@@ -1,5 +1,6 @@
 import React from 'react';
-import { Volume2, BellRing, MessageSquare } from 'lucide-react';
+import { BellRing, ChevronRight } from 'lucide-react';
+import { EVALUATOR_CONFIG } from '../data/initialData';
 
 export default function TickerBar({ students, onSelectStudent }) {
   // Collect all notes sorted by date descending
@@ -19,31 +20,66 @@ export default function TickerBar({ students, onSelectStudent }) {
   return (
     <div className="ticker-container">
       {/* Live Badge Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--skarion-orange)', padding: '0.25rem 0.65rem', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '0.45rem', 
+        background: 'var(--skarion-orange)', 
+        padding: '0.35rem 0.85rem', 
+        borderRadius: '8px', 
+        whiteSpace: 'nowrap',
+        boxShadow: '0 2px 8px rgba(255, 82, 82, 0.4)'
+      }}>
         <BellRing size={14} color="white" />
-        <span style={{ fontSize: '0.72rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          LATEST AUDIT UPDATES
+        <span style={{ fontSize: '0.74rem', fontWeight: '800', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          LATEST OBSERVATIONS
         </span>
       </div>
 
-      {/* Side-Swiping Marquee Wrapper */}
+      {/* Side-Swiping Marquee Wrapper (Slower 90s Smooth Animation) */}
       <div className="ticker-wrapper">
         <div className="ticker-track">
           {tickerItems.map((item, idx) => {
             const student = students.find(s => s.id === item.studentId);
+            const evalCfg = EVALUATOR_CONFIG[item.author] || EVALUATOR_CONFIG.Mayukh;
+
             return (
               <div 
                 key={`${item.id}-${idx}`}
                 className="ticker-item"
                 onClick={() => student && onSelectStudent(student)}
-                title="Click to view candidate audit trail"
+                title="Click candidate to view full audit record"
               >
-                <span style={{ color: '#ff8a8a', fontWeight: '800' }}>✍️ {item.author}:</span>
-                <span style={{ color: '#ffffff', fontWeight: '700' }}>{item.studentName}</span>
-                <span style={{ opacity: 0.85, fontStyle: 'italic' }}>— "{item.content}"</span>
-                <span style={{ fontSize: '0.72rem', opacity: 0.6, background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: '4px' }}>
+                <span style={{ 
+                  background: evalCfg.bg, 
+                  color: evalCfg.text, 
+                  fontWeight: '800', 
+                  fontSize: '0.74rem',
+                  padding: '0.15rem 0.5rem', 
+                  borderRadius: '5px',
+                  border: `1px solid ${evalCfg.border}` 
+                }}>
+                  ✍️ {item.author}
+                </span>
+
+                <span style={{ color: '#ffffff', fontWeight: '800', fontSize: '0.86rem' }}>
+                  {item.studentName}
+                </span>
+
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.84rem', fontWeight: '500' }}>
+                  "{item.content.length > 70 ? item.content.slice(0, 70) + '...' : item.content}"
+                </span>
+
+                <span style={{ 
+                  fontSize: '0.72rem', 
+                  color: 'rgba(255,255,255,0.6)', 
+                  fontWeight: '600',
+                  marginLeft: '0.2rem' 
+                }}>
                   {item.date}
                 </span>
+
+                <ChevronRight size={13} color="rgba(255,255,255,0.4)" />
               </div>
             );
           })}
