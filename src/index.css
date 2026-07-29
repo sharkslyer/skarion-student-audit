@@ -300,7 +300,7 @@ body {
 
 @keyframes scaleUp {
   from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  to { opacity: 1; }
 }
 
 /* Tables */
@@ -396,7 +396,6 @@ body {
   white-space: nowrap;
   flex: 1;
   position: relative;
-  mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
 }
 
 .ticker-track {
@@ -423,13 +422,14 @@ body {
   cursor: pointer;
   padding: 0.35rem 0.85rem;
   border-radius: 8px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.2s ease;
+  color: #ffffff;
 }
 
 .ticker-item:hover {
-  background: var(--bg-surface-subtle);
-  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-1px);
 }
