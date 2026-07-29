@@ -20,7 +20,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       subText: `${avgProgress}% avg course completion`,
       icon: Users,
       color: 'var(--skarion-navy)',
-      bg: 'rgba(19, 34, 71, 0.08)'
+      bg: 'rgba(56, 189, 248, 0.15)'
     },
     {
       id: 'placed',
@@ -29,7 +29,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       subText: `${total > 0 ? Math.round((placed / total) * 100) : 0}% placement rate`,
       icon: GraduationCap,
       color: '#7c3aed',
-      bg: '#f5f3ff'
+      bg: 'rgba(124, 58, 237, 0.15)'
     },
     {
       id: 'excellent',
@@ -38,7 +38,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       subText: 'Ready for tech rounds',
       icon: Award,
       color: '#059669',
-      bg: '#ecfdf5'
+      bg: 'rgba(5, 150, 105, 0.15)'
     },
     {
       id: 'good',
@@ -47,7 +47,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       subText: 'On target & steady',
       icon: ThumbsUp,
       color: '#0284c7',
-      bg: '#f0f9ff'
+      bg: 'rgba(2, 132, 199, 0.15)'
     },
     {
       id: 'needs_attention',
@@ -56,7 +56,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       subText: 'Requires mentor action',
       icon: AlertTriangle,
       color: '#d97706',
-      bg: '#fffbeb'
+      bg: 'rgba(217, 119, 6, 0.15)'
     },
     {
       id: 'bad',
@@ -65,7 +65,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       subText: 'Urgent escalation needed',
       icon: AlertCircle,
       color: '#dc2626',
-      bg: '#fef2f2'
+      bg: 'rgba(220, 38, 38, 0.15)'
     },
     {
       id: 'mocks',
@@ -74,7 +74,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       subText: `${(totalMocks / (total || 1)).toFixed(1)} avg per candidate`,
       icon: Mic,
       color: 'var(--skarion-orange)',
-      bg: 'rgba(255, 82, 82, 0.1)',
+      bg: 'rgba(255, 82, 82, 0.15)',
       noFilter: true
     }
   ];
@@ -93,12 +93,12 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
               padding: '1rem 1.15rem',
               cursor: m.noFilter ? 'default' : 'pointer',
               border: isSelected ? `2px solid ${m.color}` : '1px solid var(--border-color)',
-              background: isSelected ? m.bg : '#ffffff',
+              background: isSelected ? m.bg : 'var(--bg-surface)',
               transition: 'all 0.2s ease'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)' }}>
                 {m.label}
               </span>
               <div style={{ background: m.bg, padding: '0.35rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
