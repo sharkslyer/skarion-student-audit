@@ -131,7 +131,11 @@ export default function App() {
   const filteredStudents = safeStudentsList.filter(student => {
     if (!student || typeof student !== 'object') return false;
     const studentRating = student.rating || 'good';
-    const matchesRating = selectedRatingFilter === 'all' || studentRating === selectedRatingFilter;
+    const matchesRating = selectedRatingFilter === 'all' 
+      ? true 
+      : selectedRatingFilter === 'active' 
+        ? studentRating !== 'placed' 
+        : studentRating === selectedRatingFilter;
     const q = (searchQuery || '').toLowerCase().trim();
     const nameStr = (student.name || '').toLowerCase();
     const notesStr = student.stickyNotes && Array.isArray(student.stickyNotes) 

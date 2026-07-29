@@ -1,9 +1,10 @@
 import React from 'react';
-import { Users, Award, AlertTriangle, AlertCircle, ThumbsUp, Mic, GraduationCap } from 'lucide-react';
+import { Users, UserCheck, Award, AlertTriangle, AlertCircle, ThumbsUp, Mic, GraduationCap } from 'lucide-react';
 
 export default function MetricsOverview({ students, selectedRatingFilter, setSelectedRatingFilter }) {
   const total = students.length;
   const placed = students.filter(s => s.rating === 'placed').length;
+  const activeCandidates = students.filter(s => s.rating !== 'placed').length;
   const excellent = students.filter(s => s.rating === 'excellent').length;
   const good = students.filter(s => s.rating === 'good').length;
   const needsAttention = students.filter(s => s.rating === 'needs_attention').length;
@@ -21,6 +22,15 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       icon: Users,
       color: 'var(--skarion-navy)',
       bg: 'rgba(56, 189, 248, 0.15)'
+    },
+    {
+      id: 'active',
+      label: 'Active Candidates',
+      count: activeCandidates,
+      subText: `Excludes ${placed} placed alumni`,
+      icon: UserCheck,
+      color: '#0284c7',
+      bg: 'rgba(2, 132, 199, 0.15)'
     },
     {
       id: 'placed',
@@ -80,7 +90,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem', marginBottom: '1.5rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.85rem', marginBottom: '1.5rem' }}>
       {metrics.map((m) => {
         const Icon = m.icon;
         const isSelected = selectedRatingFilter === m.id;
