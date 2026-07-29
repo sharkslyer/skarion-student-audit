@@ -373,8 +373,8 @@ body {
 
 /* Ticker Bar Styles */
 .ticker-container {
-  background: var(--bg-surface-subtle);
-  color: var(--text-main);
+  background: #132247;
+  color: #ffffff;
   border-radius: 12px;
   padding: 0.65rem 1.15rem;
   margin-bottom: 1.35rem;
@@ -382,8 +382,13 @@ body {
   align-items: center;
   gap: 1.15rem;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 14px rgba(19, 34, 71, 0.25);
+  border: 1px solid rgba(255, 82, 82, 0.3);
+}
+
+[data-theme="dark"] .ticker-container {
+  background: #0f172a;
+  border-color: #334155;
 }
 
 .ticker-wrapper {
