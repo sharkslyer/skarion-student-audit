@@ -9,10 +9,9 @@ import {
   Calendar,
   Filter,
   Search,
-  CheckCircle,
   MessageSquare
 } from 'lucide-react';
-import { RATING_CONFIG, EVALUATORS } from '../data/initialData';
+import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG } from '../data/initialData';
 
 export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteStickyNote, onTogglePinStickyNote, onSelectStudent }) {
   const [selectedStudentFilter, setSelectedStudentFilter] = useState('all');
@@ -47,7 +46,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
     const matchesSearch = noteSearch === '' || 
       note.content.toLowerCase().includes(noteSearch.toLowerCase()) ||
       note.studentName.toLowerCase().includes(noteSearch.toLowerCase()) ||
-      note.author.toLowerCase().includes(noteSearch.toLowerCase());
+      (note.author && note.author.toLowerCase().includes(noteSearch.toLowerCase()));
     return matchesStudent && matchesCategory && matchesEvaluator && matchesSearch;
   });
 
@@ -90,10 +89,10 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <FileText size={22} color="var(--skarion-orange)" /> Candidate Audit Feed & Observation Logs
+            <FileText size={22} color="var(--skarion-orange)" /> Candidate Audit Feed & Evaluator Logs
           </h2>
           <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            Real-time chronological timeline of candidate performance feedback, attendance, and mentor assessments.
+            Real-time feedback color-coded by evaluator: <span style={{ color: '#e11d48', fontWeight: '700' }}>Mayukh (Light Red)</span>, <span style={{ color: '#0369a1', fontWeight: '700' }}>Kasshaf (Sky Blue)</span>, <span style={{ color: '#15803d', fontWeight: '700' }}>Faisal (Green)</span>, <span style={{ color: '#a16207', fontWeight: '700' }}>Saki (Light Yellow)</span>.
           </p>
         </div>
 
@@ -162,9 +161,10 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
               style={{ height: '38px', fontSize: '0.84rem', minWidth: '150px' }}
             >
               <option value="all">✍️ All Evaluators</option>
-              {EVALUATORS.map(ev => (
-                <option key={ev} value={ev}>{ev}</option>
-              ))}
+              {EVALUATORS.map(ev => {
+                const cfg = EVALUATOR_CONFIG[ev];
+                return <option key={ev} value={ev}>{ev}</option>;
+              })}
             </select>
           </div>
         </div>
@@ -251,7 +251,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
         </form>
       )}
 
-      {/* Audit Log Cards Grid */}
+      {/* Audit Log Cards Grid with Evaluator-Specific Color Coding */}
       {sortedNotes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 1rem', background: 'var(--bg-surface-subtle)', borderRadius: '14px', border: '1px dashed var(--border-color)' }}>
           <MessageSquare size={36} color="var(--text-dim)" style={{ marginBottom: '0.75rem' }} />
@@ -266,6 +266,10 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
           {sortedNotes.map((note) => {
             const ratingObj = RATING_CONFIG[note.studentRating] || RATING_CONFIG.good;
             const catStyle = categoryColors[note.category] || categoryColors['General'];
+            
+            // Evaluator Specific Color Palette:
+            // Kasshaf: Sky Blue | Mayukh: Light Red | Faisal: Green | Saki: Light Yellow
+            const evalCfg = EVALUATOR_CONFIG[note.author] || EVALUATOR_CONFIG.Mayukh;
 
             return (
               <div 
@@ -274,7 +278,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
                   background: '#ffffff', 
                   borderRadius: '14px', 
                   padding: '1.25rem', 
-                  border: note.pinned ? '2px solid var(--skarion-orange)' : '1px solid var(--border-color)',
+                  border: note.pinned ? '2px solid var(--skarion-orange)' : `1px solid ${evalCfg.border}`,
                   boxShadow: note.pinned ? '0 8px 20px rgba(255, 82, 82, 0.12)' : '0 4px 14px rgba(0,0,0,0.03)',
                   display: 'flex', 
                   flexDirection: 'column', 
@@ -326,7 +330,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
                     style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
-                      justifyContent: 'space-between',
+                      justify: 'space-between',
                       background: 'var(--bg-surface-subtle)', 
                       padding: '0.5rem 0.75rem', 
                       borderRadius: '10px',
@@ -352,14 +356,18 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
                   </p>
                 </div>
 
-                {/* Footer with Evaluator Tag */}
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.65rem', marginTop: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                {/* Footer with Evaluator-Specific Distinct Color Pill */}
+                <div style={{ borderTop: `1px solid ${evalCfg.border}`, paddingTop: '0.65rem', marginTop: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                   <span style={{ 
-                    color: 'var(--skarion-navy)', 
+                    color: evalCfg.text, 
                     fontWeight: '800', 
-                    background: 'rgba(19, 34, 71, 0.06)', 
-                    padding: '0.2rem 0.55rem', 
-                    borderRadius: '6px' 
+                    background: evalCfg.bg, 
+                    padding: '0.25rem 0.65rem', 
+                    borderRadius: '6px',
+                    border: `1px solid ${evalCfg.border}`,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
                   }}>
                     ✍️ {note.author}
                   </span>

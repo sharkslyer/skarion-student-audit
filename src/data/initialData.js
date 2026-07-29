@@ -48,6 +48,45 @@ export const RATING_CONFIG = {
 
 export const EVALUATORS = ['Mayukh', 'Saki', 'Faisal', 'Kasshaf'];
 
+export const EVALUATOR_CONFIG = {
+  Kasshaf: {
+    label: 'Kasshaf',
+    bg: '#e0f2fe',       // Sky Blue
+    text: '#0369a1',
+    border: '#7dd3fc',
+    badgeBg: '#0284c7',
+    badgeText: '#ffffff',
+    icon: '👤'
+  },
+  Mayukh: {
+    label: 'Mayukh',
+    bg: '#ffe4e6',       // Light Red
+    text: '#e11d48',
+    border: '#fecdd3',
+    badgeBg: '#e11d48',
+    badgeText: '#ffffff',
+    icon: '👤'
+  },
+  Faisal: {
+    label: 'Faisal',
+    bg: '#dcfce7',       // Green
+    text: '#15803d',
+    border: '#86efac',
+    badgeBg: '#15803d',
+    badgeText: '#ffffff',
+    icon: '👤'
+  },
+  Saki: {
+    label: 'Saki',
+    bg: '#fef9c3',       // Light Yellow
+    text: '#a16207',
+    border: '#fef08a',
+    badgeBg: '#ca8a04',
+    badgeText: '#ffffff',
+    icon: '👤'
+  }
+};
+
 // Complete dataset containing all 13 candidates
 export const INITIAL_STUDENTS = [
   {
@@ -79,6 +118,9 @@ export const INITIAL_STUDENTS = [
     progress: 98,
     mockInterviews: 3,
     rating: 'excellent',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-212-1',
@@ -98,6 +140,9 @@ export const INITIAL_STUDENTS = [
     progress: 4,
     mockInterviews: 0,
     rating: 'needs_attention',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-201-1',
@@ -117,6 +162,9 @@ export const INITIAL_STUDENTS = [
     progress: 0,
     mockInterviews: 0,
     rating: 'good',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-202-1',
@@ -136,6 +184,9 @@ export const INITIAL_STUDENTS = [
     progress: 4,
     mockInterviews: 0,
     rating: 'bad',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-203-1',
@@ -155,6 +206,9 @@ export const INITIAL_STUDENTS = [
     progress: 0,
     mockInterviews: 0,
     rating: 'needs_attention',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-204-1',
@@ -174,6 +228,9 @@ export const INITIAL_STUDENTS = [
     progress: 2,
     mockInterviews: 0,
     rating: 'bad',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-205-1',
@@ -193,6 +250,9 @@ export const INITIAL_STUDENTS = [
     progress: 22,
     mockInterviews: 0,
     rating: 'needs_attention',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-206-1',
@@ -212,6 +272,9 @@ export const INITIAL_STUDENTS = [
     progress: 8,
     mockInterviews: 0,
     rating: 'needs_attention',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-207-1',
@@ -231,6 +294,9 @@ export const INITIAL_STUDENTS = [
     progress: 25,
     mockInterviews: 1,
     rating: 'needs_attention',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-208-1',
@@ -250,6 +316,9 @@ export const INITIAL_STUDENTS = [
     progress: 88,
     mockInterviews: 3,
     rating: 'good',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-209-1',
@@ -269,6 +338,9 @@ export const INITIAL_STUDENTS = [
     progress: 96,
     mockInterviews: 4,
     rating: 'needs_attention',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-210-1',
@@ -288,6 +360,9 @@ export const INITIAL_STUDENTS = [
     progress: 25,
     mockInterviews: 3,
     rating: 'bad',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
     stickyNotes: [
       {
         id: 'note-211-1',
