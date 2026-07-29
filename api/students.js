@@ -1,5 +1,5 @@
 // Vercel Serverless Function connected directly to NeonDB PostgreSQL Database
-// Handles real-time read and write operations across all devices worldwide
+// Handles real-time CRUD operations (including deletions) across all devices worldwide
 
 import pg from 'pg';
 const { Pool } = pg;
@@ -28,14 +28,23 @@ export default async function handler(req, res) {
   const client = await pool.connect();
 
   try {
-    // POST / PUT: Update or Insert Candidate Audit Records into NeonDB
+    // POST / PUT: Sync candidate roster (with automatic deletion of removed candidates)
     if (req.method === 'POST' || req.method === 'PUT') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const studentsList = Array.isArray(body) ? body : (body?.students || []);
 
-      if (studentsList.length > 0) {
-        await client.query('BEGIN');
+      await client.query('BEGIN');
 
+      if (studentsList.length > 0) {
+        const activeIds = studentsList.map(s => s?.id).filter(Boolean);
+
+        // 1. Delete removed candidates from NeonDB
+        if (activeIds.length > 0) {
+          const placeholders = activeIds.map((_, i) => `$${i + 1}`).join(',');
+          await client.query(`DELETE FROM students WHERE id NOT IN (${placeholders});`, activeIds);
+        }
+
+        // 2. Upsert active candidates
         for (const student of studentsList) {
           if (!student || !student.id || !student.name) continue;
 
@@ -63,7 +72,17 @@ export default async function handler(req, res) {
             student.placementDate || ''
           ]);
 
+          // 3. Upsert sticky notes
           if (Array.isArray(student.stickyNotes)) {
+            // Delete sticky notes no longer present for this student
+            const activeNoteIds = student.stickyNotes.map(n => n?.id).filter(Boolean);
+            if (activeNoteIds.length > 0) {
+              const notePlaceholders = activeNoteIds.map((_, i) => `$${i + 2}`).join(',');
+              await client.query(`DELETE FROM sticky_notes WHERE student_id = $1 AND id NOT IN (${notePlaceholders});`, [student.id, ...activeNoteIds]);
+            } else {
+              await client.query(`DELETE FROM sticky_notes WHERE student_id = $1;`, [student.id]);
+            }
+
             for (const note of student.stickyNotes) {
               if (!note || !note.id || !note.content) continue;
               await client.query(`
@@ -88,10 +107,14 @@ export default async function handler(req, res) {
             }
           }
         }
-
-        await client.query('COMMIT');
-        return res.status(200).json({ success: true, count: studentsList.length });
+      } else {
+        // If student list is empty, delete all from NeonDB
+        await client.query('DELETE FROM sticky_notes;');
+        await client.query('DELETE FROM students;');
       }
+
+      await client.query('COMMIT');
+      return res.status(200).json({ success: true, count: studentsList.length });
     }
 
     // GET: Query all students and their sticky notes from NeonDB
