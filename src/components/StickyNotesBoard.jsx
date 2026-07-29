@@ -12,6 +12,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG } from '../data/initialData';
+import { getTodayLocalDate } from '../utils/dateUtils';
 
 export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteStickyNote, onTogglePinStickyNote, onSelectStudent }) {
   const [selectedStudentFilter, setSelectedStudentFilter] = useState('all');
@@ -25,7 +26,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
   const [noteContent, setNoteContent] = useState('');
   const [noteCategory, setNoteCategory] = useState('Mock Feedback');
   const [noteAccent, setNoteAccent] = useState('navy');
-  const [noteDate, setNoteDate] = useState(new Date().toISOString().split('T')[0]);
+  const [noteDate, setNoteDate] = useState(getTodayLocalDate());
   const [noteAuthor, setNoteAuthor] = useState(EVALUATORS[0]); // Default 'Mayukh'
 
   // Collect all notes across all students

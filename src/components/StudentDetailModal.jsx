@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG } from '../data/initialData';
+import { getTodayLocalDate } from '../utils/dateUtils';
 import { 
   X, 
   FileText, 
@@ -25,7 +26,7 @@ export default function StudentDetailModal({
   const [newNoteContent, setNewNoteContent] = useState('');
   const [newNoteCategory, setNewNoteCategory] = useState('Mock Feedback');
   const [newNoteAccent, setNewNoteAccent] = useState('navy');
-  const [newNoteDate, setNewNoteDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newNoteDate, setNewNoteDate] = useState(getTodayLocalDate());
   const [newNoteAuthor, setNewNoteAuthor] = useState(EVALUATORS[0]); // Default 'Mayukh'
 
   const ratingObj = RATING_CONFIG[student.rating] || RATING_CONFIG.good;
@@ -37,7 +38,7 @@ export default function StudentDetailModal({
 
     onAddStickyNote(student.id, {
       id: `note-${Date.now()}`,
-      date: newNoteDate,
+      date: newNoteDate || getTodayLocalDate(),
       content: newNoteContent.trim(),
       category: newNoteCategory,
       author: newNoteAuthor,
@@ -46,6 +47,7 @@ export default function StudentDetailModal({
     });
 
     setNewNoteContent('');
+    setNewNoteDate(getTodayLocalDate());
   };
 
   return (

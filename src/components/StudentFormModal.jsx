@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { RATING_CONFIG } from '../data/initialData';
+import { getTodayLocalDate } from '../utils/dateUtils';
 import { X, UserPlus, Save } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -7,7 +8,7 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
   const isEdit = Boolean(initialData);
 
   const [name, setName] = useState(initialData?.name || '');
-  const [joiningDate, setJoiningDate] = useState(initialData?.joiningDate || new Date().toISOString().split('T')[0]);
+  const [joiningDate, setJoiningDate] = useState(initialData?.joiningDate || getTodayLocalDate());
   const [progress, setProgress] = useState(initialData?.progress || 0);
   const [mockInterviews, setMockInterviews] = useState(initialData?.mockInterviews || 0);
   const [rating, setRating] = useState(initialData?.rating || 'good');
@@ -30,14 +31,14 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
       rating,
       placementCompany: rating === 'placed' ? placementCompany.trim() : '',
       placementRole: rating === 'placed' ? placementRole.trim() : '',
-      placementDate: rating === 'placed' ? (initialData?.placementDate || new Date().toISOString().split('T')[0]) : '',
+      placementDate: rating === 'placed' ? (initialData?.placementDate || getTodayLocalDate()) : '',
       stickyNotes: initialData?.stickyNotes || []
     };
 
     if (initialComment.trim()) {
       studentObj.stickyNotes.unshift({
         id: `note-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayLocalDate(),
         content: initialComment.trim(),
         category: 'General',
         author: 'Mayukh',
