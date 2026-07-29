@@ -45,17 +45,11 @@ export default function StudentTable({
   const handleMockChange = (e, student, delta) => {
     e.stopPropagation();
     const newCount = Math.max(0, (student.mockInterviews || 0) + delta);
-    if (delta > 0 && newCount % 3 === 0) {
-      confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-    }
     onUpdateStudent({ ...student, mockInterviews: newCount });
   };
 
   const handleRatingChange = (e, student, newRating) => {
     e.stopPropagation();
-    if (newRating === 'excellent' && student.rating !== 'excellent') {
-      confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
-    }
     onUpdateStudent({ ...student, rating: newRating });
   };
 
