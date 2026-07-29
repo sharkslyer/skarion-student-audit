@@ -11,7 +11,7 @@ import {
   Search,
   MessageSquare
 } from 'lucide-react';
-import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG } from '../data/initialData';
+import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG, CATEGORIES, CATEGORY_COLORS } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
 
 export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteStickyNote, onTogglePinStickyNote, onSelectStudent }) {
@@ -63,7 +63,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
     if (!noteContent.trim()) return;
     onAddStickyNote(targetStudentId, {
       id: `note-${Date.now()}`,
-      date: noteDate,
+      date: noteDate || getTodayLocalDate(),
       content: noteContent,
       category: noteCategory,
       author: noteAuthor,
@@ -74,15 +74,8 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
     setShowAddForm(false);
   };
 
-  const categories = ['Mock Feedback', 'Technical', 'Soft Skills', 'Attendance', 'General'];
-
-  const categoryColors = {
-    'Mock Feedback': { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' },
-    'Technical': { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
-    'Soft Skills': { bg: '#f3e8ff', text: '#6b21a8', border: '#e9d5ff' },
-    'Attendance': { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' },
-    'General': { bg: '#f1f5f9', text: '#334155', border: '#cbd5e1' }
-  };
+  const categories = CATEGORIES;
+  const categoryColors = CATEGORY_COLORS;
 
   return (
     <div className="card-panel" style={{ padding: '1.5rem' }}>

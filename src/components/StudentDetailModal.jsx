@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG } from '../data/initialData';
+import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG, CATEGORIES } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
 import { 
   X, 
@@ -146,11 +146,9 @@ export default function StudentDetailModal({
             <div>
               <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Category</label>
               <select value={newNoteCategory} onChange={(e) => setNewNoteCategory(e.target.value)} className="input-control" style={{ fontSize: '0.82rem' }}>
-                <option value="Mock Feedback">Mock Feedback</option>
-                <option value="Technical">Technical</option>
-                <option value="Soft Skills">Soft Skills</option>
-                <option value="Attendance">Attendance</option>
-                <option value="General">General</option>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
 
