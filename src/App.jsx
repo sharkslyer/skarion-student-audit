@@ -51,8 +51,8 @@ export default function App() {
   // 2. Realtime Background Cloud DB Polling (Polls every 3s to sync edits across devices live)
   useEffect(() => {
     const interval = setInterval(async () => {
-      if (Date.now() - lastEditTimeRef.current < 6000) {
-        return; // Don't overwrite if user is actively typing
+      if (Date.now() - lastEditTimeRef.current < 12000) {
+        return; // Don't overwrite if user recently performed an edit or pin action
       }
       try {
         const cloudResult = await fetchFromCloudDb();
@@ -103,6 +103,7 @@ export default function App() {
 
     setIsCloudSyncing(true);
     pushToCloudDb(sanitized).finally(() => {
+      lastEditTimeRef.current = Date.now();
       setIsCloudSyncing(false);
     });
   };

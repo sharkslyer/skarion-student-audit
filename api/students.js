@@ -1,5 +1,5 @@
 // Vercel Serverless Function connected directly to NeonDB PostgreSQL Database
-// Handles real-time CRUD operations (including deletions) across all devices worldwide
+// Handles real-time CRUD operations (including deletions and pin status updates) across all devices worldwide
 
 import pg from 'pg';
 const { Pool } = pg;
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   const client = await pool.connect();
 
   try {
-    // POST / PUT: Sync candidate roster (with automatic deletion of removed candidates)
+    // POST / PUT: Sync candidate roster and sticky notes (with deletion & multi-pin support)
     if (req.method === 'POST' || req.method === 'PUT') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const studentsList = Array.isArray(body) ? body : (body?.students || []);
@@ -72,9 +72,8 @@ export default async function handler(req, res) {
             student.placementDate || ''
           ]);
 
-          // 3. Upsert sticky notes
+          // 3. Upsert sticky notes & pin statuses
           if (Array.isArray(student.stickyNotes)) {
-            // Delete sticky notes no longer present for this student
             const activeNoteIds = student.stickyNotes.map(n => n?.id).filter(Boolean);
             if (activeNoteIds.length > 0) {
               const notePlaceholders = activeNoteIds.map((_, i) => `$${i + 2}`).join(',');
@@ -108,13 +107,12 @@ export default async function handler(req, res) {
           }
         }
       } else {
-        // If student list is empty, delete all from NeonDB
         await client.query('DELETE FROM sticky_notes;');
         await client.query('DELETE FROM students;');
       }
 
       await client.query('COMMIT');
-      return res.status(200).json({ success: true, count: studentsList.length });
+      return res.status(200).json({ success: true, count: studentsList.length, students: studentsList });
     }
 
     // GET: Query all students and their sticky notes from NeonDB
@@ -157,7 +155,7 @@ export default async function handler(req, res) {
           category: n.category,
           author: n.author,
           accent: n.accent,
-          pinned: n.pinned
+          pinned: Boolean(n.pinned)
         }));
 
       return {
