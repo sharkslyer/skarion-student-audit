@@ -206,9 +206,6 @@ export default function Header({
           <button className="btn-secondary" style={{ height: '40px', padding: '0 0.65rem' }} onClick={() => fileInputRef.current.click()} title="Import JSON Audit Log">
             <Upload size={15} />
           </button>
-          <button className="btn-icon" style={{ height: '40px', width: '40px' }} onClick={onResetData} title="Reset Default Data">
-            <RotateCcw size={15} />
-          </button>
           <button className="btn-primary" style={{ height: '40px' }} onClick={onOpenAddModal}>
             <Plus size={18} /> New Audit
           </button>
