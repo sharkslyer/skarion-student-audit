@@ -9,7 +9,7 @@ import {
   Upload, 
   RotateCcw, 
   Search,
-  CheckCircle2,
+  Database,
   Share2,
   Check
 } from 'lucide-react';
@@ -59,7 +59,7 @@ export default function Header({
   };
 
   return (
-    <header className="card-panel" style={{ padding: '1.15rem 1.75rem', marginBottom: '1.5rem' }}>
+    <header className="card-panel" style={{ padding: '1.15rem 1.75rem', marginBottom: '1.35rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.25rem' }}>
         
         {/* Brand with Exact SKARION Interlaced Logo */}
@@ -95,14 +95,14 @@ export default function Header({
                 color: '#059669',
                 fontSize: '0.68rem',
                 fontWeight: '800',
-                padding: '0.15rem 0.5rem',
+                padding: '0.15rem 0.55rem',
                 borderRadius: '6px',
                 border: '1px solid #a7f3d0',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.25rem'
+                gap: '0.3rem'
               }}>
-                <CheckCircle2 size={12} color="#059669" /> Auto-Saved
+                <Database size={12} color="#059669" /> NeonDB Online
               </span>
             </div>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
