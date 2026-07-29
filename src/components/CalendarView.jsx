@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, FileText, CheckCircle2 } from 'lucide-react';
-import { RATING_CONFIG } from '../data/initialData';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, FileText, CheckCircle2, Send } from 'lucide-react';
+import { RATING_CONFIG, EVALUATOR_CONFIG } from '../data/initialData';
 
 export default function CalendarView({ students, onSelectStudent }) {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 6, 1)); // Default July 2026
@@ -52,25 +52,25 @@ export default function CalendarView({ students, onSelectStudent }) {
       {/* Calendar Header Controls */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <CalendarIcon size={22} color="var(--skarion-orange)" /> SKARION Audit Calendar Timeline
           </h2>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+          <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
             Interactive month schedule mapping student joining milestones and logged mentor audit events.
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button className="btn-secondary" style={{ height: '38px', padding: '0 0.75rem' }} onClick={prevMonth}>
+          <button className="btn-secondary" style={{ height: '38px', padding: '0 0.85rem' }} onClick={prevMonth}>
             <ChevronLeft size={16} /> Prev
           </button>
           <span style={{ fontSize: '1.15rem', fontWeight: '800', minWidth: '160px', textAlign: 'center', color: 'var(--skarion-navy)' }}>
             {monthNames[month]} {year}
           </span>
-          <button className="btn-secondary" style={{ height: '38px', padding: '0 0.75rem' }} onClick={nextMonth}>
+          <button className="btn-secondary" style={{ height: '38px', padding: '0 0.85rem' }} onClick={nextMonth}>
             Next <ChevronRight size={16} />
           </button>
-          <button className="btn-navy" style={{ height: '38px', padding: '0 0.85rem' }} onClick={todayMonth}>
+          <button className="btn-navy" style={{ height: '38px', padding: '0 1rem' }} onClick={todayMonth}>
             Today
           </button>
         </div>
@@ -79,7 +79,7 @@ export default function CalendarView({ students, onSelectStudent }) {
       {/* Weekday Headers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px', textAlign: 'center' }}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-          <div key={d} style={{ background: 'var(--skarion-navy)', color: '#ffffff', fontSize: '0.75rem', fontWeight: '800', padding: '0.5rem', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div key={d} style={{ background: 'var(--skarion-navy)', color: '#ffffff', fontSize: '0.76rem', fontWeight: '800', padding: '0.55rem', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {d}
           </div>
         ))}
@@ -93,11 +93,11 @@ export default function CalendarView({ students, onSelectStudent }) {
               <div 
                 key={`empty-${idx}`} 
                 style={{ 
-                  minHeight: '110px', 
+                  minHeight: '115px', 
                   background: 'var(--bg-surface-subtle)', 
-                  borderRadius: '10px', 
+                  borderRadius: '12px', 
                   border: '1px solid var(--border-color)',
-                  opacity: 0.5
+                  opacity: 0.4
                 }} 
               />
             );
@@ -112,16 +112,16 @@ export default function CalendarView({ students, onSelectStudent }) {
               key={dayNum}
               onClick={() => hasEvents && setSelectedDayNotes({ dayNum, formattedDate, joiningStudents, notesOnDay })}
               style={{
-                minHeight: '110px',
-                background: isToday ? 'rgba(255, 82, 82, 0.05)' : '#ffffff',
+                minHeight: '115px',
+                background: isToday ? 'rgba(255, 82, 82, 0.08)' : 'var(--bg-surface)',
                 border: isToday ? '2px solid var(--skarion-orange)' : '1px solid var(--border-color)',
-                borderRadius: '10px',
-                padding: '0.6rem',
+                borderRadius: '12px',
+                padding: '0.65rem',
                 cursor: hasEvents ? 'pointer' : 'default',
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between',
+                justify: 'space-between',
                 boxShadow: hasEvents ? 'var(--shadow-sm)' : 'none'
               }}
             >
@@ -134,7 +134,7 @@ export default function CalendarView({ students, onSelectStudent }) {
                   {dayNum}
                 </span>
                 {hasEvents && (
-                  <span style={{ fontSize: '0.68rem', background: 'var(--skarion-orange)', color: 'white', padding: '1px 6px', borderRadius: '99px', fontWeight: '800' }}>
+                  <span style={{ fontSize: '0.7rem', background: 'var(--skarion-orange)', color: 'white', padding: '1px 6px', borderRadius: '99px', fontWeight: '800' }}>
                     {joiningStudents.length + notesOnDay.length}
                   </span>
                 )}
@@ -143,16 +143,19 @@ export default function CalendarView({ students, onSelectStudent }) {
               {/* Day Event Previews */}
               <div style={{ marginTop: '0.35rem', display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'hidden' }}>
                 {joiningStudents.map(s => (
-                  <div key={s.id} style={{ fontSize: '0.68rem', background: 'rgba(5, 150, 105, 0.1)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.3)', padding: '2px 5px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
+                  <div key={s.id} style={{ fontSize: '0.68rem', background: 'rgba(5, 150, 105, 0.12)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
                     🚀 {s.name} Joined
                   </div>
                 ))}
 
-                {notesOnDay.map(n => (
-                  <div key={n.id} style={{ fontSize: '0.68rem', background: 'rgba(19, 34, 71, 0.08)', color: 'var(--skarion-navy)', border: '1px solid rgba(19, 34, 71, 0.2)', padding: '2px 5px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
-                    📝 {n.studentName}: {n.category}
-                  </div>
-                ))}
+                {notesOnDay.map(n => {
+                  const evalCfg = EVALUATOR_CONFIG[n.author] || EVALUATOR_CONFIG.Mayukh;
+                  return (
+                    <div key={n.id} style={{ fontSize: '0.68rem', background: evalCfg.bg, color: evalCfg.text, border: `1px solid ${evalCfg.border}`, padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
+                      📝 {n.studentName}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -162,27 +165,27 @@ export default function CalendarView({ students, onSelectStudent }) {
       {/* Day Details Popover Modal */}
       {selectedDayNotes && (
         <div className="modal-backdrop" onClick={() => setSelectedDayNotes(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ padding: '1.75rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--skarion-navy)' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ padding: '1.75rem', maxWidth: '650px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 📅 Audit Events for {selectedDayNotes.formattedDate}
               </h3>
-              <button className="btn-secondary" onClick={() => setSelectedDayNotes(null)}>Close</button>
+              <button className="btn-secondary" style={{ height: '36px' }} onClick={() => setSelectedDayNotes(null)}>Close</button>
             </div>
 
             {/* Joining Candidates */}
             {selectedDayNotes.joiningStudents.length > 0 && (
               <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.85rem', color: '#059669', fontWeight: '800', marginBottom: '0.5rem' }}>
+                <h4 style={{ fontSize: '0.88rem', color: '#059669', fontWeight: '800', marginBottom: '0.65rem' }}>
                   🚀 Candidates Joined on this Date:
                 </h4>
                 {selectedDayNotes.joiningStudents.map(s => (
                   <div 
                     key={s.id} 
                     onClick={() => { setSelectedDayNotes(null); onSelectStudent(s); }}
-                    style={{ background: 'var(--bg-surface-subtle)', padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '0.5rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)' }}
+                    style={{ background: 'var(--bg-surface-subtle)', padding: '0.85rem 1rem', borderRadius: '12px', marginBottom: '0.5rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)' }}
                   >
-                    <span style={{ fontWeight: '700', color: 'var(--skarion-navy)' }}>{s.name} ({s.module})</span>
+                    <span style={{ fontWeight: '800', color: 'var(--skarion-navy)', fontSize: '0.92rem' }}>{s.name}</span>
                     <span className={`status-badge badge-${s.rating}`}>{RATING_CONFIG[s.rating]?.label}</span>
                   </div>
                 ))}
@@ -192,18 +195,29 @@ export default function CalendarView({ students, onSelectStudent }) {
             {/* Audit Logs on this Date */}
             {selectedDayNotes.notesOnDay.length > 0 && (
               <div>
-                <h4 style={{ fontSize: '0.85rem', color: 'var(--skarion-orange)', fontWeight: '800', marginBottom: '0.5rem' }}>
+                <h4 style={{ fontSize: '0.88rem', color: 'var(--skarion-orange)', fontWeight: '800', marginBottom: '0.65rem' }}>
                   📝 Mentor Audit Notes on this Date:
                 </h4>
-                {selectedDayNotes.notesOnDay.map(n => (
-                  <div key={n.id} className="audit-card" style={{ marginBottom: '0.75rem', padding: '0.85rem 1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: '800', marginBottom: '0.25rem', color: 'var(--skarion-navy)' }}>
-                      <span>{n.studentName} ({n.category})</span>
-                      <span style={{ color: 'var(--text-muted)' }}>✍️ {n.author}</span>
+                {selectedDayNotes.notesOnDay.map(n => {
+                  const evalCfg = EVALUATOR_CONFIG[n.author] || EVALUATOR_CONFIG.Mayukh;
+                  return (
+                    <div key={n.id} className="card-panel" style={{ marginBottom: '0.75rem', padding: '0.95rem 1.15rem', borderLeft: `4px solid ${evalCfg.border}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '800', marginBottom: '0.35rem', color: 'var(--skarion-navy)' }}>
+                        <span>{n.studentName} ({n.category})</span>
+                        <span style={{ 
+                          color: evalCfg.text, 
+                          background: evalCfg.bg, 
+                          padding: '0.15rem 0.5rem', 
+                          borderRadius: '5px',
+                          border: `1px solid ${evalCfg.border}` 
+                        }}>
+                          ✍️ {n.author}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '500' }}>"{n.content}"</p>
                     </div>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--text-main)' }}>"{n.content}"</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
