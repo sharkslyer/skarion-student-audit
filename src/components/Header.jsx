@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
   Plus, 
   Table, 
@@ -11,7 +11,9 @@ import {
   Search,
   Database,
   Share2,
-  Check
+  Check,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { generateShareableUrl } from '../utils/cloudSync';
 
@@ -29,6 +31,22 @@ export default function Header({
 }) {
   const fileInputRef = useRef(null);
   const [copied, setCopied] = useState(false);
+
+  // Night Mode / Light Mode State
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('SKARION_THEME_MODE') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', themeMode);
+    localStorage.setItem('SKARION_THEME_MODE', themeMode);
+  }, [themeMode]);
+
+  const toggleTheme = () => {
+    const nextTheme = themeMode === 'light' ? 'dark' : 'light';
+    setThemeMode(nextTheme);
+    if (showToast) showToast(`Switched to ${nextTheme === 'dark' ? 'Night 🌙' : 'Light ☀️'} Mode`);
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -66,8 +84,8 @@ export default function Header({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="40" height="36" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M45 20 L25 40 L40 55 L75 20 L55 5 L40 20 Z" fill="#132247" />
-              <path d="M40 55 L60 75 L45 90 L10 55 L25 40 Z" fill="#132247" />
+              <path d="M45 20 L25 40 L40 55 L75 20 L55 5 L40 20 Z" fill={themeMode === 'dark' ? '#38bdf8' : '#132247'} />
+              <path d="M40 55 L60 75 L45 90 L10 55 L25 40 Z" fill={themeMode === 'dark' ? '#38bdf8' : '#132247'} />
               <path d="M75 20 L95 40 L80 55 L45 20 L60 5 Z" fill="#FF5252" />
               <path d="M80 55 L100 75 L85 90 L50 55 L65 40 Z" fill="#FF5252" />
             </svg>
@@ -75,23 +93,23 @@ export default function Header({
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <h1 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--skarion-navy)', letterSpacing: '-0.03em' }}>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: '800', color: themeMode === 'dark' ? '#f8fafc' : 'var(--skarion-navy)', letterSpacing: '-0.03em' }}>
                 SKARION
               </h1>
               <span style={{ 
-                background: 'rgba(255, 82, 82, 0.1)', 
+                background: 'rgba(255, 82, 82, 0.15)', 
                 color: 'var(--skarion-orange)', 
                 fontSize: '0.72rem', 
                 fontWeight: '800', 
                 padding: '0.15rem 0.55rem', 
                 borderRadius: '6px', 
-                border: '1px solid rgba(255, 82, 82, 0.2)',
+                border: '1px solid rgba(255, 82, 82, 0.3)',
                 letterSpacing: '0.04em'
               }}>
                 STUDENT AUDIT LOG
               </span>
               <span style={{
-                background: '#ecfdf5',
+                background: themeMode === 'dark' ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
                 color: '#059669',
                 fontSize: '0.68rem',
                 fontWeight: '800',
@@ -153,10 +171,26 @@ export default function Header({
           </button>
         </div>
 
-        {/* Actions including Share Live State */}
+        {/* Actions including Night Mode toggle button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
           <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" style={{ display: 'none' }} />
           
+          {/* Night Mode / Light Mode Toggle Button */}
+          <button 
+            className="btn-icon" 
+            onClick={toggleTheme}
+            style={{ 
+              height: '40px', 
+              width: '40px', 
+              background: themeMode === 'dark' ? '#192642' : 'var(--bg-surface-subtle)',
+              borderColor: themeMode === 'dark' ? 'var(--skarion-orange)' : 'var(--border-color)',
+              color: themeMode === 'dark' ? '#fbbf24' : 'var(--skarion-navy)' 
+            }}
+            title={themeMode === 'dark' ? 'Switch to Light Mode ☀️' : 'Switch to Night Mode 🌙'}
+          >
+            {themeMode === 'dark' ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="var(--skarion-navy)" />}
+          </button>
+
           <button 
             className="btn-primary" 
             style={{ height: '40px', padding: '0 0.85rem', background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)', border: 'none' }} 
