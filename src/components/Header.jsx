@@ -13,7 +13,8 @@ import {
   Share2,
   Check,
   Moon,
-  Sun
+  Sun,
+  Mic
 } from 'lucide-react';
 import { generateShareableUrl } from '../utils/cloudSync';
 
@@ -161,6 +162,13 @@ export default function Header({
             onClick={() => setActiveView('calendar')}
           >
             <CalendarIcon size={15} /> Calendar
+          </button>
+          <button 
+            className={`tab-pill ${activeView === 'mock' ? 'active' : ''}`}
+            onClick={() => setActiveView('mock')}
+            style={{ background: activeView === 'mock' ? 'var(--skarion-orange)' : 'transparent', color: activeView === 'mock' ? '#ffffff' : 'inherit' }}
+          >
+            <Mic size={15} /> Mock Hub 🎙️
           </button>
           <button 
             className={`tab-pill ${activeView === 'placed' ? 'active' : ''}`}

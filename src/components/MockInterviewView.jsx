@@ -1,0 +1,680 @@
+import React, { useState } from 'react';
+import { 
+  Mic, 
+  TrendingUp, 
+  TrendingDown, 
+  Minus, 
+  Plus, 
+  Award, 
+  Calendar, 
+  CheckCircle2, 
+  AlertCircle, 
+  Star, 
+  User, 
+  Trash2, 
+  X, 
+  Send,
+  Sparkles
+} from 'lucide-react';
+import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
+import { getTodayLocalDate } from '../utils/dateUtils';
+
+export default function MockInterviewView({ students, onSaveStudent, onSelectStudent, showToast }) {
+  const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [activePointIndex, setActivePointIndex] = useState(null);
+
+  // Form state for logging a new mock session
+  const [targetStudentId, setTargetStudentId] = useState(students[0]?.id || '');
+  const [mockDate, setMockDate] = useState(getTodayLocalDate());
+  const [mockEvaluator, setMockEvaluator] = useState(EVALUATORS[0]);
+  const [mockCategory, setMockCategory] = useState(MOCK_ROUND_TYPES[0]);
+  const [mockScore, setMockScore] = useState(7.5);
+  const [mockFeedback, setMockFeedback] = useState('');
+  const [mockStrengths, setMockStrengths] = useState('');
+  const [mockImprovement, setMockImprovement] = useState('');
+
+  const currentStudent = students.find(s => s.id === selectedStudentId) || students[0];
+  const mockSessions = currentStudent?.mockSessions || [];
+
+  // Sort mock sessions chronologically (oldest to newest for the graph)
+  const sortedSessions = [...mockSessions].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Compute performance metrics
+  const totalMocks = sortedSessions.length;
+  const scores = sortedSessions.map(s => Number(s.score || 0));
+  const avgScore = totalMocks > 0 ? (scores.reduce((a, b) => a + b, 0) / totalMocks).toFixed(1) : '0.0';
+  const firstScore = scores[0] || 0;
+  const latestScore = scores[scores.length - 1] || 0;
+  const scoreDiff = (latestScore - firstScore).toFixed(1);
+  const isImproving = Number(scoreDiff) > 0;
+  const isDeclining = Number(scoreDiff) < 0;
+
+  // Handle submitting new mock interview record
+  const handleLogMock = (e) => {
+    e.preventDefault();
+    if (!mockFeedback.trim()) return;
+
+    const studentToUpdate = students.find(s => s.id === targetStudentId);
+    if (!studentToUpdate) return;
+
+    const newSession = {
+      id: `mock-${Date.now()}`,
+      date: mockDate || getTodayLocalDate(),
+      score: Number(mockScore),
+      evaluator: mockEvaluator,
+      category: mockCategory,
+      feedback: mockFeedback.trim(),
+      strengths: mockStrengths.trim(),
+      improvement: mockImprovement.trim()
+    };
+
+    const existingSessions = studentToUpdate.mockSessions || [];
+    const updatedSessions = [...existingSessions, newSession];
+
+    // Automatically update student's mockInterviews count
+    const updatedStudent = {
+      ...studentToUpdate,
+      mockInterviews: updatedSessions.length,
+      mockSessions: updatedSessions
+    };
+
+    // Automatically append an audit log entry for this mock interview
+    const auditNote = {
+      id: `note-mock-${Date.now()}`,
+      date: mockDate || getTodayLocalDate(),
+      content: `Mock Interview (${mockCategory}): Scored ${mockScore}/10. ${mockFeedback.trim()}`,
+      category: 'Mock Feedback',
+      author: mockEvaluator,
+      accent: mockScore >= 8 ? 'green' : mockScore >= 5 ? 'blue' : 'amber',
+      pinned: true
+    };
+    updatedStudent.stickyNotes = [auditNote, ...(updatedStudent.stickyNotes || [])];
+
+    onSaveStudent(updatedStudent);
+    if (showToast) showToast(`Logged ${mockScore}/10 Mock Interview for ${studentToUpdate.name}`);
+
+    // Reset form & close modal
+    setMockFeedback('');
+    setMockStrengths('');
+    setMockImprovement('');
+    setIsLogModalOpen(false);
+  };
+
+  // Handle deleting a mock session record
+  const handleDeleteMock = (sessionId) => {
+    if (!currentStudent) return;
+    const updatedSessions = mockSessions.filter(s => s.id !== sessionId);
+    const updatedStudent = {
+      ...currentStudent,
+      mockInterviews: updatedSessions.length,
+      mockSessions: updatedSessions
+    };
+    onSaveStudent(updatedStudent);
+    if (showToast) showToast('Deleted mock interview record');
+  };
+
+  // Graph dimensions for SVG performance chart
+  const graphWidth = 680;
+  const graphHeight = 220;
+  const paddingLeft = 45;
+  const paddingRight = 35;
+  const paddingTop = 25;
+  const paddingBottom = 40;
+  const plotWidth = graphWidth - paddingLeft - paddingRight;
+  const plotHeight = graphHeight - paddingTop - paddingBottom;
+
+  // Compute SVG point coordinates
+  const points = sortedSessions.map((session, index) => {
+    const x = totalMocks === 1 
+      ? paddingLeft + plotWidth / 2 
+      : paddingLeft + (index / (totalMocks - 1)) * plotWidth;
+    const y = paddingTop + plotHeight - ((session.score || 0) / 10) * plotHeight;
+    return { x, y, session, index };
+  });
+
+  const pathD = points.length > 0 
+    ? points.reduce((acc, point, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${point.x} ${point.y}`, '')
+    : '';
+
+  const areaD = points.length > 0
+    ? `${pathD} L ${points[points.length - 1].x} ${paddingTop + plotHeight} L ${points[0].x} ${paddingTop + plotHeight} Z`
+    : '';
+
+  const getScoreColor = (score) => {
+    if (score >= 8) return '#059669'; // Green
+    if (score >= 5) return '#0284c7'; // Blue
+    return '#dc2626'; // Red
+  };
+
+  return (
+    <div className="card-panel" style={{ padding: '1.75rem' }}>
+      
+      {/* Header Banner */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, #132247 0%, #1e293b 100%)', 
+        padding: '1.5rem 1.75rem', 
+        borderRadius: '16px', 
+        color: '#ffffff',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        justify: 'space-between',
+        flexWrap: 'wrap',
+        gap: '1.25rem',
+        boxShadow: '0 8px 24px rgba(19, 34, 71, 0.25)',
+        border: '1px solid rgba(56, 189, 248, 0.3)'
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
+            <Mic size={30} color="var(--skarion-orange)" />
+            <h2 style={{ fontSize: '1.45rem', fontWeight: '900', letterSpacing: '-0.02em', color: '#ffffff' }}>
+              Candidate Mock Interview Performance Hub 🎙️
+            </h2>
+          </div>
+          <p style={{ fontSize: '0.86rem', color: '#cbd5e1' }}>
+            Track each candidate's mock interview progression, ratings out of 10, evaluator feedback, and performance trend graph.
+          </p>
+        </div>
+
+        <button 
+          className="btn-primary"
+          onClick={() => { setTargetStudentId(selectedStudentId); setIsLogModalOpen(true); }}
+          style={{ height: '42px', padding: '0 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          <Plus size={18} /> + Log Mock Interview
+        </button>
+      </div>
+
+      {/* Candidate Selector Dropdown Bar */}
+      <div style={{ background: 'var(--bg-surface-subtle)', padding: '1rem 1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1', maxWidth: '420px' }}>
+          <label style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--skarion-navy)', whiteSpace: 'nowrap' }}>
+            Select Candidate:
+          </label>
+          <select 
+            value={selectedStudentId} 
+            onChange={(e) => setSelectedStudentId(e.target.value)}
+            className="input-control"
+            style={{ fontWeight: '800', fontSize: '0.9rem' }}
+          >
+            {students.map(student => (
+              <option key={student.id} value={student.id}>
+                {student.name} ({student.mockInterviews || (student.mockSessions || []).length} Mocks | Progress: {student.progress}%)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span className={`status-badge badge-${currentStudent.rating}`} style={{ fontSize: '0.82rem' }}>
+            {RATING_CONFIG[currentStudent.rating]?.icon} {RATING_CONFIG[currentStudent.rating]?.label}
+          </span>
+          <button className="btn-secondary" style={{ height: '36px', padding: '0 0.75rem', fontSize: '0.8rem' }} onClick={() => onSelectStudent(currentStudent)}>
+            View Audit Log ➔
+          </button>
+        </div>
+      </div>
+
+      {/* Performance Summary KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        {/* Total Sessions */}
+        <div className="card-panel" style={{ padding: '1.15rem' }}>
+          <span style={{ fontSize: '0.74rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            TOTAL MOCK SESSIONS
+          </span>
+          <div style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: '0.2rem 0' }}>
+            {totalMocks} Sessions
+          </div>
+          <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>Attended by candidate</span>
+        </div>
+
+        {/* Avg Score */}
+        <div className="card-panel" style={{ padding: '1.15rem' }}>
+          <span style={{ fontSize: '0.74rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            AVERAGE RATING
+          </span>
+          <div style={{ fontSize: '1.75rem', fontWeight: '900', color: getScoreColor(Number(avgScore)), margin: '0.2rem 0' }}>
+            {avgScore} <span style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-muted)' }}>/ 10</span>
+          </div>
+          <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>Overall mock average</span>
+        </div>
+
+        {/* Trend Indicator */}
+        <div className="card-panel" style={{ padding: '1.15rem' }}>
+          <span style={{ fontSize: '0.74rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            PERFORMANCE TREND
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.2rem 0' }}>
+            {isImproving ? (
+              <>
+                <TrendingUp size={24} color="#059669" />
+                <span style={{ fontSize: '1.35rem', fontWeight: '900', color: '#059669' }}>+{scoreDiff} pts</span>
+              </>
+            ) : isDeclining ? (
+              <>
+                <TrendingDown size={24} color="#dc2626" />
+                <span style={{ fontSize: '1.35rem', fontWeight: '900', color: '#dc2626' }}>{scoreDiff} pts</span>
+              </>
+            ) : (
+              <>
+                <Minus size={24} color="#0284c7" />
+                <span style={{ fontSize: '1.35rem', fontWeight: '900', color: '#0284c7' }}>Steady</span>
+              </>
+            )}
+          </div>
+          <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>
+            {isImproving ? '📈 Performance Improving' : isDeclining ? '📉 Needs Performance Push' : '➡️ Consistent Rating'}
+          </span>
+        </div>
+
+        {/* Latest Score */}
+        <div className="card-panel" style={{ padding: '1.15rem' }}>
+          <span style={{ fontSize: '0.74rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            LATEST MOCK SCORE
+          </span>
+          <div style={{ fontSize: '1.75rem', fontWeight: '900', color: getScoreColor(latestScore), margin: '0.2rem 0' }}>
+            {totalMocks > 0 ? `${latestScore} / 10` : 'N/A'}
+          </div>
+          <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>
+            {totalMocks > 0 ? `Latest on ${sortedSessions[sortedSessions.length - 1]?.date}` : 'No mocks logged'}
+          </span>
+        </div>
+      </div>
+
+      {/* SVG Performance Improvement / Decline Line Chart */}
+      <div className="card-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            📈 Mock Score Progression Graph (Out of 10)
+          </h3>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+            {currentStudent.name}'s Score Progression Trail
+          </span>
+        </div>
+
+        {totalMocks === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3.5rem 1rem', background: 'var(--bg-surface-subtle)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
+            <Mic size={42} color="var(--text-dim)" style={{ marginBottom: '0.6rem' }} />
+            <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.3rem' }}>
+              No Mock Interviews Logged Yet for {currentStudent.name}
+            </h4>
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Click "+ Log Mock Interview" above to record candidate performance out of 10 and view the score graph!
+            </p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <svg width="100%" height={graphHeight} viewBox={`0 0 ${graphWidth} ${graphHeight}`} style={{ overflow: 'visible' }}>
+              
+              {/* Y-Axis Grid Lines & Labels (0, 2, 4, 6, 8, 10) */}
+              {[0, 2, 4, 6, 8, 10].map(val => {
+                const y = paddingTop + plotHeight - (val / 10) * plotHeight;
+                return (
+                  <g key={val}>
+                    <line 
+                      x1={paddingLeft} 
+                      y1={y} 
+                      x2={graphWidth - paddingRight} 
+                      y2={y} 
+                      stroke="var(--border-color)" 
+                      strokeDasharray="4 4" 
+                    />
+                    <text 
+                      x={paddingLeft - 10} 
+                      y={y + 4} 
+                      fill="var(--text-muted)" 
+                      fontSize="11" 
+                      fontWeight="700" 
+                      textAnchor="end"
+                    >
+                      {val}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* Area Gradient Fill under Line */}
+              <defs>
+                <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={isImproving ? '#059669' : isDeclining ? '#dc2626' : '#0284c7'} stopOpacity="0.35" />
+                  <stop offset="100%" stopColor={isImproving ? '#059669' : isDeclining ? '#dc2626' : '#0284c7'} stopOpacity="0.02" />
+                </linearGradient>
+              </defs>
+
+              {areaD && <path d={areaD} fill="url(#scoreGradient)" />}
+
+              {/* Trend Line */}
+              {pathD && (
+                <path 
+                  d={pathD} 
+                  fill="none" 
+                  stroke={isImproving ? '#059669' : isDeclining ? '#dc2626' : '#0284c7'} 
+                  strokeWidth="3.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                />
+              )}
+
+              {/* Data Points */}
+              {points.map((pt) => {
+                const isSelectedPoint = activePointIndex === pt.index;
+                const pointColor = getScoreColor(pt.session.score);
+                const evalCfg = EVALUATOR_CONFIG[pt.session.evaluator] || EVALUATOR_CONFIG.Mayukh;
+
+                return (
+                  <g 
+                    key={pt.session.id}
+                    onClick={() => setActivePointIndex(isSelectedPoint ? null : pt.index)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <circle 
+                      cx={pt.x} 
+                      cy={pt.y} 
+                      r={isSelectedPoint ? "8" : "6"} 
+                      fill={pointColor} 
+                      stroke="#ffffff" 
+                      strokeWidth="2.5"
+                      style={{ transition: 'all 0.2s' }}
+                    />
+
+                    {/* Score Label above point */}
+                    <text 
+                      x={pt.x} 
+                      y={pt.y - 12} 
+                      fill={pointColor} 
+                      fontSize="12" 
+                      fontWeight="900" 
+                      textAnchor="middle"
+                    >
+                      {pt.session.score}/10
+                    </text>
+
+                    {/* X-Axis Session Date Label */}
+                    <text 
+                      x={pt.x} 
+                      y={paddingTop + plotHeight + 22} 
+                      fill="var(--text-muted)" 
+                      fontSize="10" 
+                      fontWeight="700" 
+                      textAnchor="middle"
+                    >
+                      Mock #{pt.index + 1} ({pt.session.date})
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Mock Session History Cards */}
+      <h3 style={{ fontSize: '1.05rem', fontWeight: '800', marginBottom: '0.85rem', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>Mock Interview Performance History ({sortedSessions.length})</span>
+        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+          Showing all recorded mock evaluations for {currentStudent.name}
+        </span>
+      </h3>
+
+      {sortedSessions.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '2rem', background: 'var(--bg-surface-subtle)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)' }}>
+            No mock history available yet for {currentStudent.name}.
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+          {[...sortedSessions].reverse().map((session) => {
+            const evalCfg = EVALUATOR_CONFIG[session.evaluator] || EVALUATOR_CONFIG.Mayukh;
+            const scoreColor = getScoreColor(session.score);
+
+            return (
+              <div 
+                key={session.id} 
+                className="card-panel" 
+                style={{ 
+                  padding: '1.15rem', 
+                  borderLeft: `5px solid ${scoreColor}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justify: 'space-between'
+                }}
+              >
+                <div>
+                  {/* Top Bar: Rating Score & Evaluator */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                    <span style={{ 
+                      background: getScoreColor(session.score) + '20', 
+                      color: scoreColor, 
+                      fontWeight: '900', 
+                      fontSize: '0.95rem',
+                      padding: '0.25rem 0.65rem',
+                      borderRadius: '8px',
+                      border: `1px solid ${scoreColor}40`
+                    }}>
+                      ⭐ {session.score} / 10 Rating
+                    </span>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ 
+                        color: evalCfg.text, 
+                        fontWeight: '800', 
+                        fontSize: '0.74rem',
+                        background: evalCfg.bg, 
+                        padding: '0.15rem 0.5rem', 
+                        borderRadius: '5px',
+                        border: `1px solid ${evalCfg.border}`
+                      }}>
+                        ✍️ {session.evaluator}
+                      </span>
+                      <button 
+                        onClick={() => handleDeleteMock(session.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5 }}
+                        title="Delete mock record"
+                      >
+                        <Trash2 size={14} color="var(--text-muted)" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Round Category & Date */}
+                  <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span>🎯 Category: {session.category}</span>
+                    <span style={{ color: 'var(--text-dim)' }}>• {session.date}</span>
+                  </div>
+
+                  {/* Feedback Notes */}
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontStyle: 'italic', marginBottom: '0.65rem', lineHeight: '1.45', background: 'var(--bg-surface-subtle)', padding: '0.6rem 0.85rem', borderRadius: '8px' }}>
+                    "{session.feedback}"
+                  </p>
+
+                  {/* Strengths & Improvement Points */}
+                  {session.strengths && (
+                    <div style={{ fontSize: '0.76rem', color: '#059669', fontWeight: '700', marginBottom: '0.2rem' }}>
+                      ✔️ Strength: {session.strengths}
+                    </div>
+                  )}
+                  {session.improvement && (
+                    <div style={{ fontSize: '0.76rem', color: '#d97706', fontWeight: '700' }}>
+                      🎯 Improvement: {session.improvement}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Log New Mock Interview Modal */}
+      {isLogModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsLogModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px', padding: '1.75rem' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                🎙️ Log Candidate Mock Interview Performance
+              </h3>
+              <button className="btn-icon" onClick={() => setIsLogModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleLogMock}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1rem' }}>
+                {/* Candidate Selection */}
+                <div>
+                  <label style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    Candidate Name
+                  </label>
+                  <select 
+                    value={targetStudentId} 
+                    onChange={(e) => setTargetStudentId(e.target.value)} 
+                    className="input-control" 
+                    style={{ fontSize: '0.86rem', fontWeight: '700' }}
+                  >
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Date */}
+                <div>
+                  <label style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    Mock Date
+                  </label>
+                  <input 
+                    type="date" 
+                    value={mockDate} 
+                    onChange={(e) => setMockDate(e.target.value)} 
+                    className="input-control" 
+                    style={{ fontSize: '0.86rem' }} 
+                  />
+                </div>
+
+                {/* Evaluator */}
+                <div>
+                  <label style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    Interviewer / Evaluator
+                  </label>
+                  <select 
+                    value={mockEvaluator} 
+                    onChange={(e) => setMockEvaluator(e.target.value)} 
+                    className="input-control" 
+                    style={{ fontSize: '0.86rem', fontWeight: '700' }}
+                  >
+                    {EVALUATORS.map(e => (
+                      <option key={e} value={e}>✍️ {e}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Round Category */}
+                <div>
+                  <label style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    Mock Round Type
+                  </label>
+                  <select 
+                    value={mockCategory} 
+                    onChange={(e) => setMockCategory(e.target.value)} 
+                    className="input-control" 
+                    style={{ fontSize: '0.86rem' }}
+                  >
+                    {MOCK_ROUND_TYPES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Score Range Input (0 to 10) */}
+              <div style={{ background: 'var(--bg-surface-subtle)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--skarion-navy)' }}>
+                    Mock Rating Score (Out of 10)
+                  </label>
+                  <span style={{ 
+                    fontSize: '1.15rem', 
+                    fontWeight: '900', 
+                    color: getScoreColor(mockScore),
+                    background: getScoreColor(mockScore) + '20',
+                    padding: '0.2rem 0.65rem',
+                    borderRadius: '8px'
+                  }}>
+                    {mockScore} / 10
+                  </span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="10" 
+                  step="0.5"
+                  value={mockScore} 
+                  onChange={(e) => setMockScore(Number(e.target.value))} 
+                  style={{ width: '100%', cursor: 'pointer', accentColor: getScoreColor(mockScore) }} 
+                />
+              </div>
+
+              {/* Detailed Feedback */}
+              <div style={{ marginBottom: '0.85rem' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                  Detailed Performance Observation & Feedback *
+                </label>
+                <textarea 
+                  value={mockFeedback} 
+                  onChange={(e) => setMockFeedback(e.target.value)} 
+                  rows={3} 
+                  className="input-control" 
+                  placeholder="Record interviewer observations, coding speed, communication, and technical depth..." 
+                  required 
+                />
+              </div>
+
+              {/* Strengths & Improvement */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    Key Strengths Noted
+                  </label>
+                  <input 
+                    type="text" 
+                    value={mockStrengths} 
+                    onChange={(e) => setMockStrengths(e.target.value)} 
+                    placeholder="e.g. Clean recursion, verbal communication" 
+                    className="input-control" 
+                    style={{ fontSize: '0.82rem' }} 
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    Areas for Improvement
+                  </label>
+                  <input 
+                    type="text" 
+                    value={mockImprovement} 
+                    onChange={(e) => setMockImprovement(e.target.value)} 
+                    placeholder="e.g. Edge case testing, dynamic programming" 
+                    className="input-control" 
+                    style={{ fontSize: '0.82rem' }} 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem' }}>
+                <button type="button" className="btn-secondary" onClick={() => setIsLogModalOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" style={{ padding: '0 1.25rem' }}>
+                  <Send size={15} /> Save Mock Record
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

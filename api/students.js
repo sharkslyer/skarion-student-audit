@@ -1,5 +1,5 @@
 // Vercel Serverless Function connected directly to NeonDB PostgreSQL Database
-// Handles real-time CRUD operations (including deletions and pin status updates) across all devices worldwide
+// Handles real-time CRUD operations, mock interview journey sessions, and pin status updates
 
 import pg from 'pg';
 const { Pool } = pg;
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   const client = await pool.connect();
 
   try {
-    // POST / PUT: Sync candidate roster and sticky notes (with deletion & multi-pin support)
+    // POST / PUT: Sync candidate roster and mock interview sessions (with deletion & multi-pin support)
     if (req.method === 'POST' || req.method === 'PUT') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const studentsList = Array.isArray(body) ? body : (body?.students || []);
@@ -48,9 +48,11 @@ export default async function handler(req, res) {
         for (const student of studentsList) {
           if (!student || !student.id || !student.name) continue;
 
+          const mockSessionsJson = JSON.stringify(student.mockSessions || []);
+
           await client.query(`
-            INSERT INTO students (id, name, joining_date, progress, mock_interviews, rating, placement_company, placement_role, placement_date)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO students (id, name, joining_date, progress, mock_interviews, rating, placement_company, placement_role, placement_date, mock_sessions_json)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             ON CONFLICT (id) DO UPDATE SET
               name = EXCLUDED.name,
               joining_date = EXCLUDED.joining_date,
@@ -59,17 +61,19 @@ export default async function handler(req, res) {
               rating = EXCLUDED.rating,
               placement_company = EXCLUDED.placement_company,
               placement_role = EXCLUDED.placement_role,
-              placement_date = EXCLUDED.placement_date;
+              placement_date = EXCLUDED.placement_date,
+              mock_sessions_json = EXCLUDED.mock_sessions_json;
           `, [
             student.id,
             student.name,
             student.joiningDate || new Date().toISOString().split('T')[0],
             student.progress || 0,
-            student.mockInterviews || 0,
+            student.mockInterviews || (student.mockSessions || []).length,
             student.rating || 'good',
             student.placementCompany || '',
             student.placementRole || '',
-            student.placementDate || ''
+            student.placementDate || '',
+            mockSessionsJson
           ]);
 
           // 3. Upsert sticky notes & pin statuses
@@ -126,7 +130,8 @@ export default async function handler(req, res) {
         rating, 
         placement_company as "placementCompany", 
         placement_role as "placementRole", 
-        placement_date as "placementDate"
+        placement_date as "placementDate",
+        mock_sessions_json as "mockSessionsJson"
       FROM students 
       ORDER BY created_at DESC;
     `);
@@ -158,8 +163,18 @@ export default async function handler(req, res) {
           pinned: Boolean(n.pinned)
         }));
 
+      let mockSessions = [];
+      if (student.mockSessionsJson) {
+        try {
+          mockSessions = JSON.parse(student.mockSessionsJson);
+        } catch (e) {
+          mockSessions = [];
+        }
+      }
+
       return {
         ...student,
+        mockSessions,
         stickyNotes: notes
       };
     });

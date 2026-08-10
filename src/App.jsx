@@ -8,6 +8,7 @@ import StudentTable from './components/StudentTable';
 import StickyNotesBoard from './components/StickyNotesBoard';
 import CalendarView from './components/CalendarView';
 import PlacedCandidatesView from './components/PlacedCandidatesView';
+import MockInterviewView from './components/MockInterviewView';
 import StudentFormModal from './components/StudentFormModal';
 import StudentDetailModal from './components/StudentDetailModal';
 
@@ -332,6 +333,15 @@ export default function App() {
         <CalendarView 
           students={safeStudentsList}
           onSelectStudent={(student) => setSelectedDetailStudent(student)}
+        />
+      )}
+
+      {activeView === 'mock' && (
+        <MockInterviewView 
+          students={safeStudentsList}
+          onSaveStudent={handleSaveStudent}
+          onSelectStudent={(student) => setSelectedDetailStudent(student)}
+          showToast={showToast}
         />
       )}
 

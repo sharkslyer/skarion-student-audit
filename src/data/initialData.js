@@ -115,18 +115,31 @@ export const CATEGORY_COLORS = {
   'General': { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' }
 };
 
-// Complete dataset containing all 13 candidates
+export const MOCK_ROUND_TYPES = [
+  'System Design (HLD)',
+  'Coding & Data Structures',
+  'Behavioral & Soft Skills',
+  'Resume & Portfolio'
+];
+
+// Complete dataset containing all 13 candidates with rich mock interview sessions
 export const INITIAL_STUDENTS = [
   {
     id: 'skr-213',
     name: 'Ananya Roy',
     joiningDate: '2026-04-20',
     progress: 100,
-    mockInterviews: 7,
+    mockInterviews: 4,
     rating: 'placed',
     placementCompany: 'Innovate Tech Solutions',
     placementRole: 'Frontend Developer',
     placementDate: '2026-07-28',
+    mockSessions: [
+      { id: 'mock-213-1', date: '2026-06-10', score: 6.0, evaluator: 'Mayukh', category: 'Coding & Data Structures', feedback: 'Good understanding of JS fundamentals, needs practice on async patterns.', strengths: 'Syntax fluency', improvement: 'Async/Await error handling' },
+      { id: 'mock-213-2', date: '2026-06-25', score: 7.5, evaluator: 'Saki', category: 'System Design (HLD)', feedback: 'Solid component hierarchy design. Improved state management.', strengths: 'UI component modularity', improvement: 'Caching strategies' },
+      { id: 'mock-213-3', date: '2026-07-12', score: 9.0, evaluator: 'Faisal', category: 'Coding & Data Structures', feedback: 'High quality code with clean Time/Space complexity analysis.', strengths: 'Clean code & recursion', improvement: 'Edge case validation' },
+      { id: 'mock-213-4', date: '2026-07-28', score: 10.0, evaluator: 'Mayukh', category: 'Interview Experience', feedback: 'Passed final round! Flawless live coding & technical communication.', strengths: 'Complete tech mastery', improvement: 'None - Ready for job market' }
+    ],
     stickyNotes: [
       {
         id: 'note-213-1',
@@ -149,6 +162,11 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [
+      { id: 'mock-212-1', date: '2026-07-16', score: 7.0, evaluator: 'Mayukh', category: 'System Design (HLD)', feedback: 'Good grasp of basic system architecture, needs work on load balancer failover details.', strengths: 'Database schema modeling', improvement: 'Load balancer failover' },
+      { id: 'mock-212-2', date: '2026-07-22', score: 8.5, evaluator: 'Kasshaf', category: 'Coding & Data Structures', feedback: 'Excellent algorithm optimization, clean dynamic programming solution.', strengths: 'DP algorithms', improvement: 'Time complexity explanation' },
+      { id: 'mock-212-3', date: '2026-07-29', score: 9.5, evaluator: 'Mayukh', category: 'System Design (HLD)', feedback: 'Flawless database sharding and caching strategy. Outstanding performer ready for tech rounds.', strengths: 'Distributed systems & sharding', improvement: 'Polishing verbal delivery' }
+    ],
     stickyNotes: [
       {
         id: 'note-212-1',
@@ -171,6 +189,7 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [],
     stickyNotes: [
       {
         id: 'note-201-1',
@@ -193,6 +212,7 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [],
     stickyNotes: [
       {
         id: 'note-202-1',
@@ -215,6 +235,7 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [],
     stickyNotes: [
       {
         id: 'note-203-1',
@@ -237,6 +258,7 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [],
     stickyNotes: [
       {
         id: 'note-204-1',
@@ -259,6 +281,7 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [],
     stickyNotes: [
       {
         id: 'note-205-1',
@@ -281,6 +304,7 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [],
     stickyNotes: [
       {
         id: 'note-206-1',
@@ -303,6 +327,7 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [],
     stickyNotes: [
       {
         id: 'note-207-1',
@@ -325,6 +350,9 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [
+      { id: 'mock-208-1', date: '2026-07-15', score: 6.0, evaluator: 'Mayukh', category: 'Coding & Data Structures', feedback: 'Hasn’t submitted HLD Project 1, 1 mock interview attended.', strengths: 'Basic syntax', improvement: 'Project submission & consistency' }
+    ],
     stickyNotes: [
       {
         id: 'note-208-1',
@@ -347,6 +375,11 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [
+      { id: 'mock-209-1', date: '2026-07-05', score: 6.5, evaluator: 'Kasshaf', category: 'Coding & Data Structures', feedback: 'Good problem-solving approach, needs faster implementation.', strengths: 'Logic formulation', improvement: 'Coding speed' },
+      { id: 'mock-209-2', date: '2026-07-15', score: 7.8, evaluator: 'Faisal', category: 'System Design (HLD)', feedback: 'Solid understanding of microservices architecture.', strengths: 'API design', improvement: 'Database scaling' },
+      { id: 'mock-209-3', date: '2026-07-24', score: 8.8, evaluator: 'Mayukh', category: 'System Design (HLD)', feedback: 'Great response on database indexing and API rate limiting. 88% progress.', strengths: 'Indexing & rate limiting', improvement: 'Minor edge cases' }
+    ],
     stickyNotes: [
       {
         id: 'note-209-1',
@@ -369,6 +402,12 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [
+      { id: 'mock-210-1', date: '2026-07-02', score: 5.0, evaluator: 'Saki', category: 'Coding & Data Structures', feedback: 'Struggled with tree traversal edge cases.', strengths: 'Recursion basics', improvement: 'Tree traversal' },
+      { id: 'mock-210-2', date: '2026-07-10', score: 4.0, evaluator: 'Faisal', category: 'System Design (HLD)', feedback: 'Could not explain message queue partitioning.', strengths: 'High level concepts', improvement: 'Queue partitioning' },
+      { id: 'mock-210-3', date: '2026-07-18', score: 5.5, evaluator: 'Mayukh', category: 'Behavioral & Soft Skills', feedback: 'Improved communication, but technical answers lacked structure.', strengths: 'Enthusiasm', improvement: 'Structured answers' },
+      { id: 'mock-210-4', date: '2026-07-25', score: 4.5, evaluator: 'Mayukh', category: 'Coding & Data Structures', feedback: 'Had 4 mock interviews, performing poorly in interviews, need more attention.', strengths: 'Persistence', improvement: 'Core problem solving' }
+    ],
     stickyNotes: [
       {
         id: 'note-210-1',
@@ -391,6 +430,11 @@ export const INITIAL_STUDENTS = [
     placementCompany: '',
     placementRole: '',
     placementDate: '',
+    mockSessions: [
+      { id: 'mock-211-1', date: '2026-06-15', score: 5.0, evaluator: 'Mayukh', category: 'Coding & Data Structures', feedback: 'Initial assessment okay, but lacks project submissions.', strengths: 'Basic syntax', improvement: 'Project work' },
+      { id: 'mock-211-2', date: '2026-07-02', score: 4.0, evaluator: 'Saki', category: 'Behavioral & Soft Skills', feedback: 'Needs more regular attendance and practice.', strengths: 'Punctuality', improvement: 'Active participation' },
+      { id: 'mock-211-3', date: '2026-07-22', score: 3.0, evaluator: 'Mayukh', category: 'Attendance', feedback: 'Joined 3 mock interviews, hasn’t done any projects and doesn’t responds to texts.', strengths: 'None noted', improvement: 'Communication & responsiveness' }
+    ],
     stickyNotes: [
       {
         id: 'note-211-1',
