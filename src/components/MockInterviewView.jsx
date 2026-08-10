@@ -14,15 +14,18 @@ import {
   Trash2, 
   X, 
   Send,
-  Sparkles
+  Sparkles,
+  Search,
+  Check
 } from 'lucide-react';
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
 
 export default function MockInterviewView({ students, onSaveStudent, onSelectStudent, showToast }) {
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
+  const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [activePointIndex, setActivePointIndex] = useState(null);
+  const [hoveredPointIndex, setHoveredPointIndex] = useState(null);
 
   // Form state for logging a new mock session
   const [targetStudentId, setTargetStudentId] = useState(students[0]?.id || '');
@@ -33,6 +36,11 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [mockFeedback, setMockFeedback] = useState('');
   const [mockStrengths, setMockStrengths] = useState('');
   const [mockImprovement, setMockImprovement] = useState('');
+
+  // Filter candidates matching search query
+  const searchableCandidates = students.filter(s => 
+    !candidateSearchQuery || s.name.toLowerCase().includes(candidateSearchQuery.toLowerCase())
+  );
 
   const currentStudent = students.find(s => s.id === selectedStudentId) || students[0];
   const mockSessions = currentStudent?.mockSessions || [];
@@ -116,11 +124,11 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
   // Graph dimensions for SVG performance chart
   const graphWidth = 680;
-  const graphHeight = 220;
+  const graphHeight = 230;
   const paddingLeft = 45;
   const paddingRight = 35;
-  const paddingTop = 25;
-  const paddingBottom = 40;
+  const paddingTop = 30;
+  const paddingBottom = 45;
   const plotWidth = graphWidth - paddingLeft - paddingRight;
   const plotHeight = graphHeight - paddingTop - paddingBottom;
 
@@ -173,7 +181,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
             </h2>
           </div>
           <p style={{ fontSize: '0.86rem', color: '#cbd5e1' }}>
-            Track each candidate's mock interview progression, ratings out of 10, evaluator feedback, and performance trend graph.
+            Track each candidate's mock interview progression, ratings out of 10, evaluator feedback, and interactive score graph.
           </p>
         </div>
 
@@ -186,33 +194,84 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
         </button>
       </div>
 
-      {/* Candidate Selector Dropdown Bar */}
-      <div style={{ background: 'var(--bg-surface-subtle)', padding: '1rem 1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1', maxWidth: '420px' }}>
-          <label style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--skarion-navy)', whiteSpace: 'nowrap' }}>
-            Select Candidate:
-          </label>
-          <select 
-            value={selectedStudentId} 
-            onChange={(e) => setSelectedStudentId(e.target.value)}
-            className="input-control"
-            style={{ fontWeight: '800', fontSize: '0.9rem' }}
-          >
-            {students.map(student => (
-              <option key={student.id} value={student.id}>
-                {student.name} ({student.mockInterviews || (student.mockSessions || []).length} Mocks | Progress: {student.progress}%)
-              </option>
-            ))}
-          </select>
+      {/* Friendly Search Bar & Candidate Switcher Section */}
+      <div className="card-panel" style={{ padding: '1.25rem', marginBottom: '1.5rem', background: 'var(--bg-surface-subtle)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.85rem' }}>
+          
+          {/* Search Input */}
+          <div style={{ flex: '1', minWidth: '260px', maxWidth: '400px', position: 'relative' }}>
+            <Search size={16} color="var(--text-dim)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+            <input 
+              type="text"
+              placeholder="Search candidate by name..."
+              value={candidateSearchQuery}
+              onChange={(e) => setCandidateSearchQuery(e.target.value)}
+              className="input-control"
+              style={{ paddingLeft: '2.5rem', height: '40px', fontSize: '0.86rem' }}
+            />
+          </div>
+
+          {/* Candidate Dropdown Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <label style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--skarion-navy)', whiteSpace: 'nowrap' }}>
+              Candidate:
+            </label>
+            <select 
+              value={selectedStudentId} 
+              onChange={(e) => setSelectedStudentId(e.target.value)}
+              className="input-control"
+              style={{ fontWeight: '800', fontSize: '0.88rem', height: '40px', minWidth: '220px' }}
+            >
+              {searchableCandidates.map(student => (
+                <option key={student.id} value={student.id}>
+                  {student.name} ({student.mockInterviews || (student.mockSessions || []).length} Mocks | {student.progress}%)
+                </option>
+              ))}
+            </select>
+          </div>
+
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span className={`status-badge badge-${currentStudent.rating}`} style={{ fontSize: '0.82rem' }}>
-            {RATING_CONFIG[currentStudent.rating]?.icon} {RATING_CONFIG[currentStudent.rating]?.label}
+        {/* Quick Candidate Selector Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.74rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: '0.2rem' }}>
+            Quick Select:
           </span>
-          <button className="btn-secondary" style={{ height: '36px', padding: '0 0.75rem', fontSize: '0.8rem' }} onClick={() => onSelectStudent(currentStudent)}>
-            View Audit Log ➔
-          </button>
+          {searchableCandidates.slice(0, 8).map(student => {
+            const isSelected = student.id === selectedStudentId;
+            return (
+              <button
+                key={student.id}
+                onClick={() => setSelectedStudentId(student.id)}
+                style={{
+                  background: isSelected ? 'var(--skarion-navy)' : 'var(--bg-surface)',
+                  color: isSelected ? '#ffffff' : 'var(--text-main)',
+                  border: isSelected ? '1px solid var(--skarion-navy)' : '1px solid var(--border-color)',
+                  padding: '0.3rem 0.7rem',
+                  borderRadius: '20px',
+                  fontSize: '0.78rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  boxShadow: isSelected ? 'var(--shadow-sm)' : 'none'
+                }}
+              >
+                <span>👤 {student.name}</span>
+                <span style={{ 
+                  fontSize: '0.68rem', 
+                  opacity: 0.85,
+                  background: isSelected ? 'rgba(255,255,255,0.2)' : 'var(--bg-surface-subtle)',
+                  padding: '1px 5px',
+                  borderRadius: '99px'
+                }}>
+                  {student.mockInterviews || (student.mockSessions || []).length} Mocks
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -226,7 +285,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           <div style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: '0.2rem 0' }}>
             {totalMocks} Sessions
           </div>
-          <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>Attended by candidate</span>
+          <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>Attended by {currentStudent.name}</span>
         </div>
 
         {/* Avg Score */}
@@ -282,16 +341,70 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
         </div>
       </div>
 
-      {/* SVG Performance Improvement / Decline Line Chart */}
+      {/* SVG Performance Improvement / Decline Line Chart with Hover Cursor Pop-Up */}
       <div className="card-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📈 Mock Score Progression Graph (Out of 10)
+            📈 Score Progression Graph (Hover points to view exact log details)
           </h3>
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>
             {currentStudent.name}'s Score Progression Trail
           </span>
         </div>
+
+        {/* Hover Popover Card Floating Tooltip */}
+        {hoveredPointIndex !== null && points[hoveredPointIndex] && (
+          <div style={{
+            position: 'absolute',
+            left: `${Math.min(85, Math.max(15, (points[hoveredPointIndex].x / graphWidth) * 100))}%`,
+            top: `${points[hoveredPointIndex].y - 12}px`,
+            transform: 'translate(-50%, -100%)',
+            background: 'var(--bg-surface)',
+            border: `2px solid ${getScoreColor(points[hoveredPointIndex].session.score)}`,
+            borderRadius: '14px',
+            padding: '0.9rem 1.15rem',
+            boxShadow: 'var(--shadow-lg)',
+            zIndex: 100,
+            width: '310px',
+            pointerEvents: 'none',
+            animation: 'fadeIn 0.15s ease-out'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+              <span style={{ fontWeight: '800', fontSize: '0.82rem', color: 'var(--skarion-navy)' }}>
+                Mock #{hoveredPointIndex + 1} • {points[hoveredPointIndex].session.date}
+              </span>
+              <span style={{ 
+                fontWeight: '900', 
+                fontSize: '0.9rem', 
+                color: getScoreColor(points[hoveredPointIndex].session.score),
+                background: getScoreColor(points[hoveredPointIndex].session.score) + '20',
+                padding: '2px 8px',
+                borderRadius: '6px'
+              }}>
+                ⭐ {points[hoveredPointIndex].session.score} / 10
+              </span>
+            </div>
+
+            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '0.35rem' }}>
+              🎯 {points[hoveredPointIndex].session.category} • ✍️ {points[hoveredPointIndex].session.evaluator}
+            </div>
+
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-main)', fontStyle: 'italic', background: 'var(--bg-surface-subtle)', padding: '0.5rem 0.75rem', borderRadius: '8px', margin: '0.4rem 0', lineHeight: '1.4' }}>
+              "{points[hoveredPointIndex].session.feedback}"
+            </p>
+
+            {points[hoveredPointIndex].session.strengths && (
+              <div style={{ fontSize: '0.74rem', color: '#059669', fontWeight: '700', marginTop: '0.3rem' }}>
+                ✔️ Strength: {points[hoveredPointIndex].session.strengths}
+              </div>
+            )}
+            {points[hoveredPointIndex].session.improvement && (
+              <div style={{ fontSize: '0.74rem', color: '#d97706', fontWeight: '700', marginTop: '0.2rem' }}>
+                🎯 Improvement: {points[hoveredPointIndex].session.improvement}
+              </div>
+            )}
+          </div>
+        )}
 
         {totalMocks === 0 ? (
           <div style={{ textAlign: 'center', padding: '3.5rem 1rem', background: 'var(--bg-surface-subtle)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
@@ -356,34 +469,46 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                 />
               )}
 
-              {/* Data Points */}
+              {/* Data Points with Hover Events */}
               {points.map((pt) => {
-                const isSelectedPoint = activePointIndex === pt.index;
+                const isHovered = hoveredPointIndex === pt.index;
                 const pointColor = getScoreColor(pt.session.score);
-                const evalCfg = EVALUATOR_CONFIG[pt.session.evaluator] || EVALUATOR_CONFIG.Mayukh;
 
                 return (
                   <g 
                     key={pt.session.id}
-                    onClick={() => setActivePointIndex(isSelectedPoint ? null : pt.index)}
+                    onMouseEnter={() => setHoveredPointIndex(pt.index)}
+                    onMouseLeave={() => setHoveredPointIndex(null)}
                     style={{ cursor: 'pointer' }}
                   >
+                    {/* Outer hover ring */}
+                    {isHovered && (
+                      <circle 
+                        cx={pt.x} 
+                        cy={pt.y} 
+                        r="12" 
+                        fill={pointColor} 
+                        fillOpacity="0.3" 
+                      />
+                    )}
+
+                    {/* Point Circle */}
                     <circle 
                       cx={pt.x} 
                       cy={pt.y} 
-                      r={isSelectedPoint ? "8" : "6"} 
+                      r={isHovered ? "8" : "6"} 
                       fill={pointColor} 
                       stroke="#ffffff" 
                       strokeWidth="2.5"
-                      style={{ transition: 'all 0.2s' }}
+                      style={{ transition: 'all 0.15s ease' }}
                     />
 
                     {/* Score Label above point */}
                     <text 
                       x={pt.x} 
-                      y={pt.y - 12} 
+                      y={pt.y - (isHovered ? 14 : 11)} 
                       fill={pointColor} 
-                      fontSize="12" 
+                      fontSize={isHovered ? "13" : "11"} 
                       fontWeight="900" 
                       textAnchor="middle"
                     >
@@ -394,9 +519,9 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     <text 
                       x={pt.x} 
                       y={paddingTop + plotHeight + 22} 
-                      fill="var(--text-muted)" 
+                      fill={isHovered ? 'var(--skarion-navy)' : 'var(--text-muted)'} 
                       fontSize="10" 
-                      fontWeight="700" 
+                      fontWeight={isHovered ? "900" : "700"} 
                       textAnchor="middle"
                     >
                       Mock #{pt.index + 1} ({pt.session.date})
