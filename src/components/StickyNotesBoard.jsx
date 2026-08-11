@@ -86,7 +86,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
             <FileText size={22} color="var(--skarion-orange)" /> Candidate Audit Feed & Evaluator Logs
           </h2>
           <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            Real-time feedback color-coded by evaluator: <span style={{ color: '#e11d48', fontWeight: '700' }}>Mayukh (Light Red)</span>, <span style={{ color: '#0369a1', fontWeight: '700' }}>Kasshaf (Sky Blue)</span>, <span style={{ color: '#15803d', fontWeight: '700' }}>Faisal (Green)</span>, <span style={{ color: '#a16207', fontWeight: '700' }}>Saki (Light Yellow)</span>.
+            Real-time feedback color-coded by evaluator: <span style={{ color: '#e11d48', fontWeight: '700' }}>Mayukh (Light Red)</span>, <span style={{ color: '#0369a1', fontWeight: '700' }}>Kasshaf (Sky Blue)</span>, <span style={{ color: '#15803d', fontWeight: '700' }}>Faisal (Green)</span>, <span style={{ color: '#a16207', fontWeight: '700' }}>Saki (Light Yellow)</span>, <span style={{ color: '#7c3aed', fontWeight: '700' }}>Ferdous (Purple)</span>, <span style={{ color: '#ea580c', fontWeight: '700' }}>Piyas (Orange)</span>.
           </p>
         </div>
 
