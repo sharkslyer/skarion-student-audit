@@ -53,7 +53,7 @@ export default function SyncModal({ isOpen, onClose, students, onImportData, sho
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
             Current cloud REST endpoint handling universal multi-user edits:
           </p>
-          <div style={{ background: '#ffffff', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #ddd6fe', fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--skarion-navy)', wordBreak: 'break-all' }}>
+          <div style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--skarion-navy)', wordBreak: 'break-all' }}>
             {activeEndpoint}
           </div>
         </div>

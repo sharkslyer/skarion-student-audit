@@ -180,12 +180,12 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
       {/* Quick Add Form with Evaluator Selector */}
       {showAddForm && (
         <form onSubmit={handleAddSubmit} style={{ 
-          background: '#ffffff', 
+          background: 'var(--bg-surface)', 
           padding: '1.35rem', 
           borderRadius: '14px', 
           marginBottom: '1.75rem', 
           border: '2px solid var(--skarion-navy)',
-          boxShadow: '0 8px 24px rgba(19, 34, 71, 0.08)'
+          boxShadow: 'var(--shadow-md)'
         }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: '800', marginBottom: '1.15rem', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <MessageSquare size={18} color="var(--skarion-orange)" /> Create New Audit Observation Record
@@ -269,7 +269,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
               <div 
                 key={note.id}
                 style={{ 
-                  background: '#ffffff', 
+                  background: 'var(--bg-surface)', 
                   borderRadius: '14px', 
                   padding: '1.25rem', 
                   border: note.pinned ? '2px solid var(--skarion-orange)' : `1px solid ${evalCfg.border}`,

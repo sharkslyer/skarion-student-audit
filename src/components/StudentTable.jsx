@@ -67,7 +67,7 @@ export default function StudentTable({
             Input-friendly dashboard to update mock interviews, course completion %, and evaluation marks.
           </p>
         </div>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', background: '#ffffff', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', background: 'var(--bg-surface)', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
           {sortedStudents.length} candidates enrolled
         </span>
       </div>
@@ -164,7 +164,7 @@ export default function StudentTable({
                         }}
                       >
                         {Object.entries(RATING_CONFIG).map(([key, cfg]) => (
-                          <option key={key} value={key} style={{ background: '#ffffff', color: cfg.color, fontWeight: 'bold' }}>
+                          <option key={key} value={key} style={{ background: 'var(--bg-surface)', color: cfg.color, fontWeight: 'bold' }}>
                             {cfg.icon} {cfg.label}
                           </option>
                         ))}

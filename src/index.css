@@ -67,6 +67,17 @@
   --rating-bad-bg: rgba(220, 38, 38, 0.2);
 }
 
+[data-theme="dark"] .card-panel {
+  background-color: var(--bg-surface);
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] select.input-control option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
