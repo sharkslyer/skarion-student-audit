@@ -15,12 +15,15 @@ export function cleanSpeakerName(name) {
   if (lower.includes('kasshaf')) return 'Kasshaf';
   if (lower.includes('piyas')) return 'Piyas';
   if (lower.includes('saki')) return 'Saki';
+  if (lower.includes('maahir')) return 'Maahir';
+  if (lower.includes('ahmed')) return 'Ahmed';
   if (lower.includes('interviewer')) return 'Interviewer';
   if (lower.includes('candidate')) return 'Candidate';
   
   // Clean prefix title like Md, MD, Mr, Ms
   cleaned = cleaned.replace(/^(md|mr|ms|mrs|dr)\.?\s+/i, '');
-  return cleaned.trim();
+  const parts = cleaned.split(/\s+/).filter(p => !['md', 'ali', 'ahnaf', 'abid', 'hasan', 'akash', 'bhattacharjee', 'mahmud', 'ahmad', 'azmain', 'chowdhury'].includes(p.toLowerCase()));
+  return parts[0] || cleaned;
 }
 
 export function extractTimestamp(str) {
@@ -62,6 +65,7 @@ export function parseAndOrganizeTranscript(rawText) {
   let currentLines = [];
 
   const isInitialsLine = (line) => /^[A-Z]{1,3}$/.test(line.trim());
+  
   const isTimestampLine = (line) => {
     if (!line) return false;
     const s = line.trim();
@@ -71,11 +75,31 @@ export function parseAndOrganizeTranscript(rawText) {
            /^\d+\s*minutes?\s*\d*\s*seconds?\d+:\d+$/i.test(s);
   };
 
+  const isSystemMetadataLine = (line) => {
+    if (!line) return false;
+    const lower = line.toLowerCase().trim();
+    return (
+      lower.includes('meeting recording') ||
+      lower.includes('started transcription') ||
+      lower.includes('stopped transcription') ||
+      lower.includes('started recording') ||
+      lower.includes('stopped recording') ||
+      lower.includes('joined the meeting') ||
+      lower.includes('left the meeting') ||
+      /^\d{1,2}m\s*\d{1,2}s$/i.test(lower) ||
+      /^\d{1,2}h\s*\d{1,2}m$/i.test(lower) ||
+      /^(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},\s+\d{4}/i.test(lower)
+    );
+  };
+
   const commonSpeechWords = ['hello', 'hi', 'yes', 'no', 'okay', 'ok', 'good', 'yeah', 'alright', 'thanks', 'thank', 'bye', 'welcome', 'sure'];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
+
+    // Skip system metadata header/footer lines
+    if (isSystemMetadataLine(line)) continue;
 
     // Skip avatar initials lines (e.g. "AC", "M", "KA", "AB")
     if (isInitialsLine(line)) continue;
@@ -111,7 +135,7 @@ export function parseAndOrganizeTranscript(rawText) {
       }
     }
 
-    // Scenario C: Standalone Name line like "Ahmed Chowdhury" or "Md Ali Ahnaf Abid Mayukh"
+    // Scenario C: Standalone Name line like "Maahir Azmain Chowdhury", "Faisal Mahmud", "Ahmed Chowdhury"
     if (!detectedSpeaker) {
       const candidateName = cleanSpeakerName(line);
       const isNotSpeechWord = !commonSpeechWords.includes(candidateName.toLowerCase());
@@ -147,7 +171,7 @@ export function parseAndOrganizeTranscript(rawText) {
         currentLines.push(contentAfterHeader);
       }
     } else {
-      if (line !== currentSpeaker && !isTimestampLine(line)) {
+      if (line !== currentSpeaker && !isTimestampLine(line) && !isSystemMetadataLine(line)) {
         currentLines.push(line);
       }
     }

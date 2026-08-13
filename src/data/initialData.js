@@ -219,6 +219,83 @@ export const INITIAL_STUDENTS = [
     ]
   },
   {
+    id: 'skr-215',
+    name: 'Maahir Azmain Chowdhury',
+    joiningDate: '2026-08-05',
+    progress: 90,
+    mockInterviews: 1,
+    rating: 'excellent',
+    placementCompany: '',
+    placementRole: '',
+    placementDate: '',
+    mockSessions: [
+      {
+        id: 'mock-215-1',
+        date: '2026-08-13',
+        score: 8.5,
+        evaluator: 'Faisal',
+        category: 'Technological',
+        feedback: 'Mock interview for Network Implementation Engineer role at Forge Fiber. Candidate communicated OSP permitting experience, Civil 3D DOT packages, and AutoLISP drafting automation clearly.',
+        strengths: 'DOT permit packages, Civil 3D, AutoLISP drafting automation',
+        improvement: 'Articulating computer science degree relevance to network implementation',
+        transcript: `Maahir [00:03]: Be prepared to follow the STAR method when answering questions.
+
+Faisal [00:11]: So that would be for behavioral, absolutely.
+
+Maahir [00:15]: It says in the email that it's a behavioral interview preparation.
+
+Faisal [00:15]: We can focus on behavioral part and then throw in some technical just to make sure you know.
+
+Maahir [00:28]: Yeah, right, right.
+
+Faisal [00:33]: Do you know if tomorrow's interview is with somebody who's just a recruiter or is it with the hiring manager?
+
+Maahir [00:43]: It's the Senior Manager of Local Network Implementation.
+
+Faisal [00:49]: All right, so he's a technical guy. There may be technical questions that he may throw in in between.
+
+Mayukh [01:13]: Alright, so this mock interview is focused on the position at Forge Fiber, and the candidate name is Maahir Azmain. Tell me about yourself.
+
+Maahir [02:12]: So, I'm currently working in OSP telecommunication design, primarily focused on fiber permitting and construction ready engineering. In my current role with Alison Services, I work heavily with DOT permit packages using Civil 3D including plans, profiles, right of way information, MOT requirements, and utilities. Across those projects, I supported more than 400,000 linear feet of fiber and over 100 permit packages.
+
+Mayukh [03:17]: All right, so how does your computer science degree and GIS background give you an edge in network implementation?
+
+Maahir [05:22]: My degree involves coding and programming, and we use AutoLISP on a regular basis at my company to automate repetitive drafting tasks, reducing drafting times by 15 to 20%.
+
+Mayukh [06:28]: Tell me about a time when you faced an urgent engineering deadline across multiple municipalities and how did you prioritize your tasks?
+
+Maahir [06:41]: I prioritize deadlines depending on project dependency. Working across more than 100 permit packages at Skarion taught me that organization becomes part of the engineering process when dealing with volume.
+
+Mayukh [08:11]: Tell me about a time when you identified an inefficient process within your team and took the initiative to fix it.
+
+Maahir [08:11]: On a DOT project, a jurisdictional reviewer identified conflicting depth information. I reconciled the depth information and reviewed the MOT application against proposed conditions to eliminate field risk.
+
+Mayukh [09:50]: Can you describe a time when you had to quickly learn a new technical tool or software system to complete a project?
+
+Maahir [10:00]: When I started working with Alison, I didn't have experience with Vetro GIS. I quickly transferred my skills from QGIS and ArcGIS into Vetro fiber map using AI and online resources.
+
+Mayukh [12:52]: Where do you see yourself in three to five years?
+
+Maahir [13:02]: I see myself owning OSP design engineering works and moving into a senior or managerial role taking pride in turnkey deliveries.
+
+Kasshaf [14:46]: Hello, hello. You will be needing practice.
+
+Faisal [15:07]: All right, so Maahir, first of all, I want to set the precedence. Your profile is strong. When answering computer science relevance, paint a problem-solving story explaining how you automated drafting workflows.`
+      }
+    ],
+    stickyNotes: [
+      {
+        id: 'note-215-1',
+        date: '2026-08-13',
+        content: 'Network Implementation Engineer mock completed. Scored 8.5/10. Faisal & Mayukh reviewed DOT permit & AutoLISP automation answers.',
+        category: 'Mock Feedback',
+        author: 'Faisal',
+        accent: 'green',
+        pinned: true
+      }
+    ]
+  },
+  {
     id: 'skr-214',
     name: 'Ahmed Chowdhury',
     joiningDate: '2026-08-01',
