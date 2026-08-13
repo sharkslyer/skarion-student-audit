@@ -215,7 +215,9 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
     const rawSpeaker = speakerMatch[1].trim();
     const timeTag = speakerMatch[2];
-    const dialogue = speakerMatch[3].trim();
+    const rawDialogue = speakerMatch[3].trim();
+    // Clean up any leading timestamp numbers (e.g. "04 Hello!" -> "Hello!", "07 Hello?" -> "Hello?")
+    const dialogue = rawDialogue.replace(/^\d{1,2}\s+/, '').replace(/^\[\d{1,2}:\d{2}\]:?\s*/, '').trim();
     
     // Filter speaker if filter is active
     if (transcriptSpeakerFilter !== 'all' && rawSpeaker.toLowerCase() !== transcriptSpeakerFilter.toLowerCase()) {

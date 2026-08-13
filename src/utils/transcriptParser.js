@@ -172,7 +172,8 @@ export function parseAndOrganizeTranscript(rawText) {
   if (blocks.length > 0) {
     return blocks.map(b => {
       const timeStr = b.timestamp ? ` [${b.timestamp}]` : '';
-      return `${b.speaker}${timeStr}: ${b.text}`;
+      const cleanText = b.text.replace(/^\d{1,2}\s+/, '').replace(/^\[\d{1,2}:\d{2}\]:?\s*/, '').trim();
+      return `${b.speaker}${timeStr}: ${cleanText}`;
     }).join('\n\n');
   }
 
