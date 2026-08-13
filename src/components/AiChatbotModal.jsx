@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, User, ArrowRight } from 'lucide-react';
+import { X, Send, Sparkles, User, ArrowRight, Settings, Zap, Check, Key } from 'lucide-react';
 
 // Friendly Cute AI Face Mascot Component
 function CuteMascotAvatar({ size = 36 }) {
@@ -129,6 +129,7 @@ function renderFormattedMessage(text) {
   );
 }
 
+// Built-in Smart Roster Intent Engine
 function generateAiResponse(query, students) {
   const q = query.toLowerCase().trim();
 
@@ -149,7 +150,11 @@ function generateAiResponse(query, students) {
     };
   }
 
-  // C. Specific Candidate Match
+  // C. Check for Active-Only / Non-Placed Constraints
+  const isExceptPlaced = q.includes('except placed') || q.includes('active') || q.includes('not placed') || q.includes('non placed') || q.includes('currently active') || q.includes('without placed');
+  const isPlacedOnly = (q.includes('placed') || q.includes('hired') || q.includes('job') || q.includes('offer')) && !isExceptPlaced;
+
+  // D. Specific Candidate Match
   const matchedStudent = students.find(s => {
     if (!s || !s.name) return false;
     const nameLower = s.name.toLowerCase();
@@ -188,11 +193,11 @@ function generateAiResponse(query, students) {
     return { text: resp, studentId: matchedStudent.id, studentName: matchedStudent.name };
   }
 
-  // D. Query about Placed Candidates
-  if (q.includes('placed') || q.includes('hired') || q.includes('job') || q.includes('offer')) {
+  // E. Placed Candidates Query
+  if (isPlacedOnly) {
     const placedList = students.filter(s => s.rating === 'placed');
     if (placedList.length === 0) return { text: "No candidates are currently marked as Placed." };
-    let resp = `Woohoo! 🎉 We've got **${placedList.length} amazing candidates** placed at top companies! Here is the victory list:\n\n`;
+    let resp = `Woohoo! 🎉 We've got **${placedList.length} amazing candidates** placed at top tech companies! Here is the victory list:\n\n`;
     resp += `### 🎓 Placed Candidates (${placedList.length})\n\n`;
     placedList.forEach(s => {
       resp += `- **${s.name}**: Placed at **${s.placementCompany || 'Tech Corp'}** (${s.placementRole || 'Engineer'}) on ${s.placementDate || '2026'}\n`;
@@ -200,18 +205,33 @@ function generateAiResponse(query, students) {
     return { text: resp };
   }
 
-  // E. Query about High Performers
-  if (q.includes('excellent') || q.includes('top') || q.includes('ready') || q.includes('best') || q.includes('star')) {
-    const topList = students.filter(s => s.rating === 'excellent' || s.rating === 'placed');
-    let resp = `Here are our top star performers doing phenomenal work right now! ⭐\n\n`;
-    resp += `### 🌟 Top High-Performing Candidates\n\n`;
+  // F. High Performers / Best Candidates Query
+  if (q.includes('excellent') || q.includes('top') || q.includes('ready') || q.includes('best') || q.includes('star') || q.includes('high performer')) {
+    let topList;
+    if (isExceptPlaced) {
+      topList = students.filter(s => s.rating !== 'placed' && (s.rating === 'excellent' || s.rating === 'good'));
+      topList.sort((a, b) => (b.progress || 0) - (a.progress || 0));
+    } else {
+      topList = students.filter(s => s.rating === 'excellent' || s.rating === 'placed');
+    }
+
+    if (topList.length === 0) {
+      topList = students.filter(s => s.rating !== 'placed').slice(0, 5);
+    }
+
+    let resp = isExceptPlaced
+      ? `Here are our top **Active Candidates** currently in training (excluding placed graduates)! ⭐\n\n`
+      : `Here are our top star performers doing phenomenal work right now! ⭐\n\n`;
+
+    resp += `### 🌟 Top ${isExceptPlaced ? 'Active ' : ''}Candidates (${topList.length})\n\n`;
     topList.forEach(s => {
-      resp += `- **${s.name}** (${s.progress}% progress) - Rating: \`${s.rating.toUpperCase()}\`\n`;
+      const mockScore = s.mockSessions && s.mockSessions.length > 0 ? s.mockSessions[s.mockSessions.length - 1].score : 'N/A';
+      resp += `- **${s.name}** (${s.progress || 0}% progress) - Status: \`${(s.rating || 'good').toUpperCase()}\` | Latest Mock: \`${mockScore}/10\`\n`;
     });
     return { text: resp };
   }
 
-  // F. Query about Candidates Needing Attention
+  // G. Candidates Needing Attention Query
   if (q.includes('attention') || q.includes('help') || q.includes('struggle') || q.includes('bad') || q.includes('risk') || q.includes('weak')) {
     const atRisk = students.filter(s => s.rating === 'needs_attention' || s.rating === 'bad');
     if (atRisk.length === 0) return { text: "🎉 Great news! All active candidates are currently performing well." };
@@ -223,7 +243,7 @@ function generateAiResponse(query, students) {
     return { text: resp };
   }
 
-  // G. Query about Mock Interviews / Scores
+  // H. Mock Interview Summary Query
   if (q.includes('mock') || q.includes('score') || q.includes('interview') || q.includes('evaluator')) {
     let resp = `Sure thing! Here is a quick snapshot of our latest mock interview results:\n\n`;
     resp += `### 🎙️ Mock Interview Roster Summary\n\n`;
@@ -244,23 +264,66 @@ function generateAiResponse(query, students) {
     text: `Hello! I'm **Skarion AI Assistant** (◕‿◕✿). I'm ready to help you explore any candidate in your audit roster!\n\n` +
           `Currently tracking **${total} candidates** (${active} active, ${placedCount} placed).\n\n` +
           `Try asking me:\n` +
+          `- "Show best active candidates except placed"\n` +
           `- "Tell me about Maahir Azmain Chowdhury"\n` +
-          `- "Show me Ahmed Chowdhury's feedback"\n` +
           `- "Who is ready for placement?"\n` +
           `- "Which candidates need attention?"`
   };
 }
 
+// Cloud LLM API Gateway (Gemini API Connector)
+async function queryCloudGeminiApi(apiKey, query, students) {
+  try {
+    const rosterSummary = students.map(s => ({
+      name: s.name,
+      rating: s.rating,
+      progress: s.progress,
+      mockInterviews: s.mockInterviews,
+      placementCompany: s.placementCompany,
+      placementRole: s.placementRole,
+      latestMock: s.mockSessions && s.mockSessions.length > 0 ? s.mockSessions[s.mockSessions.length - 1] : null,
+      notes: (s.stickyNotes || []).map(n => n.content)
+    }));
+
+    const systemPrompt = `You are Skarion AI Assistant, a friendly, intelligent, cute AI assistant for Skarion Student Audit website. Answer the user's question clearly, warmly, and accurately using this live candidate roster context:\n\n${JSON.stringify(rosterSummary, null, 2)}`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          { role: 'user', parts: [{ text: `${systemPrompt}\n\nUser Question: ${query}` }] }
+        ]
+      })
+    });
+
+    if (!response.ok) throw new Error(`Gemini API returned status ${response.status}`);
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (text) return { text };
+    throw new Error('Empty Gemini response');
+  } catch (err) {
+    console.warn('Cloud Gemini API fallback notice:', err);
+    return generateAiResponse(query, students);
+  }
+}
+
 export default function AiChatbotModal({ students, onSelectStudent }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
+  // Gemini API Key state
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    return localStorage.getItem('SKARION_GEMINI_API_KEY') || '';
+  });
+
   const [messages, setMessages] = useState([
     {
       id: 'welcome-1',
       sender: 'ai',
-      text: `Hello! I'm **Skarion AI Assistant** (◕‿◕✿). Ask me about candidate progress, mock scores, evaluators, or placement status!`,
+      text: `Hello! I'm **Skarion AI Assistant** (◕‿◕✿). Ask me about active candidates, mock scores, evaluators, or placement status!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -275,7 +338,12 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
     if (isOpen) scrollToBottom();
   }, [messages, isOpen]);
 
-  const handleSend = (textToSend) => {
+  const handleSaveApiKey = (key) => {
+    setGeminiApiKey(key);
+    localStorage.setItem('SKARION_GEMINI_API_KEY', key);
+  };
+
+  const handleSend = async (textToSend) => {
     const query = textToSend || inputQuery;
     if (!query.trim()) return;
 
@@ -290,19 +358,25 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
     if (!textToSend) setInputQuery('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const aiResp = generateAiResponse(query, students);
-      const aiMsg = {
-        id: `ai-${Date.now()}`,
-        sender: 'ai',
-        text: aiResp.text,
-        studentId: aiResp.studentId,
-        studentName: aiResp.studentName,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, 450);
+    let aiResp;
+    if (geminiApiKey.trim()) {
+      aiResp = await queryCloudGeminiApi(geminiApiKey.trim(), query, students);
+    } else {
+      await new Promise(r => setTimeout(r, 450));
+      aiResp = generateAiResponse(query, students);
+    }
+
+    const aiMsg = {
+      id: `ai-${Date.now()}`,
+      sender: 'ai',
+      text: aiResp.text,
+      studentId: aiResp.studentId,
+      studentName: aiResp.studentName,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setMessages(prev => [...prev, aiMsg]);
+    setIsTyping(false);
   };
 
   const handlePromptChipClick = (promptText) => {
@@ -347,8 +421,8 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
             width: '9px', 
             height: '9px', 
             borderRadius: '50%', 
-            background: '#34d399',
-            boxShadow: '0 0 8px #34d399'
+            background: geminiApiKey ? '#38bdf8' : '#34d399',
+            boxShadow: geminiApiKey ? '0 0 8px #38bdf8' : '0 0 8px #34d399'
           }} />
         </button>
       </div>
@@ -361,9 +435,9 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
             position: 'fixed',
             bottom: '88px',
             right: '24px',
-            width: '420px',
+            width: '430px',
             maxWidth: 'calc(100vw - 32px)',
-            height: '560px',
+            height: '570px',
             maxHeight: 'calc(100vh - 120px)',
             background: 'var(--bg-surface)',
             border: '2px solid var(--border-color)',
@@ -390,30 +464,103 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
                 <h3 style={{ margin: 0, fontSize: '0.96rem', fontWeight: '900', color: '#ffffff' }}>
                   Skarion AI Assistant (◕‿◕✿)
                 </h3>
-                <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: '600' }}>
-                  Active Roster Intelligence
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  {geminiApiKey ? <Zap size={11} color="#38bdf8" /> : null}
+                  {geminiApiKey ? 'Cloud Gemini AI Mode' : 'Smart Roster Engine'}
                 </span>
               </div>
             </div>
 
-            <button 
-              onClick={() => setIsOpen(false)}
-              style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                border: 'none',
-                color: '#ffffff',
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justify: 'center'
-              }}
-            >
-              <X size={18} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                style={{
+                  background: showSettings ? 'rgba(255,255,255,0.3)' : 'rgba(255, 255, 255, 0.15)',
+                  border: 'none',
+                  color: '#ffffff',
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center'
+                }}
+                title="AI Settings / API Key Connector"
+              >
+                <Settings size={16} />
+              </button>
+
+              <button 
+                onClick={() => setIsOpen(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: 'none',
+                  color: '#ffffff',
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
+
+          {/* AI Settings Drawer (Gemini / OpenAI API Key Config) */}
+          {showSettings && (
+            <div style={{
+              padding: '0.85rem 1rem',
+              background: 'var(--bg-surface-subtle)',
+              borderBottom: '1px solid var(--border-color)',
+              fontSize: '0.82rem'
+            }}>
+              <div style={{ fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Key size={14} color="#7c3aed" /> Optional Cloud Gemini API Key
+              </div>
+              <p style={{ margin: '0 0 0.5rem 0', color: 'var(--text-muted)', fontSize: '0.76rem', lineHeight: '1.4' }}>
+                Connect your Google Gemini API key for advanced natural language reasoning. Leave empty to use built-in smart intent engine.
+              </p>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <input 
+                  type="password"
+                  placeholder="Paste Gemini API Key..."
+                  value={geminiApiKey}
+                  onChange={(e) => handleSaveApiKey(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '0.45rem 0.65rem',
+                    fontSize: '0.78rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-surface)',
+                    color: 'var(--text-main)'
+                  }}
+                />
+                {geminiApiKey && (
+                  <button
+                    onClick={() => handleSaveApiKey('')}
+                    style={{
+                      background: '#ef4444',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '0 0.6rem',
+                      borderRadius: '8px',
+                      fontSize: '0.74rem',
+                      cursor: 'pointer',
+                      fontWeight: '800'
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Quick Prompt Chips */}
           <div style={{ 
@@ -426,7 +573,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
             whiteSpace: 'nowrap'
           }}>
             <button 
-              onClick={() => handlePromptChipClick("Who is ready for placement?")}
+              onClick={() => handlePromptChipClick("Show best active candidates except placed")}
               style={{
                 fontSize: '0.72rem',
                 fontWeight: '700',
@@ -438,7 +585,22 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
                 cursor: 'pointer'
               }}
             >
-              💡 Placed Candidates
+              ⭐ Best Active Candidates
+            </button>
+            <button 
+              onClick={() => handlePromptChipClick("Who is placed?")}
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: '700',
+                padding: '3px 8px',
+                borderRadius: '99px',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-main)',
+                cursor: 'pointer'
+              }}
+            >
+              🎓 Placed Candidates
             </button>
             <button 
               onClick={() => handlePromptChipClick("Tell me about Maahir Azmain Chowdhury")}
@@ -454,21 +616,6 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
               }}
             >
               👤 Maahir's Mock
-            </button>
-            <button 
-              onClick={() => handlePromptChipClick("Show Ahmed Chowdhury's feedback")}
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: '700',
-                padding: '3px 8px',
-                borderRadius: '99px',
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-main)',
-                cursor: 'pointer'
-              }}
-            >
-              📊 Ahmed's Audit
             </button>
           </div>
 
@@ -571,7 +718,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                 <CuteMascotAvatar size={30} />
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', fontStyle: 'italic' }}>
-                  Analyzing roster intelligence...
+                  {geminiApiKey ? 'Consulting Gemini Cloud AI...' : 'Analyzing roster intelligence...'}
                 </span>
               </div>
             )}
@@ -593,7 +740,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
           >
             <input 
               type="text"
-              placeholder="Ask about any candidate (e.g. Maahir)..."
+              placeholder="Ask about candidates (e.g. best active)..."
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               style={{
