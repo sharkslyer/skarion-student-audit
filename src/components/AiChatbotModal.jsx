@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, User, ArrowRight, Settings, Zap, Check, Key } from 'lucide-react';
+import { X, Send, Sparkles, User, ArrowRight } from 'lucide-react';
 
 // Friendly Cute AI Face Mascot Component
 function CuteMascotAvatar({ size = 36 }) {
@@ -129,9 +129,20 @@ function renderFormattedMessage(text) {
   );
 }
 
-// Built-in Smart Roster Intent Engine
-function generateAiResponse(query, students) {
+// Ultra-Smart Conversational AI Roster Intelligence Engine
+function generateAiResponse(query, students, lastStudentId) {
   const q = query.toLowerCase().trim();
+
+  // Helper to find student by name or ID
+  const findStudentByNameOrId = (str) => {
+    if (!str) return null;
+    return students.find(s => {
+      if (!s || !s.name) return false;
+      const nameLower = s.name.toLowerCase();
+      const parts = nameLower.split(/\s+/);
+      return nameLower.includes(str) || parts.some(p => p.length >= 3 && str.includes(p));
+    });
+  };
 
   // A. Friendly Greetings (Hello, Hi, Hey)
   if (/^(hello|hi|hey|greetings|good morning|good afternoon|good evening)/i.test(q)) {
@@ -150,54 +161,129 @@ function generateAiResponse(query, students) {
     };
   }
 
-  // C. Check for Active-Only / Non-Placed Constraints
-  const isExceptPlaced = q.includes('except placed') || q.includes('active') || q.includes('not placed') || q.includes('non placed') || q.includes('currently active') || q.includes('without placed');
-  const isPlacedOnly = (q.includes('placed') || q.includes('hired') || q.includes('job') || q.includes('offer')) && !isExceptPlaced;
+  // C. Contextual Follow-up Detection ("his strengths", "her score", "what did evaluator say about him")
+  const isPronounFollowup = /\b(his|her|he|she|him|them|this candidate|that student|their)\b/i.test(q) ||
+    /^(what are (his|her|their) strengths|what (did|is) (his|her|their) (score|feedback|weakness)|how is (he|she) doing)/i.test(q);
 
-  // D. Specific Candidate Match
-  const matchedStudent = students.find(s => {
-    if (!s || !s.name) return false;
-    const nameLower = s.name.toLowerCase();
-    const parts = nameLower.split(/\s+/);
-    return nameLower.includes(q) || parts.some(p => p.length >= 3 && q.includes(p));
-  });
+  let activeStudent = findStudentByNameOrId(q);
+  if (!activeStudent && isPronounFollowup && lastStudentId) {
+    activeStudent = students.find(s => s.id === lastStudentId);
+  }
 
-  if (matchedStudent) {
-    const mocks = matchedStudent.mockSessions || [];
+  // D. Handle Specific Candidate Queries & Follow-ups
+  if (activeStudent) {
+    const mocks = activeStudent.mockSessions || [];
     const latestMock = mocks[mocks.length - 1];
-    const notes = matchedStudent.stickyNotes || [];
+    const notes = activeStudent.stickyNotes || [];
 
-    let resp = `Oh, great choice! Let me pull up everything we have on **${matchedStudent.name}** for you right away! 🚀\n\n`;
-    resp += `### 👤 ${matchedStudent.name} Profile Overview\n\n`;
-    resp += `- Current Status: \`${(matchedStudent.rating || 'good').toUpperCase()}\` (${matchedStudent.progress || 0}% progress)\n`;
-    resp += `- Mock Interviews Completed: ${matchedStudent.mockInterviews || 0}\n`;
+    // Follow-up: Strengths
+    if (q.includes('strength') || q.includes('good at') || q.includes('best at')) {
+      return {
+        text: `Here are the key strengths recorded for **${activeStudent.name}**:\n\n` +
+              `💪 **Primary Strengths**: ${latestMock?.strengths || 'Strong technical foundation and adaptable learning mindset'}\n\n` +
+              `Progress Standing: \`${activeStudent.progress}%\` | Rating: \`${(activeStudent.rating || 'good').toUpperCase()}\``,
+        studentId: activeStudent.id,
+        studentName: activeStudent.name
+      };
+    }
 
-    if (matchedStudent.rating === 'placed') {
-      resp += `- 🎓 Placement: Placed at **${matchedStudent.placementCompany || 'Tech Corp'}** as **${matchedStudent.placementRole || 'Engineer'}** on ${matchedStudent.placementDate || '2026'}.\n`;
+    // Follow-up: Improvements / Growth
+    if (q.includes('improvement') || q.includes('weakness') || q.includes('improve') || q.includes('work on') || q.includes('growth')) {
+      return {
+        text: `Here is what **${activeStudent.name}** is currently focusing to improve:\n\n` +
+              `🎯 **Area for Growth**: ${latestMock?.improvement || 'Articulating technical experience with deeper domain context'}\n\n` +
+              `Evaluator Note from ${latestMock?.evaluator || 'Audit Team'}: "${latestMock?.feedback || 'Good overall performance, continue practicing mock interview scenarios.'}"`,
+        studentId: activeStudent.id,
+        studentName: activeStudent.name
+      };
+    }
+
+    // Follow-up: Evaluator feedback
+    if (q.includes('evaluator') || q.includes('interviewer') || q.includes('feedback') || q.includes('faisal') || q.includes('mayukh')) {
+      return {
+        text: `Here is the detailed evaluator feedback for **${activeStudent.name}**:\n\n` +
+              `🎙️ **Evaluated by ${latestMock?.evaluator || 'Mayukh'}** (Score: ⭐ \`${latestMock?.score || 8}/10\`)\n` +
+              `- Category: \`${latestMock?.category || 'Technological'}\`\n` +
+              `- Feedback: "${latestMock?.feedback || 'Demonstrated solid domain understanding.'}"\n` +
+              `- Key Strengths: ${latestMock?.strengths || 'N/A'}\n` +
+              `- Focus Focus: ${latestMock?.improvement || 'N/A'}`,
+        studentId: activeStudent.id,
+        studentName: activeStudent.name
+      };
+    }
+
+    // Full Candidate Profile Breakdown
+    let resp = `Here is the complete audit breakdown for **${activeStudent.name}**! 🚀\n\n`;
+    resp += `### 👤 ${activeStudent.name} Profile Overview\n\n`;
+    resp += `- **Status**: \`${(activeStudent.rating || 'good').toUpperCase()}\` (${activeStudent.progress || 0}% progress)\n`;
+    resp += `- **Mock Interviews**: ${activeStudent.mockInterviews || 0} session(s) completed\n`;
+
+    if (activeStudent.rating === 'placed') {
+      resp += `- 🎓 **Placement**: Placed at **${activeStudent.placementCompany || 'Tech Corp'}** as **${activeStudent.placementRole || 'Engineer'}** on ${activeStudent.placementDate || '2026'}.\n`;
     }
 
     if (latestMock) {
       resp += `\n#### 🎯 Latest Mock Evaluation:\n`;
-      resp += `- Score: ⭐ \`${latestMock.score} / 10\` (Evaluator: **${latestMock.evaluator}**)\n`;
-      resp += `- Category: \`${latestMock.category}\`\n`;
-      resp += `- Feedback: "${latestMock.feedback}"\n`;
-      resp += `- Strengths: ${latestMock.strengths || 'N/A'}\n`;
-      resp += `- Area for Improvement: ${latestMock.improvement || 'N/A'}\n`;
+      resp += `- **Score**: ⭐ \`${latestMock.score} / 10\` (Evaluator: **${latestMock.evaluator}**)\n`;
+      resp += `- **Category**: \`${latestMock.category}\`\n`;
+      resp += `- **Feedback**: "${latestMock.feedback}"\n`;
+      resp += `- **Strengths**: ${latestMock.strengths || 'N/A'}\n`;
+      resp += `- **Growth Focus**: ${latestMock.improvement || 'N/A'}\n`;
     }
 
     if (notes.length > 0) {
       resp += `\n#### ✍️ Recent Audit Observation:\n`;
-      resp += `- "${notes[0].content}" (by ${notes[0].author} on ${notes[0].date})\n`;
+      resp += `- "${notes[0].content}" *(by ${notes[0].author} on ${notes[0].date})*\n`;
     }
 
-    return { text: resp, studentId: matchedStudent.id, studentName: matchedStudent.name };
+    return { text: resp, studentId: activeStudent.id, studentName: activeStudent.name };
   }
 
-  // E. Placed Candidates Query
+  // E. Candidate Comparison Query ("compare Maahir and Ahmed", "difference between X and Y")
+  if (q.includes('compare') || q.includes('versus') || q.includes(' vs ')) {
+    const matched = students.filter(s => s.name && q.includes(s.name.toLowerCase().split(' ')[0]));
+    if (matched.length >= 2) {
+      const s1 = matched[0];
+      const s2 = matched[1];
+      const m1 = s1.mockSessions?.[s1.mockSessions.length - 1];
+      const m2 = s2.mockSessions?.[s2.mockSessions.length - 1];
+
+      let resp = `Here is a side-by-side audit comparison between **${s1.name}** and **${s2.name}**:\n\n`;
+      resp += `### ⚔️ Candidate Comparison\n\n`;
+      resp += `- **${s1.name}**: Progress \`${s1.progress}%\` | Status: \`${(s1.rating || 'good').toUpperCase()}\` | Mock: \`${m1?.score || 'N/A'}/10\` (${m1?.evaluator || 'Audit'})\n`;
+      resp += `- **${s2.name}**: Progress \`${s2.progress}%\` | Status: \`${(s2.rating || 'good').toUpperCase()}\` | Mock: \`${m2?.score || 'N/A'}/10\` (${m2?.evaluator || 'Audit'})\n\n`;
+      resp += `💡 Both candidates show strong dedication, with ${s1.name} at ${s1.progress}% progress and ${s2.name} at ${s2.progress}% progress.`;
+      return { text: resp };
+    }
+  }
+
+  // F. Evaluator Specific Queries ("what did Faisal say", "Mayukh's evaluations")
+  if (q.includes('faisal') || q.includes('mayukh') || q.includes('kasshaf') || q.includes('ferdous') || q.includes('piyas') || q.includes('saki')) {
+    const evaluatorName = ['faisal', 'mayukh', 'kasshaf', 'ferdous', 'piyas', 'saki'].find(e => q.includes(e));
+    const evalCap = evaluatorName.charAt(0).toUpperCase() + evaluatorName.slice(1);
+
+    const evaluatedStudents = students.filter(s => 
+      (s.mockSessions || []).some(m => m.evaluator && m.evaluator.toLowerCase() === evaluatorName) ||
+      (s.stickyNotes || []).some(n => n.author && n.author.toLowerCase() === evaluatorName)
+    );
+
+    let resp = `Here are the candidates audited and evaluated by **${evalCap}**:\n\n`;
+    resp += `### 📋 Evaluations by ${evalCap} (${evaluatedStudents.length})\n\n`;
+    evaluatedStudents.forEach(s => {
+      const lastMock = (s.mockSessions || []).find(m => m.evaluator && m.evaluator.toLowerCase() === evaluatorName);
+      resp += `- **${s.name}**: ${lastMock ? `Score \`${lastMock.score}/10\` ("${lastMock.feedback}")` : `Added observation note`}\n`;
+    });
+    return { text: resp };
+  }
+
+  // G. Placed Candidates Query
+  const isExceptPlaced = q.includes('except placed') || q.includes('active') || q.includes('not placed') || q.includes('non placed') || q.includes('currently active') || q.includes('without placed');
+  const isPlacedOnly = (q.includes('placed') || q.includes('hired') || q.includes('job') || q.includes('offer')) && !isExceptPlaced;
+
   if (isPlacedOnly) {
     const placedList = students.filter(s => s.rating === 'placed');
     if (placedList.length === 0) return { text: "No candidates are currently marked as Placed." };
-    let resp = `Woohoo! 🎉 We've got **${placedList.length} amazing candidates** placed at top tech companies! Here is the victory list:\n\n`;
+    let resp = `Woohoo! 🎉 We've got **${placedList.length} amazing candidates** placed at top tech companies! Here is the victory breakdown:\n\n`;
     resp += `### 🎓 Placed Candidates (${placedList.length})\n\n`;
     placedList.forEach(s => {
       resp += `- **${s.name}**: Placed at **${s.placementCompany || 'Tech Corp'}** (${s.placementRole || 'Engineer'}) on ${s.placementDate || '2026'}\n`;
@@ -205,7 +291,7 @@ function generateAiResponse(query, students) {
     return { text: resp };
   }
 
-  // F. High Performers / Best Candidates Query
+  // H. Best Active Candidates Query
   if (q.includes('excellent') || q.includes('top') || q.includes('ready') || q.includes('best') || q.includes('star') || q.includes('high performer')) {
     let topList;
     if (isExceptPlaced) {
@@ -213,10 +299,6 @@ function generateAiResponse(query, students) {
       topList.sort((a, b) => (b.progress || 0) - (a.progress || 0));
     } else {
       topList = students.filter(s => s.rating === 'excellent' || s.rating === 'placed');
-    }
-
-    if (topList.length === 0) {
-      topList = students.filter(s => s.rating !== 'placed').slice(0, 5);
     }
 
     let resp = isExceptPlaced
@@ -231,30 +313,6 @@ function generateAiResponse(query, students) {
     return { text: resp };
   }
 
-  // G. Candidates Needing Attention Query
-  if (q.includes('attention') || q.includes('help') || q.includes('struggle') || q.includes('bad') || q.includes('risk') || q.includes('weak')) {
-    const atRisk = students.filter(s => s.rating === 'needs_attention' || s.rating === 'bad');
-    if (atRisk.length === 0) return { text: "🎉 Great news! All active candidates are currently performing well." };
-    let resp = `Good call checking in on performance! Here are the candidates who could use a little extra coaching right now:\n\n`;
-    resp += `### ⚠️ Candidates Requiring Follow-Up (${atRisk.length})\n\n`;
-    atRisk.forEach(s => {
-      resp += `- **${s.name}** (${s.progress}% progress) - Rating: \`${s.rating.toUpperCase()}\`\n`;
-    });
-    return { text: resp };
-  }
-
-  // H. Mock Interview Summary Query
-  if (q.includes('mock') || q.includes('score') || q.includes('interview') || q.includes('evaluator')) {
-    let resp = `Sure thing! Here is a quick snapshot of our latest mock interview results:\n\n`;
-    resp += `### 🎙️ Mock Interview Roster Summary\n\n`;
-    const mocked = students.filter(s => s.mockSessions && s.mockSessions.length > 0);
-    mocked.slice(0, 5).forEach(s => {
-      const last = s.mockSessions[s.mockSessions.length - 1];
-      resp += `- **${s.name}**: Score **${last.score}/10** (Evaluator: ${last.evaluator}, Category: ${last.category})\n`;
-    });
-    return { text: resp };
-  }
-
   // Default Response
   const total = students.length;
   const active = students.filter(s => s.rating !== 'placed').length;
@@ -263,67 +321,25 @@ function generateAiResponse(query, students) {
   return {
     text: `Hello! I'm **Skarion AI Assistant** (◕‿◕✿). I'm ready to help you explore any candidate in your audit roster!\n\n` +
           `Currently tracking **${total} candidates** (${active} active, ${placedCount} placed).\n\n` +
-          `Try asking me:\n` +
-          `- "Show best active candidates except placed"\n` +
+          `**Try asking me:**\n` +
           `- "Tell me about Maahir Azmain Chowdhury"\n` +
-          `- "Who is ready for placement?"\n` +
-          `- "Which candidates need attention?"`
+          `- "What are his strengths?"\n` +
+          `- "Compare Maahir and Ahmed"\n` +
+          `- "Show best active candidates except placed"`
   };
-}
-
-// Cloud LLM API Gateway (Gemini API Connector)
-async function queryCloudGeminiApi(apiKey, query, students) {
-  try {
-    const rosterSummary = students.map(s => ({
-      name: s.name,
-      rating: s.rating,
-      progress: s.progress,
-      mockInterviews: s.mockInterviews,
-      placementCompany: s.placementCompany,
-      placementRole: s.placementRole,
-      latestMock: s.mockSessions && s.mockSessions.length > 0 ? s.mockSessions[s.mockSessions.length - 1] : null,
-      notes: (s.stickyNotes || []).map(n => n.content)
-    }));
-
-    const systemPrompt = `You are Skarion AI Assistant, a friendly, intelligent, cute AI assistant for Skarion Student Audit website. Answer the user's question clearly, warmly, and accurately using this live candidate roster context:\n\n${JSON.stringify(rosterSummary, null, 2)}`;
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          { role: 'user', parts: [{ text: `${systemPrompt}\n\nUser Question: ${query}` }] }
-        ]
-      })
-    });
-
-    if (!response.ok) throw new Error(`Gemini API returned status ${response.status}`);
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (text) return { text };
-    throw new Error('Empty Gemini response');
-  } catch (err) {
-    console.warn('Cloud Gemini API fallback notice:', err);
-    return generateAiResponse(query, students);
-  }
 }
 
 export default function AiChatbotModal({ students, onSelectStudent }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [lastStudentId, setLastStudentId] = useState(null);
   
-  // Gemini API Key state
-  const [geminiApiKey, setGeminiApiKey] = useState(() => {
-    return localStorage.getItem('SKARION_GEMINI_API_KEY') || '';
-  });
-
   const [messages, setMessages] = useState([
     {
       id: 'welcome-1',
       sender: 'ai',
-      text: `Hello! I'm **Skarion AI Assistant** (◕‿◕✿). Ask me about active candidates, mock scores, evaluators, or placement status!`,
+      text: `Hello! I'm **Skarion AI Assistant** (◕‿◕✿). Ask me about active candidates, mock scores, follow-ups, or placement status!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -338,12 +354,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
     if (isOpen) scrollToBottom();
   }, [messages, isOpen]);
 
-  const handleSaveApiKey = (key) => {
-    setGeminiApiKey(key);
-    localStorage.setItem('SKARION_GEMINI_API_KEY', key);
-  };
-
-  const handleSend = async (textToSend) => {
+  const handleSend = (textToSend) => {
     const query = textToSend || inputQuery;
     if (!query.trim()) return;
 
@@ -358,25 +369,21 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
     if (!textToSend) setInputQuery('');
     setIsTyping(true);
 
-    let aiResp;
-    if (geminiApiKey.trim()) {
-      aiResp = await queryCloudGeminiApi(geminiApiKey.trim(), query, students);
-    } else {
-      await new Promise(r => setTimeout(r, 450));
-      aiResp = generateAiResponse(query, students);
-    }
+    setTimeout(() => {
+      const aiResp = generateAiResponse(query, students, lastStudentId);
+      if (aiResp.studentId) setLastStudentId(aiResp.studentId);
 
-    const aiMsg = {
-      id: `ai-${Date.now()}`,
-      sender: 'ai',
-      text: aiResp.text,
-      studentId: aiResp.studentId,
-      studentName: aiResp.studentName,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages(prev => [...prev, aiMsg]);
-    setIsTyping(false);
+      const aiMsg = {
+        id: `ai-${Date.now()}`,
+        sender: 'ai',
+        text: aiResp.text,
+        studentId: aiResp.studentId,
+        studentName: aiResp.studentName,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, aiMsg]);
+      setIsTyping(false);
+    }, 400);
   };
 
   const handlePromptChipClick = (promptText) => {
@@ -421,8 +428,8 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
             width: '9px', 
             height: '9px', 
             borderRadius: '50%', 
-            background: geminiApiKey ? '#38bdf8' : '#34d399',
-            boxShadow: geminiApiKey ? '0 0 8px #38bdf8' : '0 0 8px #34d399'
+            background: '#34d399',
+            boxShadow: '0 0 8px #34d399'
           }} />
         </button>
       </div>
@@ -464,103 +471,30 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
                 <h3 style={{ margin: 0, fontSize: '0.96rem', fontWeight: '900', color: '#ffffff' }}>
                   Skarion AI Assistant (◕‿◕✿)
                 </h3>
-                <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  {geminiApiKey ? <Zap size={11} color="#38bdf8" /> : null}
-                  {geminiApiKey ? 'Cloud Gemini AI Mode' : 'Smart Roster Engine'}
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: '600' }}>
+                  Active Roster Intelligence
                 </span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                style={{
-                  background: showSettings ? 'rgba(255,255,255,0.3)' : 'rgba(255, 255, 255, 0.15)',
-                  border: 'none',
-                  color: '#ffffff',
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'center'
-                }}
-                title="AI Settings / API Key Connector"
-              >
-                <Settings size={16} />
-              </button>
-
-              <button 
-                onClick={() => setIsOpen(false)}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  border: 'none',
-                  color: '#ffffff',
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'center'
-                }}
-              >
-                <X size={18} />
-              </button>
-            </div>
+            <button 
+              onClick={() => setIsOpen(false)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: 'none',
+                color: '#ffffff',
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'center'
+              }}
+            >
+              <X size={18} />
+            </button>
           </div>
-
-          {/* AI Settings Drawer (Gemini / OpenAI API Key Config) */}
-          {showSettings && (
-            <div style={{
-              padding: '0.85rem 1rem',
-              background: 'var(--bg-surface-subtle)',
-              borderBottom: '1px solid var(--border-color)',
-              fontSize: '0.82rem'
-            }}>
-              <div style={{ fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Key size={14} color="#7c3aed" /> Optional Cloud Gemini API Key
-              </div>
-              <p style={{ margin: '0 0 0.5rem 0', color: 'var(--text-muted)', fontSize: '0.76rem', lineHeight: '1.4' }}>
-                Connect your Google Gemini API key for advanced natural language reasoning. Leave empty to use built-in smart intent engine.
-              </p>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <input 
-                  type="password"
-                  placeholder="Paste Gemini API Key..."
-                  value={geminiApiKey}
-                  onChange={(e) => handleSaveApiKey(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '0.45rem 0.65rem',
-                    fontSize: '0.78rem',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                    color: 'var(--text-main)'
-                  }}
-                />
-                {geminiApiKey && (
-                  <button
-                    onClick={() => handleSaveApiKey('')}
-                    style={{
-                      background: '#ef4444',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '0 0.6rem',
-                      borderRadius: '8px',
-                      fontSize: '0.74rem',
-                      cursor: 'pointer',
-                      fontWeight: '800'
-                    }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Quick Prompt Chips */}
           <div style={{ 
@@ -718,7 +652,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                 <CuteMascotAvatar size={30} />
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', fontStyle: 'italic' }}>
-                  {geminiApiKey ? 'Consulting Gemini Cloud AI...' : 'Analyzing roster intelligence...'}
+                  Analyzing roster intelligence...
                 </span>
               </div>
             )}
