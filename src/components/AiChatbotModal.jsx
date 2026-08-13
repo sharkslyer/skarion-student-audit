@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, User, ArrowRight, Pause, Play, RefreshCcw } from 'lucide-react';
+import { X, Send, Sparkles, User, ArrowRight } from 'lucide-react';
 
 // Friendly Cute AI Face Mascot Component
 function CuteMascotAvatar({ size = 36 }) {
@@ -42,7 +42,7 @@ function CuteMascotAvatar({ size = 36 }) {
   );
 }
 
-// Clean Formatted Message Renderer (Strips raw markdown symbols like ### and **)
+// Clean Formatted Message Renderer (Strips raw markdown symbols like ###, **, and stray *)
 function renderFormattedMessage(text) {
   if (!text) return null;
 
@@ -55,7 +55,7 @@ function renderFormattedMessage(text) {
 
         // Headers starting with ### or ####
         if (clean.startsWith('###') || clean.startsWith('####')) {
-          const headerText = clean.replace(/^[#\s]+/, '').replace(/\*\*/g, '').replace(/`/g, '');
+          const headerText = clean.replace(/^[#\s]+/, '').replace(/\*/g, '').replace(/`/g, '').trim();
           return (
             <div key={idx} style={{ 
               fontWeight: '900', 
@@ -82,11 +82,11 @@ function renderFormattedMessage(text) {
               <span style={{ color: '#7c3aed', fontWeight: '900', marginTop: '1px' }}>•</span>
               <div>
                 {parts.map((part, pIdx) => {
+                  const cleanedPart = part.replace(/\*/g, '');
                   if (pIdx % 2 === 1) {
-                    return <strong key={pIdx} style={{ fontWeight: '800' }}>{part}</strong>;
+                    return <strong key={pIdx} style={{ fontWeight: '800' }}>{cleanedPart}</strong>;
                   }
-                  // Clean inline code ticks like `GOOD`
-                  const tickParts = part.split(/`/);
+                  const tickParts = cleanedPart.split(/`/);
                   return tickParts.map((tPart, tIdx) => {
                     if (tIdx % 2 === 1) {
                       return (
@@ -111,15 +111,16 @@ function renderFormattedMessage(text) {
           );
         }
 
-        // Normal paragraph lines
+        // Normal paragraph lines - strip any stray *
         const parts = clean.split(/\*\*/);
         return (
           <p key={idx} style={{ margin: 0, fontSize: '0.86rem', lineHeight: '1.55' }}>
             {parts.map((part, pIdx) => {
+              const cleanedPart = part.replace(/\*/g, '');
               if (pIdx % 2 === 1) {
-                return <strong key={pIdx} style={{ fontWeight: '800' }}>{part}</strong>;
+                return <strong key={pIdx} style={{ fontWeight: '800' }}>{cleanedPart}</strong>;
               }
-              return part;
+              return cleanedPart;
             })}
           </p>
         );
@@ -131,7 +132,24 @@ function renderFormattedMessage(text) {
 function generateAiResponse(query, students) {
   const q = query.toLowerCase().trim();
 
-  // 1. Specific Candidate Match
+  // A. Friendly Greetings (Hello, Hi, Hey)
+  if (/^(hello|hi|hey|greetings|good morning|good afternoon|good evening)/i.test(q)) {
+    return {
+      text: `Hey there! 👋 I'm **Skarion AI** (◕‿◕✿), super happy to help you today!\n\n` +
+            `I'm currently tracking **${students.length} candidates** in your active audit roster.\n\n` +
+            `What candidate or mock evaluation details would you like me to look up for you?`
+    };
+  }
+
+  // B. Warm Appreciations (Thanks, Thank you, Awesome, Great)
+  if (/^(thanks|thank you|thank|awesome|great|cool|perfect|nice)/i.test(q)) {
+    return {
+      text: `You're so very welcome! 😊 (◕‿◕✿)\n\n` +
+            `Always happy to help you manage and review your candidate roster. Feel free to ask anytime!`
+    };
+  }
+
+  // C. Specific Candidate Match
   const matchedStudent = students.find(s => {
     if (!s || !s.name) return false;
     const nameLower = s.name.toLowerCase();
@@ -144,66 +162,71 @@ function generateAiResponse(query, students) {
     const latestMock = mocks[mocks.length - 1];
     const notes = matchedStudent.stickyNotes || [];
 
-    let resp = `### 👤 ${matchedStudent.name} Profile Overview\n\n`;
-    resp += `- **Current Status**: \`${(matchedStudent.rating || 'good').toUpperCase()}\` (${matchedStudent.progress || 0}% progress)\n`;
-    resp += `- **Mock Interviews Completed**: ${matchedStudent.mockInterviews || 0}\n`;
+    let resp = `Oh, great choice! Let me pull up everything we have on **${matchedStudent.name}** for you right away! 🚀\n\n`;
+    resp += `### 👤 ${matchedStudent.name} Profile Overview\n\n`;
+    resp += `- Current Status: \`${(matchedStudent.rating || 'good').toUpperCase()}\` (${matchedStudent.progress || 0}% progress)\n`;
+    resp += `- Mock Interviews Completed: ${matchedStudent.mockInterviews || 0}\n`;
 
     if (matchedStudent.rating === 'placed') {
-      resp += `- 🎓 **Placement**: Placed at **${matchedStudent.placementCompany || 'Tech Corp'}** as **${matchedStudent.placementRole || 'Engineer'}** on ${matchedStudent.placementDate || '2026'}.\n`;
+      resp += `- 🎓 Placement: Placed at **${matchedStudent.placementCompany || 'Tech Corp'}** as **${matchedStudent.placementRole || 'Engineer'}** on ${matchedStudent.placementDate || '2026'}.\n`;
     }
 
     if (latestMock) {
       resp += `\n#### 🎯 Latest Mock Evaluation:\n`;
-      resp += `- **Score**: ⭐ \`${latestMock.score} / 10\` (Evaluator: **${latestMock.evaluator}**)\n`;
-      resp += `- **Category**: \`${latestMock.category}\`\n`;
-      resp += `- **Feedback**: "${latestMock.feedback}"\n`;
-      resp += `- **Strengths**: ${latestMock.strengths || 'N/A'}\n`;
-      resp += `- **Area for Improvement**: ${latestMock.improvement || 'N/A'}\n`;
+      resp += `- Score: ⭐ \`${latestMock.score} / 10\` (Evaluator: **${latestMock.evaluator}**)\n`;
+      resp += `- Category: \`${latestMock.category}\`\n`;
+      resp += `- Feedback: "${latestMock.feedback}"\n`;
+      resp += `- Strengths: ${latestMock.strengths || 'N/A'}\n`;
+      resp += `- Area for Improvement: ${latestMock.improvement || 'N/A'}\n`;
     }
 
     if (notes.length > 0) {
       resp += `\n#### ✍️ Recent Audit Observation:\n`;
-      resp += `- "${notes[0].content}" *(by ${notes[0].author} on ${notes[0].date})*\n`;
+      resp += `- "${notes[0].content}" (by ${notes[0].author} on ${notes[0].date})\n`;
     }
 
     return { text: resp, studentId: matchedStudent.id, studentName: matchedStudent.name };
   }
 
-  // 2. Query about Placed Candidates
+  // D. Query about Placed Candidates
   if (q.includes('placed') || q.includes('hired') || q.includes('job') || q.includes('offer')) {
     const placedList = students.filter(s => s.rating === 'placed');
     if (placedList.length === 0) return { text: "No candidates are currently marked as Placed." };
-    let resp = `### 🎓 Placed Candidates (${placedList.length})\n\n`;
+    let resp = `Woohoo! 🎉 We've got **${placedList.length} amazing candidates** placed at top companies! Here is the victory list:\n\n`;
+    resp += `### 🎓 Placed Candidates (${placedList.length})\n\n`;
     placedList.forEach(s => {
       resp += `- **${s.name}**: Placed at **${s.placementCompany || 'Tech Corp'}** (${s.placementRole || 'Engineer'}) on ${s.placementDate || '2026'}\n`;
     });
     return { text: resp };
   }
 
-  // 3. Query about High Performers
+  // E. Query about High Performers
   if (q.includes('excellent') || q.includes('top') || q.includes('ready') || q.includes('best') || q.includes('star')) {
     const topList = students.filter(s => s.rating === 'excellent' || s.rating === 'placed');
-    let resp = `### 🌟 Top High-Performing Candidates\n\n`;
+    let resp = `Here are our top star performers doing phenomenal work right now! ⭐\n\n`;
+    resp += `### 🌟 Top High-Performing Candidates\n\n`;
     topList.forEach(s => {
       resp += `- **${s.name}** (${s.progress}% progress) - Rating: \`${s.rating.toUpperCase()}\`\n`;
     });
     return { text: resp };
   }
 
-  // 4. Query about Candidates Needing Attention
+  // F. Query about Candidates Needing Attention
   if (q.includes('attention') || q.includes('help') || q.includes('struggle') || q.includes('bad') || q.includes('risk') || q.includes('weak')) {
     const atRisk = students.filter(s => s.rating === 'needs_attention' || s.rating === 'bad');
     if (atRisk.length === 0) return { text: "🎉 Great news! All active candidates are currently performing well." };
-    let resp = `### ⚠️ Candidates Requiring Follow-Up (${atRisk.length})\n\n`;
+    let resp = `Good call checking in on performance! Here are the candidates who could use a little extra coaching right now:\n\n`;
+    resp += `### ⚠️ Candidates Requiring Follow-Up (${atRisk.length})\n\n`;
     atRisk.forEach(s => {
       resp += `- **${s.name}** (${s.progress}% progress) - Rating: \`${s.rating.toUpperCase()}\`\n`;
     });
     return { text: resp };
   }
 
-  // 5. Query about Mock Interviews / Scores
+  // G. Query about Mock Interviews / Scores
   if (q.includes('mock') || q.includes('score') || q.includes('interview') || q.includes('evaluator')) {
-    let resp = `### 🎙️ Mock Interview Roster Summary\n\n`;
+    let resp = `Sure thing! Here is a quick snapshot of our latest mock interview results:\n\n`;
+    resp += `### 🎙️ Mock Interview Roster Summary\n\n`;
     const mocked = students.filter(s => s.mockSessions && s.mockSessions.length > 0);
     mocked.slice(0, 5).forEach(s => {
       const last = s.mockSessions[s.mockSessions.length - 1];
@@ -218,13 +241,13 @@ function generateAiResponse(query, students) {
   const placedCount = students.filter(s => s.rating === 'placed').length;
 
   return {
-    text: `Hello! I'm **Skarion AI Assistant** (◕‿◕). I can answer questions about any candidate in your audit roster.\n\n` +
+    text: `Hello! I'm **Skarion AI Assistant** (◕‿◕✿). I'm ready to help you explore any candidate in your audit roster!\n\n` +
           `Currently tracking **${total} candidates** (${active} active, ${placedCount} placed).\n\n` +
-          `**Try asking me:**\n` +
-          `- *"Tell me about Maahir Azmain Chowdhury"*\n` +
-          `- *"Show me Ahmed Chowdhury's feedback"*\n` +
-          `- *"Who is ready for placement?"*\n` +
-          `- *"Which candidates need attention?"*`
+          `Try asking me:\n` +
+          `- "Tell me about Maahir Azmain Chowdhury"\n` +
+          `- "Show me Ahmed Chowdhury's feedback"\n` +
+          `- "Who is ready for placement?"\n` +
+          `- "Which candidates need attention?"`
   };
 }
 
