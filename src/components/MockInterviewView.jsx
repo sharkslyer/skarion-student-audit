@@ -84,7 +84,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     if (!studentToUpdate) return;
 
     // Automatically parse raw transcript if pasted in form
-    const cleanedTranscript = parseAndOrganizeTranscript(mockTranscript.trim());
+    const studentRosterNames = (students || []).map(s => s?.name).filter(Boolean);
+    const cleanedTranscript = parseAndOrganizeTranscript(mockTranscript.trim(), studentRosterNames);
 
     const newSession = {
       id: `mock-${Date.now()}`,
@@ -155,7 +156,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   // Auto-clean raw Teams / Zoom / Meet copy-paste transcript
   const handleAutoCleanTranscript = () => {
     if (!transcriptTextBuffer) return;
-    const cleaned = parseAndOrganizeTranscript(transcriptTextBuffer);
+    const studentRosterNames = (students || []).map(s => s?.name).filter(Boolean);
+    const cleaned = parseAndOrganizeTranscript(transcriptTextBuffer, studentRosterNames);
     setTranscriptTextBuffer(cleaned);
     if (showToast) showToast('Raw meeting transcript auto-cleaned & organized!');
   };
@@ -164,7 +166,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const handleSaveTranscript = () => {
     if (!activeTranscriptSession || !currentStudent) return;
 
-    const cleanedText = parseAndOrganizeTranscript(transcriptTextBuffer.trim());
+    const studentRosterNames = (students || []).map(s => s?.name).filter(Boolean);
+    const cleanedText = parseAndOrganizeTranscript(transcriptTextBuffer.trim(), studentRosterNames);
 
     const updatedSessions = mockSessions.map(s => {
       if (s.id === activeTranscriptSession.id) {

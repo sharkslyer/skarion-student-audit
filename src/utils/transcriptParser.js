@@ -1,17 +1,17 @@
 /**
  * Smart Transcript Auto-Organizer Utility
- * Strict Whitelist-Based Speaker Parser
+ * Strict Header-Based MS Teams & Zoom Transcript Parser
  * Evaluator Whitelist: Kasshaf, Faisal, Saki, Ferdous, Piyas, Mayukh, Tashfia
  * Candidate Whitelist: Active Candidate Roster Names (Bhaskar, Maahir, Ahmed, etc.)
  */
 
 const ALLOWED_EVALUATOR_NAMES = [
-  'kasshaf', 'faisal', 'saki', 'ferdous', 'piyas', 'mayukh', 'tashfia', 'interviewer', 'evaluator'
+  'kasshaf', 'faisal', 'saki', 'ferdous', 'piyas', 'mayukh', 'tashfia'
 ];
 
 const DEFAULT_CANDIDATE_ROSTER_NAMES = [
   'bhaskar', 'bhashkar', 'maahir', 'mahir', 'ahmed', 'ananya', 'avirup', 'rahul', 'fatima', 'tanvir', 'zayn',
-  'ahasanul', 'tahmeed', 'sadman', 'yulun', 'candidate'
+  'ahasanul', 'tahmeed', 'sadman', 'yulun'
 ];
 
 export function cleanSpeakerName(name) {
@@ -39,8 +39,6 @@ export function cleanSpeakerName(name) {
   if (lower.includes('tahmeed')) return 'Tahmeed';
   if (lower.includes('sadman')) return 'Sadman';
   if (lower.includes('yulun')) return 'Yulun';
-  if (lower.includes('interviewer')) return 'Interviewer';
-  if (lower.includes('candidate')) return 'Candidate';
   
   // Clean prefix title like Md, MD, Mr, Ms
   cleaned = cleaned.replace(/^(md|mr|ms|mrs|dr)\.?\s+/i, '');
@@ -68,7 +66,6 @@ export function isWhitelistedSpeaker(rawSpeakerName, extraCandidateNames = []) {
     return true;
   }
 
-  // Anything else is strictly NOT a whitelisted speaker!
   return false;
 }
 
@@ -95,7 +92,7 @@ export function extractTimestamp(str) {
     return `${mins}:${secs}`;
   }
 
-  // Pattern 3: Standalone seconds count like "04", "07", "08", "09", "11", "14", "18", "28", "40"
+  // Pattern 3: Standalone seconds count like "04", "07"
   if (/^\d{1,2}$/.test(s)) {
     const secs = String(s).padStart(2, '0');
     return `00:${secs}`;
@@ -112,17 +109,6 @@ export function parseAndOrganizeTranscript(rawText, extraCandidateNames = []) {
   let currentSpeaker = '';
   let currentTimestamp = '';
   let currentLines = [];
-
-  const isInitialsLine = (line) => /^[A-Z]{1,3}$/.test(line.trim());
-  
-  const isTimestampLine = (line) => {
-    if (!line) return false;
-    const s = line.trim();
-    return /^\d{1,2}$/.test(s) || 
-           /^\d{1,2}:\d{2}(?::\d{2})?$/.test(s) || 
-           /^\d+\s*minutes?\s*\d*\s*seconds?/i.test(s) ||
-           /^\d+\s*minutes?\s*\d*\s*seconds?\d+:\d+$/i.test(s);
-  };
 
   const isSystemMetadataLine = (line) => {
     if (!line) return false;
@@ -148,21 +134,11 @@ export function parseAndOrganizeTranscript(rawText, extraCandidateNames = []) {
     // Skip system metadata header/footer lines
     if (isSystemMetadataLine(line)) continue;
 
-    // Skip avatar initials lines (e.g. "AC", "M", "KA", "AB")
-    if (isInitialsLine(line)) continue;
-
-    // If line is pure timestamp line
-    if (isTimestampLine(line)) {
-      const ts = extractTimestamp(line);
-      if (ts) currentTimestamp = ts;
-      continue;
-    }
-
     let detectedSpeaker = '';
     let detectedTime = '';
     let contentAfterHeader = '';
 
-    // Scenario A: Formatted line like "Name [MM:SS]: Dialogue..." or "Name: Dialogue..."
+    // Pattern 1: Explicit Formatted line like "Speaker [MM:SS]: Dialogue..." or "Speaker: Dialogue..."
     const formattedMatch = line.match(/^([^:\[\n]{2,35})(?:\s*\[(\d{1,2}:\d{2}(?::\d{2})?)\])?\s*:(.*)$/);
     if (formattedMatch) {
       const candidateName = cleanSpeakerName(formattedMatch[1]);
@@ -173,23 +149,15 @@ export function parseAndOrganizeTranscript(rawText, extraCandidateNames = []) {
       }
     }
 
-    // Scenario B: Raw Teams header line like "Bhaskar Roy 0:03" or "Md Ali Ahnaf Abid Mayukh 0:03" or "Kasshaf Ahmad 1:00:18"
-    if (!detectedSpeaker && (/^[A-Za-z\s\.\-]{2,40}\s+\d+(?::\d{2}){1,2}$/i.test(line) || /^[A-Za-z\s\.\-]{2,40}\s+\d+\s*minutes?/i.test(line))) {
-      const parts = line.match(/^(.*?)\s*(\d+:\d{2}(?::\d{2})?|\d+\s*minutes?.*)$/i);
+    // Pattern 2: Explicit MS Teams header line like "Bhaskar Roy   0:03" or "Md Ali Ahnaf Abid Mayukh   0:03" or "Kasshaf Ahmad   1:00:18"
+    if (!detectedSpeaker && (/^[A-Za-z\s\.\-]{2,45}\s+\d+(?::\d{2}){1,2}$/i.test(line) || /^[A-Za-z\s\.\-]{2,45}\s+\d+\s*minutes?/i.test(line))) {
+      const parts = line.match(/^(.*?)\s+(\d+(?::\d{2}){1,2}|\d+\s*minutes?.*)$/i);
       if (parts) {
         const candidateName = cleanSpeakerName(parts[1]);
         if (isWhitelistedSpeaker(candidateName, extraCandidateNames)) {
           detectedSpeaker = candidateName;
           detectedTime = extractTimestamp(parts[2]);
         }
-      }
-    }
-
-    // Scenario C: Standalone Name line (STRICTLY Whitelisted Speakers Only!)
-    if (!detectedSpeaker) {
-      const candidateName = cleanSpeakerName(line);
-      if (isWhitelistedSpeaker(candidateName, extraCandidateNames)) {
-        detectedSpeaker = candidateName;
       }
     }
 
@@ -217,7 +185,7 @@ export function parseAndOrganizeTranscript(rawText, extraCandidateNames = []) {
         currentLines.push(contentAfterHeader);
       }
     } else {
-      if (line !== currentSpeaker && !isTimestampLine(line) && !isSystemMetadataLine(line)) {
+      if (currentSpeaker && !isSystemMetadataLine(line)) {
         currentLines.push(line);
       }
     }
