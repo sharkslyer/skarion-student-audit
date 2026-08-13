@@ -216,28 +216,35 @@ export default function TickerBar({ students, onSelectStudent }) {
             <ChevronLeft size={24} color="var(--skarion-navy)" />
           </button>
 
-          {/* Main Hero Spotlight Quote Card with Fade Animation */}
+          {/* Main Hero Spotlight Quote Card with Fixed Height & Fade Animation */}
           <div 
             key={fadeKey}
             onClick={() => student && onSelectStudent(student)}
             className="animate-pop-in"
             style={{ 
               flex: '1', 
+              height: '120px',
+              minHeight: '120px',
+              maxHeight: '120px',
+              display: 'flex',
+              flexDirection: 'column',
+              justify: 'space-between',
               background: 'var(--bg-surface)', 
               border: '2px solid var(--border-color)', 
               borderRadius: '16px', 
-              padding: '1.15rem 1.45rem',
+              padding: '1.05rem 1.45rem',
               cursor: 'pointer',
               boxShadow: 'var(--shadow-sm)',
               position: 'relative',
-              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              overflow: 'hidden'
             }}
           >
             {/* Candidate Title & Date Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <User size={18} color="var(--skarion-orange)" />
-                <span style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--skarion-navy)', letterSpacing: '-0.01em' }}>
+                <span style={{ fontWeight: '900', fontSize: '1.05rem', color: 'var(--skarion-navy)', letterSpacing: '-0.01em' }}>
                   {currentNote.studentName}
                 </span>
               </div>
@@ -252,16 +259,21 @@ export default function TickerBar({ students, onSelectStudent }) {
               </div>
             </div>
 
-            {/* Observation Quote Body */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-              <Quote size={22} color="var(--skarion-orange)" style={{ flexShrink: 0, marginTop: '2px', opacity: 0.8 }} />
+            {/* Observation Quote Body with Line Clamping */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', overflow: 'hidden' }}>
+              <Quote size={20} color="var(--skarion-orange)" style={{ flexShrink: 0, marginTop: '2px', opacity: 0.8 }} />
               <p style={{ 
-                fontSize: '1rem', 
+                fontSize: '0.94rem', 
                 color: 'var(--text-main)', 
-                lineHeight: '1.65', 
+                lineHeight: '1.5', 
                 margin: 0, 
                 fontWeight: '600',
-                fontStyle: 'italic'
+                fontStyle: 'italic',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
               }}>
                 {currentNote.content}
               </p>
