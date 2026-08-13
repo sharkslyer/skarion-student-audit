@@ -231,6 +231,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     const initials = rawSpeaker.split(/\s+/).map(p => p[0]).join('').substring(0, 2).toUpperCase();
 
     // Distinct Evaluator & Candidate Color Themes
+    const evaluatorKey = evalCfg ? evalCfg.label.toLowerCase() : isCandidate ? 'candidate' : 'interviewer';
+
     const speakerTheme = evalCfg ? {
       bg: evalCfg.bg,
       border: evalCfg.border,
@@ -238,7 +240,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       badgeBg: evalCfg.badgeBg || evalCfg.text,
       badgeText: '#ffffff',
       gradientStart: evalCfg.text,
-      gradientEnd: evalCfg.border
+      gradientEnd: evalCfg.border,
+      evaluatorKey
     } : isCandidate ? {
       bg: 'rgba(99, 102, 241, 0.08)',
       border: 'rgba(99, 102, 241, 0.3)',
@@ -246,7 +249,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       badgeBg: '#4f46e5',
       badgeText: '#ffffff',
       gradientStart: '#6366f1',
-      gradientEnd: '#4338ca'
+      gradientEnd: '#4338ca',
+      evaluatorKey
     } : {
       bg: 'rgba(2, 132, 199, 0.08)',
       border: 'rgba(2, 132, 199, 0.3)',
@@ -254,7 +258,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       badgeBg: '#0284c7',
       badgeText: '#ffffff',
       gradientStart: '#0284c7',
-      gradientEnd: '#0369a1'
+      gradientEnd: '#0369a1',
+      evaluatorKey
     };
 
     return (
@@ -292,6 +297,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
         {/* Chat Speech Bubble */}
         <div 
+          className={`chat-bubble-card evaluator-${speakerTheme.evaluatorKey}`}
           style={{ 
             maxWidth: '84%',
             background: speakerTheme.bg,
@@ -305,7 +311,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           {/* Top Bar: Speaker Name & Role + Timestamp */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <span style={{ fontWeight: '900', fontSize: '0.86rem', color: speakerTheme.text }}>
+              <span className="chat-speaker-name" style={{ fontWeight: '900', fontSize: '0.86rem', color: speakerTheme.text }}>
                 {rawSpeaker}
               </span>
               <span style={{ 
@@ -322,7 +328,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
             </div>
 
             {timeTag && (
-              <span style={{ 
+              <span className="chat-timestamp-badge" style={{ 
                 fontSize: '0.72rem', 
                 color: 'var(--text-muted)', 
                 fontWeight: '800', 
@@ -337,9 +343,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           </div>
 
           {/* Dialogue Body Text */}
-          <div style={{ 
+          <div className="chat-bubble-text" style={{ 
             fontSize: `${transcriptFontSize}px`, 
-            color: 'var(--text-main)', 
             lineHeight: '1.68', 
             fontWeight: '400',
             whiteSpace: 'pre-wrap',

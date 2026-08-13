@@ -444,3 +444,98 @@ body {
   border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-1px);
 }
+
+/* ==========================================================================
+   Chat Bubble High-Contrast Theme System (Light Mode & Night Mode / Dark Mode)
+   ========================================================================== */
+
+.chat-bubble-card {
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, background-color 0.25s ease, border-color 0.25s ease;
+}
+
+/* Light Mode: Body text is dark charcoal for 100% legibility on light pastel backgrounds */
+.chat-bubble-text {
+  color: #0f172a;
+}
+
+/* --------------------------------------------------------------------------
+   Night Mode (Dark Mode) High-Contrast Overrides
+   -------------------------------------------------------------------------- */
+[data-theme="dark"] .chat-bubble-card.evaluator-faisal {
+  background-color: rgba(22, 163, 74, 0.18) !important;
+  border-color: rgba(74, 222, 128, 0.4) !important;
+}
+[data-theme="dark"] .chat-bubble-card.evaluator-faisal .chat-speaker-name {
+  color: #4ade80 !important;
+}
+
+[data-theme="dark"] .chat-bubble-card.evaluator-mayukh {
+  background-color: rgba(225, 29, 72, 0.18) !important;
+  border-color: rgba(251, 113, 133, 0.4) !important;
+}
+[data-theme="dark"] .chat-bubble-card.evaluator-mayukh .chat-speaker-name {
+  color: #fb7185 !important;
+}
+
+[data-theme="dark"] .chat-bubble-card.evaluator-kasshaf {
+  background-color: rgba(2, 132, 199, 0.18) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+[data-theme="dark"] .chat-bubble-card.evaluator-kasshaf .chat-speaker-name {
+  color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .chat-bubble-card.evaluator-ferdous {
+  background-color: rgba(124, 58, 237, 0.18) !important;
+  border-color: rgba(196, 181, 253, 0.4) !important;
+}
+[data-theme="dark"] .chat-bubble-card.evaluator-ferdous .chat-speaker-name {
+  color: #c4b5fd !important;
+}
+
+[data-theme="dark"] .chat-bubble-card.evaluator-piyas {
+  background-color: rgba(234, 88, 12, 0.18) !important;
+  border-color: rgba(253, 186, 116, 0.4) !important;
+}
+[data-theme="dark"] .chat-bubble-card.evaluator-piyas .chat-speaker-name {
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .chat-bubble-card.evaluator-saki {
+  background-color: rgba(202, 138, 4, 0.18) !important;
+  border-color: rgba(253, 224, 71, 0.4) !important;
+}
+[data-theme="dark"] .chat-bubble-card.evaluator-saki .chat-speaker-name {
+  color: #fde047 !important;
+}
+
+[data-theme="dark"] .chat-bubble-card.evaluator-candidate,
+[data-theme="dark"] .chat-bubble-card.candidate-card {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+  border-color: rgba(165, 180, 252, 0.4) !important;
+}
+[data-theme="dark"] .chat-bubble-card.evaluator-candidate .chat-speaker-name,
+[data-theme="dark"] .chat-bubble-card.candidate-card .chat-speaker-name {
+  color: #a5b4fc !important;
+}
+
+[data-theme="dark"] .chat-bubble-card.evaluator-interviewer {
+  background-color: rgba(2, 132, 199, 0.18) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+[data-theme="dark"] .chat-bubble-card.evaluator-interviewer .chat-speaker-name {
+  color: #38bdf8 !important;
+}
+
+/* In Dark Mode, dialogue body text is bright white over dark translucent cards */
+[data-theme="dark"] .chat-bubble-text {
+  color: #f8fafc !important;
+}
+
+/* In Dark Mode, timestamp badge is clear dark surface with white text */
+[data-theme="dark"] .chat-timestamp-badge {
+  background-color: #0f172a !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
