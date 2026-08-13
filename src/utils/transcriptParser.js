@@ -1,7 +1,18 @@
 /**
  * Smart Transcript Auto-Organizer Utility
- * Cleans and formats raw meeting copy-pastes (MS Teams, Google Meet, Zoom, etc.)
+ * Strict Whitelist-Based Speaker Parser
+ * Evaluator Whitelist: Kasshaf, Faisal, Saki, Ferdous, Piyas, Mayukh, Tashfia
+ * Candidate Whitelist: Active Candidate Roster Names (Maahir, Ahmed, etc.)
  */
+
+const ALLOWED_EVALUATOR_NAMES = [
+  'kasshaf', 'faisal', 'saki', 'ferdous', 'piyas', 'mayukh', 'tashfia', 'interviewer', 'evaluator'
+];
+
+const DEFAULT_CANDIDATE_ROSTER_NAMES = [
+  'maahir', 'mahir', 'ahmed', 'ananya', 'avirup', 'rahul', 'fatima', 'tanvir', 'zayn',
+  'ahasanul', 'tahmeed', 'sadman', 'yulun', 'candidate'
+];
 
 export function cleanSpeakerName(name) {
   if (!name) return '';
@@ -15,8 +26,18 @@ export function cleanSpeakerName(name) {
   if (lower.includes('kasshaf')) return 'Kasshaf';
   if (lower.includes('piyas')) return 'Piyas';
   if (lower.includes('saki')) return 'Saki';
-  if (lower.includes('maahir')) return 'Maahir';
+  if (lower.includes('tashfia')) return 'Tashfia';
+  if (lower.includes('maahir') || lower.includes('mahir')) return 'Maahir';
   if (lower.includes('ahmed')) return 'Ahmed';
+  if (lower.includes('ananya')) return 'Ananya';
+  if (lower.includes('rahul')) return 'Rahul';
+  if (lower.includes('fatima')) return 'Fatima';
+  if (lower.includes('tanvir')) return 'Tanvir';
+  if (lower.includes('zayn')) return 'Zayn';
+  if (lower.includes('ahasanul')) return 'Ahasanul';
+  if (lower.includes('tahmeed')) return 'Tahmeed';
+  if (lower.includes('sadman')) return 'Sadman';
+  if (lower.includes('yulun')) return 'Yulun';
   if (lower.includes('interviewer')) return 'Interviewer';
   if (lower.includes('candidate')) return 'Candidate';
   
@@ -24,6 +45,30 @@ export function cleanSpeakerName(name) {
   cleaned = cleaned.replace(/^(md|mr|ms|mrs|dr)\.?\s+/i, '');
   const parts = cleaned.split(/\s+/).filter(p => !['md', 'ali', 'ahnaf', 'abid', 'hasan', 'akash', 'bhattacharjee', 'mahmud', 'ahmad', 'azmain', 'chowdhury'].includes(p.toLowerCase()));
   return parts[0] || cleaned;
+}
+
+export function isWhitelistedSpeaker(rawSpeakerName, extraCandidateNames = []) {
+  if (!rawSpeakerName) return false;
+  const cleaned = cleanSpeakerName(rawSpeakerName).toLowerCase().trim();
+  if (!cleaned || cleaned.length < 2) return false;
+
+  // 1. Check against Evaluator Whitelist
+  if (ALLOWED_EVALUATOR_NAMES.some(e => cleaned === e || (e.length >= 3 && cleaned.includes(e)))) {
+    return true;
+  }
+
+  // 2. Check against Candidate Roster Names
+  const candidateWhitelist = [
+    ...DEFAULT_CANDIDATE_ROSTER_NAMES,
+    ...extraCandidateNames.map(n => cleanSpeakerName(n).toLowerCase().trim())
+  ];
+
+  if (candidateWhitelist.some(c => c === cleaned || (c.length >= 3 && cleaned.includes(c)))) {
+    return true;
+  }
+
+  // Anything else is strictly NOT a whitelisted speaker!
+  return false;
 }
 
 export function extractTimestamp(str) {
@@ -55,7 +100,7 @@ export function extractTimestamp(str) {
   return '';
 }
 
-export function parseAndOrganizeTranscript(rawText) {
+export function parseAndOrganizeTranscript(rawText, extraCandidateNames = []) {
   if (!rawText || !rawText.trim()) return '';
 
   const lines = rawText.split('\n');
@@ -92,8 +137,6 @@ export function parseAndOrganizeTranscript(rawText) {
     );
   };
 
-  const commonSpeechWords = ['hello', 'hi', 'yes', 'no', 'okay', 'ok', 'good', 'yeah', 'alright', 'thanks', 'thank', 'bye', 'welcome', 'sure'];
-
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
@@ -119,30 +162,29 @@ export function parseAndOrganizeTranscript(rawText) {
     const formattedMatch = line.match(/^([^:\[\n]{2,35})(?:\s*\[(\d{1,2}:\d{2})\])?\s*:(.*)$/);
     if (formattedMatch) {
       const candidateName = cleanSpeakerName(formattedMatch[1]);
-      if (candidateName && candidateName.length >= 2 && !commonSpeechWords.includes(candidateName.toLowerCase())) {
+      if (isWhitelistedSpeaker(candidateName, extraCandidateNames)) {
         detectedSpeaker = candidateName;
         detectedTime = formattedMatch[2] || '';
         contentAfterHeader = formattedMatch[3].trim();
       }
     }
 
-    // Scenario B: Raw Teams header line like "Ahmed Chowdhury 0 minutes 7 seconds" or "Md Ali Ahnaf Abid Mayukh 0:04"
+    // Scenario B: Raw Teams header line like "Faisal Mahmud 0:11" or "Maahir Azmain Chowdhury 0:03"
     if (!detectedSpeaker && (/^[A-Za-z\s\.\-]{2,40}\s+\d+\s*minutes?/i.test(line) || /^[A-Za-z\s\.\-]{2,40}\s+\d+:\d{2}$/i.test(line))) {
       const parts = line.match(/^(.*?)\s*(\d+\s*minutes?.*|\d+:\d{2}.*)$/i);
       if (parts) {
-        detectedSpeaker = cleanSpeakerName(parts[1]);
-        detectedTime = extractTimestamp(parts[2]);
+        const candidateName = cleanSpeakerName(parts[1]);
+        if (isWhitelistedSpeaker(candidateName, extraCandidateNames)) {
+          detectedSpeaker = candidateName;
+          detectedTime = extractTimestamp(parts[2]);
+        }
       }
     }
 
-    // Scenario C: Standalone Name line like "Maahir Azmain Chowdhury", "Faisal Mahmud", "Ahmed Chowdhury"
+    // Scenario C: Standalone Name line (STRICTLY Whitelisted Speakers Only!)
     if (!detectedSpeaker) {
       const candidateName = cleanSpeakerName(line);
-      const isNotSpeechWord = !commonSpeechWords.includes(candidateName.toLowerCase());
-      const isShortName = candidateName.length >= 2 && candidateName.length <= 35;
-      const hasNoPunctuation = !/[\.\,\?\!\:\;]/.test(line);
-
-      if (isShortName && isNotSpeechWord && hasNoPunctuation) {
+      if (isWhitelistedSpeaker(candidateName, extraCandidateNames)) {
         detectedSpeaker = candidateName;
       }
     }
