@@ -308,50 +308,52 @@ export default function App() {
         setSelectedRatingFilter={setSelectedRatingFilter}
       />
 
-      {/* Main Content Area based on View Switcher */}
-      {activeView === 'table' && (
-        <StudentTable 
-          students={filteredStudents}
-          onUpdateStudent={handleUpdateStudent}
-          onDeleteStudent={handleDeleteStudent}
-          onSelectStudent={(student) => setSelectedDetailStudent(student)}
-          onAddNoteForStudent={(student) => setSelectedDetailStudent(student)}
-        />
-      )}
+      {/* Main Content Area with Smooth Tab Switching Animation */}
+      <div key={activeView} className="animate-fade-in-up">
+        {activeView === 'table' && (
+          <StudentTable 
+            students={filteredStudents}
+            onUpdateStudent={handleUpdateStudent}
+            onDeleteStudent={handleDeleteStudent}
+            onSelectStudent={(student) => setSelectedDetailStudent(student)}
+            onAddNoteForStudent={(student) => setSelectedDetailStudent(student)}
+          />
+        )}
 
-      {activeView === 'sticky' && (
-        <StickyNotesBoard 
-          students={safeStudentsList}
-          onAddStickyNote={handleAddStickyNote}
-          onDeleteStickyNote={handleDeleteStickyNote}
-          onTogglePinStickyNote={handleTogglePinStickyNote}
-          onSelectStudent={(student) => setSelectedDetailStudent(student)}
-        />
-      )}
+        {activeView === 'sticky' && (
+          <StickyNotesBoard 
+            students={safeStudentsList}
+            onAddStickyNote={handleAddStickyNote}
+            onDeleteStickyNote={handleDeleteStickyNote}
+            onTogglePinStickyNote={handleTogglePinStickyNote}
+            onSelectStudent={(student) => setSelectedDetailStudent(student)}
+          />
+        )}
 
-      {activeView === 'calendar' && (
-        <CalendarView 
-          students={safeStudentsList}
-          onSelectStudent={(student) => setSelectedDetailStudent(student)}
-        />
-      )}
+        {activeView === 'calendar' && (
+          <CalendarView 
+            students={safeStudentsList}
+            onSelectStudent={(student) => setSelectedDetailStudent(student)}
+          />
+        )}
 
-      {activeView === 'mock' && (
-        <MockInterviewView 
-          students={safeStudentsList}
-          onSaveStudent={handleSaveStudent}
-          onSelectStudent={(student) => setSelectedDetailStudent(student)}
-          showToast={showToast}
-        />
-      )}
+        {activeView === 'mock' && (
+          <MockInterviewView 
+            students={safeStudentsList}
+            onSaveStudent={handleSaveStudent}
+            onSelectStudent={(student) => setSelectedDetailStudent(student)}
+            showToast={showToast}
+          />
+        )}
 
-      {activeView === 'placed' && (
-        <PlacedCandidatesView 
-          students={safeStudentsList}
-          onSelectStudent={(student) => setSelectedDetailStudent(student)}
-          onOpenAddModal={() => { setEditingStudent(null); setIsAddEditModalOpen(true); }}
-        />
-      )}
+        {activeView === 'placed' && (
+          <PlacedCandidatesView 
+            students={safeStudentsList}
+            onSelectStudent={(student) => setSelectedDetailStudent(student)}
+            onOpenAddModal={() => { setEditingStudent(null); setIsAddEditModalOpen(true); }}
+          />
+        )}
+      </div>
 
       {/* Add / Edit Student Modal */}
       <StudentFormModal 
