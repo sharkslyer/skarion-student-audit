@@ -12,10 +12,9 @@ export function parseAndOrganizeTranscript(rawText) {
   let currentTimestamp = '';
   let currentLines = [];
 
-  // Helper to extract clean name from raw name line
   const cleanSpeakerName = (name) => {
     if (!name) return '';
-    const cleaned = name.replace(/\d+.*$/, '').replace(/[\(\)\[\]]/g, '').trim();
+    const cleaned = name.replace(/\d+.*$/, '').replace(/[\(\)\[\]:]/g, '').trim();
     const lower = cleaned.toLowerCase();
     
     if (lower.includes('mayukh')) return 'Mayukh';
@@ -28,12 +27,10 @@ export function parseAndOrganizeTranscript(rawText) {
     if (lower.includes('interviewer')) return 'Interviewer';
     if (lower.includes('candidate')) return 'Candidate';
     
-    // Return clean name
     const parts = cleaned.split(/\s+/).filter(p => !['md', 'ali', 'ahnaf', 'abid', 'hasan', 'akash', 'bhattacharjee', 'mahmud', 'ahmad'].includes(p.toLowerCase()));
-    return parts.length > 0 ? parts.join(' ') : cleaned;
+    return parts[0] || cleaned;
   };
 
-  // Helper to extract timestamp (e.g. "0 minutes 4 seconds", "0:04", "34:02")
   const extractTimestamp = (str) => {
     if (!str) return '';
     const minSecMatch = str.match(/(\d+)\s*minutes?\s*(\d+)?\s*seconds?/i);
@@ -52,47 +49,44 @@ export function parseAndOrganizeTranscript(rawText) {
   };
 
   const isInitialsLine = (line) => /^[A-Z]{1,3}$/.test(line.trim());
-  const isTeamsNoiseLine = (line) => 
-    /^\d+\s*minutes?\s*\d*\s*seconds?\d+:\d+$/i.test(line.trim()) ||
-    /^\d+\s*minutes?\s*\d*\s*seconds?$/i.test(line.trim()) ||
-    /^\d+:\d{2}$/.test(line.trim());
-
-  // Clean sentence text formatting
-  const cleanDialogueText = (linesArr) => {
-    let joined = linesArr.join(' ')
-      .replace(/\s+/g, ' ')
-      .replace(/\s+([,\.\?\!])/g, '$1')
-      .replace(/\.\s*\./g, '.')
-      .trim();
-
-    return joined;
-  };
+  const isNoiseLine = (line) => /^\d+\s*minutes?\s*\d*\s*seconds?\d+:\d+$/i.test(line.trim());
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
-    // Skip Teams avatar initials noise (e.g. "AB", "M", "KA", "FM", "FH")
     if (isInitialsLine(line)) continue;
-    // Skip Teams timestamp noise lines
-    if (isTeamsNoiseLine(line)) continue;
+    if (isNoiseLine(line)) continue;
 
     let detectedSpeaker = '';
     let detectedTime = '';
+    let contentAfterHeader = '';
 
-    // Check if line contains speaker name + timestamp (e.g. "Md Ali Ahnaf Abid Mayukh 0 minutes 4 seconds")
-    if (/^\D+\s+\d+\s*minutes?/i.test(line) || /^\D+\s+\d+:\d{2}$/i.test(line)) {
+    // Scenario A: Formatted dialogue like "Mayukh [00:04]: Dialogue content..." or "Mayukh: Dialogue content..."
+    const formattedMatch = line.match(/^([^:\[\n]+)(?:\s*\[(\d{1,2}:\d{2})\])?\s*:(.*)$/);
+    if (formattedMatch) {
+      const possibleSpeaker = cleanSpeakerName(formattedMatch[1]);
+      const known = ['Mayukh', 'Avirup', 'Faisal', 'Ferdous', 'Kasshaf', 'Piyas', 'Saki', 'Interviewer', 'Candidate'].includes(possibleSpeaker);
+      if (known) {
+        detectedSpeaker = possibleSpeaker;
+        detectedTime = formattedMatch[2] || '';
+        contentAfterHeader = formattedMatch[3].trim();
+      }
+    }
+
+    // Scenario B: Raw Teams header like "Md Ali Ahnaf Abid Mayukh 0 minutes 4 seconds"
+    if (!detectedSpeaker && (/^\D+\s+\d+\s*minutes?/i.test(line) || /^\D+\s+\d+:\d{2}$/i.test(line))) {
       const parts = line.match(/^(.*?)\s*(\d+\s*minutes?.*|\d+:\d{2}.*)$/i);
       if (parts) {
         detectedSpeaker = cleanSpeakerName(parts[1]);
         detectedTime = extractTimestamp(parts[2]);
       }
-    } else {
-      // Check if line is just a speaker name or known evaluator/candidate
-      const possibleName = cleanSpeakerName(line);
-      const knownSpeakers = ['Mayukh', 'Avirup', 'Faisal', 'Ferdous', 'Kasshaf', 'Piyas', 'Saki', 'Interviewer', 'Candidate'];
-      const isKnown = knownSpeakers.some(k => possibleName.toLowerCase().includes(k.toLowerCase()));
+    }
 
+    // Scenario C: Line is just a speaker name line like "Md Ali Ahnaf Abid Mayukh"
+    if (!detectedSpeaker) {
+      const possibleName = cleanSpeakerName(line);
+      const isKnown = ['Mayukh', 'Avirup', 'Faisal', 'Ferdous', 'Kasshaf', 'Piyas', 'Saki', 'Interviewer', 'Candidate'].includes(possibleName);
       if (isKnown && !line.includes('minutes') && !/^\d+:\d{2}$/.test(line) && line.length < 40) {
         detectedSpeaker = possibleName;
       }
@@ -100,15 +94,15 @@ export function parseAndOrganizeTranscript(rawText) {
 
     if (detectedSpeaker) {
       if (currentSpeaker && currentLines.length > 0) {
-        const textContent = cleanDialogueText(currentLines);
-        if (textContent) {
+        const fullText = currentLines.join(' ').trim();
+        if (fullText) {
           if (blocks.length > 0 && blocks[blocks.length - 1].speaker === currentSpeaker) {
-            blocks[blocks.length - 1].text = cleanDialogueText([blocks[blocks.length - 1].text, textContent]);
+            blocks[blocks.length - 1].text += ' ' + fullText;
           } else {
             blocks.push({
               speaker: currentSpeaker,
               timestamp: currentTimestamp,
-              text: textContent
+              text: fullText
             });
           }
         }
@@ -117,38 +111,38 @@ export function parseAndOrganizeTranscript(rawText) {
 
       currentSpeaker = detectedSpeaker;
       if (detectedTime) currentTimestamp = detectedTime;
+      if (contentAfterHeader) {
+        currentLines.push(contentAfterHeader);
+      }
     } else {
-      // Check if line contains timestamp by itself
       const timeOnly = extractTimestamp(line);
       if (timeOnly && line.length < 30 && !currentTimestamp) {
         currentTimestamp = timeOnly;
         continue;
       }
 
-      // Filter out duplicate name lines
       if (line !== currentSpeaker && !line.includes('minutes') && !/^\d+:\d{2}$/.test(line)) {
         currentLines.push(line);
       }
     }
   }
 
-  // Push final block
+  // Push last block
   if (currentSpeaker && currentLines.length > 0) {
-    const textContent = cleanDialogueText(currentLines);
-    if (textContent) {
+    const fullText = currentLines.join(' ').trim();
+    if (fullText) {
       if (blocks.length > 0 && blocks[blocks.length - 1].speaker === currentSpeaker) {
-        blocks[blocks.length - 1].text = cleanDialogueText([blocks[blocks.length - 1].text, textContent]);
+        blocks[blocks.length - 1].text += ' ' + fullText;
       } else {
         blocks.push({
           speaker: currentSpeaker,
           timestamp: currentTimestamp,
-          text: textContent
+          text: fullText
         });
       }
     }
   }
 
-  // Return organized, structured transcript markdown
   if (blocks.length > 0) {
     return blocks.map(b => {
       const timeStr = b.timestamp ? ` [${b.timestamp}]` : '';
