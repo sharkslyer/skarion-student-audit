@@ -875,22 +875,45 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
                     {hasTranscript ? (
                       <button 
-                        className="btn-primary"
+                        className="btn-transcript-cool"
                         onClick={() => openTranscriptModal(session, false)}
                         style={{ 
                           width: '100%', 
-                          background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', 
+                          background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #4c1d95 100%)', 
                           color: '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
-                          justify: 'center',
-                          gap: '0.5rem',
-                          height: '38px',
-                          fontSize: '0.82rem',
-                          boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
+                          justifyContent: 'space-between',
+                          padding: '0.6rem 1rem',
+                          height: '42px',
+                          borderRadius: '12px',
+                          fontSize: '0.84rem',
+                          fontWeight: '800',
+                          border: '1px solid rgba(255, 255, 255, 0.25)',
+                          boxShadow: '0 6px 20px rgba(124, 58, 237, 0.35)',
+                          cursor: 'pointer',
+                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
                         }}
                       >
-                        <BookOpen size={16} /> View Full Transcript ({wordCount} words)
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                          <BookOpen size={16} color="#ffffff" />
+                          <span>View Full Dialogue Transcript</span>
+                        </div>
+                        <div style={{
+                          background: 'rgba(255, 255, 255, 0.2)',
+                          backdropFilter: 'blur(4px)',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '20px',
+                          fontSize: '0.74rem',
+                          fontWeight: '800',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}>
+                          <span>{wordCount} words</span>
+                          <ArrowRight size={13} />
+                        </div>
                       </button>
                     ) : (
                       <button 
@@ -1107,7 +1130,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
       {/* User-Friendly Long Screen Reader & Editor Modal Dialog */}
       {activeTranscriptSession && (
-        <div className="modal-backdrop" onClick={() => setActiveTranscriptSession(null)}>
+        <div className="transcript-modal-backdrop" onClick={() => setActiveTranscriptSession(null)}>
           <div 
             className="modal-content" 
             onClick={(e) => e.stopPropagation()} 
