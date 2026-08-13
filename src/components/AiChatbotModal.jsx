@@ -480,19 +480,21 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
             <button 
               onClick={() => setIsOpen(false)}
               style={{
-                background: 'rgba(255, 255, 255, 0.15)',
+                background: 'rgba(255, 255, 255, 0.2)',
                 border: 'none',
                 color: '#ffffff',
-                width: '30px',
-                height: '30px',
+                width: '32px',
+                height: '32px',
                 borderRadius: '50%',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'center'
+                justify: 'center',
+                padding: 0,
+                flexShrink: 0
               }}
             >
-              <X size={18} />
+              <X size={18} color="#ffffff" style={{ display: 'block', margin: 'auto' }} />
             </button>
           </div>
 
@@ -691,9 +693,9 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
             <button
               type="submit"
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
                 background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
                 border: 'none',
                 color: '#ffffff',
@@ -701,10 +703,11 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
                 display: 'flex',
                 alignItems: 'center',
                 justify: 'center',
+                padding: 0,
                 flexShrink: 0
               }}
             >
-              <Send size={16} />
+              <Send size={18} color="#ffffff" style={{ display: 'block', margin: '0 auto' }} />
             </button>
           </form>
 

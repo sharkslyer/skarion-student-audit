@@ -277,6 +277,30 @@ body {
   border-color: var(--skarion-navy);
 }
 
+/* Global Dead-Centering for All Icon Buttons, SVGs & Avatars */
+button, .btn-icon, .btn-primary, .btn-secondary, .btn-navy {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+button svg, .btn-icon svg, .btn-primary svg, .btn-secondary svg {
+  display: block;
+  margin: 0 auto;
+  align-self: center;
+  justify-self: center;
+}
+
+/* Avatar Initials Dead Centering */
+.avatar-circle, [class*="avatar"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
 /* Modals */
 .modal-backdrop {
   position: fixed;
