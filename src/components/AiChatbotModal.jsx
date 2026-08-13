@@ -1,5 +1,132 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, Sparkles, User, MessageSquare, ArrowRight, CornerDownLeft, RefreshCw } from 'lucide-react';
+import { X, Send, Sparkles, User, ArrowRight, Pause, Play, RefreshCcw } from 'lucide-react';
+
+// Friendly Cute AI Face Mascot Component
+function CuteMascotAvatar({ size = 36 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, filter: 'drop-shadow(0 3px 8px rgba(124, 58, 237, 0.4))' }}>
+      <defs>
+        <linearGradient id="cuteMascotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+      </defs>
+      
+      {/* Antenna */}
+      <line x1="20" y1="8" x2="20" y2="3" stroke="#e9d5ff" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="20" cy="3" r="2.5" fill="#ff5252" />
+      
+      {/* Ears / Side Bolts */}
+      <rect x="1" y="18" width="3" height="8" rx="1.5" fill="#c084fc" />
+      <rect x="36" y="18" width="3" height="8" rx="1.5" fill="#c084fc" />
+
+      {/* Head Outer Box */}
+      <rect x="4" y="8" width="32" height="28" rx="14" fill="url(#cuteMascotGrad)" />
+
+      {/* Face Screen */}
+      <rect x="7" y="11" width="26" height="22" rx="11" fill="#0f172a" opacity="0.9" />
+      
+      {/* Shiny Sparkle Eyes */}
+      <circle cx="14" cy="20" r="3.2" fill="#ffffff" />
+      <circle cx="26" cy="20" r="3.2" fill="#ffffff" />
+      <circle cx="15.2" cy="18.8" r="1.2" fill="#38bdf8" />
+      <circle cx="27.2" cy="18.8" r="1.2" fill="#38bdf8" />
+
+      {/* Rosy Pink Cheeks */}
+      <circle cx="11" cy="24" r="2" fill="#fb7185" opacity="0.85" />
+      <circle cx="29" cy="24" r="2" fill="#fb7185" opacity="0.85" />
+
+      {/* Sweet Happy Smile */}
+      <path d="M16.5 24.5 Q20 28.5 23.5 24.5" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+// Clean Formatted Message Renderer (Strips raw markdown symbols like ### and **)
+function renderFormattedMessage(text) {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+      {lines.map((line, idx) => {
+        let clean = line.trim();
+        if (!clean) return <div key={idx} style={{ height: '4px' }} />;
+
+        // Headers starting with ### or ####
+        if (clean.startsWith('###') || clean.startsWith('####')) {
+          const headerText = clean.replace(/^[#\s]+/, '').replace(/\*\*/g, '').replace(/`/g, '');
+          return (
+            <div key={idx} style={{ 
+              fontWeight: '900', 
+              fontSize: '0.92rem', 
+              color: 'var(--skarion-navy)', 
+              marginTop: idx > 0 ? '0.45rem' : '0',
+              marginBottom: '0.2rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem'
+            }}>
+              {headerText}
+            </div>
+          );
+        }
+
+        // Bullet point lines starting with -
+        if (clean.startsWith('-')) {
+          const bulletContent = clean.substring(1).trim();
+          const parts = bulletContent.split(/\*\*/);
+
+          return (
+            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.84rem' }}>
+              <span style={{ color: '#7c3aed', fontWeight: '900', marginTop: '1px' }}>•</span>
+              <div>
+                {parts.map((part, pIdx) => {
+                  if (pIdx % 2 === 1) {
+                    return <strong key={pIdx} style={{ fontWeight: '800' }}>{part}</strong>;
+                  }
+                  // Clean inline code ticks like `GOOD`
+                  const tickParts = part.split(/`/);
+                  return tickParts.map((tPart, tIdx) => {
+                    if (tIdx % 2 === 1) {
+                      return (
+                        <span key={tIdx} style={{ 
+                          background: 'rgba(124, 58, 237, 0.12)', 
+                          color: '#7c3aed', 
+                          fontWeight: '800', 
+                          padding: '1px 6px', 
+                          borderRadius: '4px',
+                          fontSize: '0.78rem',
+                          margin: '0 2px'
+                        }}>
+                          {tPart}
+                        </span>
+                      );
+                    }
+                    return tPart;
+                  });
+                })}
+              </div>
+            </div>
+          );
+        }
+
+        // Normal paragraph lines
+        const parts = clean.split(/\*\*/);
+        return (
+          <p key={idx} style={{ margin: 0, fontSize: '0.86rem', lineHeight: '1.55' }}>
+            {parts.map((part, pIdx) => {
+              if (pIdx % 2 === 1) {
+                return <strong key={pIdx} style={{ fontWeight: '800' }}>{part}</strong>;
+              }
+              return part;
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 function generateAiResponse(query, students) {
   const q = query.toLowerCase().trim();
@@ -17,26 +144,26 @@ function generateAiResponse(query, students) {
     const latestMock = mocks[mocks.length - 1];
     const notes = matchedStudent.stickyNotes || [];
 
-    let resp = `### 👤 **${matchedStudent.name}** Profile Overview\n\n`;
+    let resp = `### 👤 ${matchedStudent.name} Profile Overview\n\n`;
     resp += `- **Current Status**: \`${(matchedStudent.rating || 'good').toUpperCase()}\` (${matchedStudent.progress || 0}% progress)\n`;
     resp += `- **Mock Interviews Completed**: ${matchedStudent.mockInterviews || 0}\n`;
 
     if (matchedStudent.rating === 'placed') {
-      resp += `- 🎓 **Placement**: Placed at **${matchedStudent.placementCompany || 'Tech Company'}** as **${matchedStudent.placementRole || 'Developer'}** on ${matchedStudent.placementDate || '2026'}.\n`;
+      resp += `- 🎓 **Placement**: Placed at **${matchedStudent.placementCompany || 'Tech Corp'}** as **${matchedStudent.placementRole || 'Engineer'}** on ${matchedStudent.placementDate || '2026'}.\n`;
     }
 
     if (latestMock) {
-      resp += `\n#### 🎯 **Latest Mock Evaluation**:
-- **Score**: ⭐ \`${latestMock.score} / 10\` (Evaluator: **${latestMock.evaluator}**)
-- **Category**: \`${latestMock.category}\`
-- **Feedback**: "${latestMock.feedback}"
-- **Strengths**: ${latestMock.strengths || 'N/A'}
-- **Area for Improvement**: ${latestMock.improvement || 'N/A'}\n`;
+      resp += `\n#### 🎯 Latest Mock Evaluation:\n`;
+      resp += `- **Score**: ⭐ \`${latestMock.score} / 10\` (Evaluator: **${latestMock.evaluator}**)\n`;
+      resp += `- **Category**: \`${latestMock.category}\`\n`;
+      resp += `- **Feedback**: "${latestMock.feedback}"\n`;
+      resp += `- **Strengths**: ${latestMock.strengths || 'N/A'}\n`;
+      resp += `- **Area for Improvement**: ${latestMock.improvement || 'N/A'}\n`;
     }
 
     if (notes.length > 0) {
-      resp += `\n#### ✍️ **Recent Audit Observation**:
-- "${notes[0].content}" *(by ${notes[0].author} on ${notes[0].date})*\n`;
+      resp += `\n#### ✍️ Recent Audit Observation:\n`;
+      resp += `- "${notes[0].content}" *(by ${notes[0].author} on ${notes[0].date})*\n`;
     }
 
     return { text: resp, studentId: matchedStudent.id, studentName: matchedStudent.name };
@@ -46,7 +173,7 @@ function generateAiResponse(query, students) {
   if (q.includes('placed') || q.includes('hired') || q.includes('job') || q.includes('offer')) {
     const placedList = students.filter(s => s.rating === 'placed');
     if (placedList.length === 0) return { text: "No candidates are currently marked as Placed." };
-    let resp = `### 🎓 **Placed Candidates (${placedList.length})**\n\n`;
+    let resp = `### 🎓 Placed Candidates (${placedList.length})\n\n`;
     placedList.forEach(s => {
       resp += `- **${s.name}**: Placed at **${s.placementCompany || 'Tech Corp'}** (${s.placementRole || 'Engineer'}) on ${s.placementDate || '2026'}\n`;
     });
@@ -56,7 +183,7 @@ function generateAiResponse(query, students) {
   // 3. Query about High Performers
   if (q.includes('excellent') || q.includes('top') || q.includes('ready') || q.includes('best') || q.includes('star')) {
     const topList = students.filter(s => s.rating === 'excellent' || s.rating === 'placed');
-    let resp = `### 🌟 **Top High-Performing Candidates**\n\n`;
+    let resp = `### 🌟 Top High-Performing Candidates\n\n`;
     topList.forEach(s => {
       resp += `- **${s.name}** (${s.progress}% progress) - Rating: \`${s.rating.toUpperCase()}\`\n`;
     });
@@ -67,7 +194,7 @@ function generateAiResponse(query, students) {
   if (q.includes('attention') || q.includes('help') || q.includes('struggle') || q.includes('bad') || q.includes('risk') || q.includes('weak')) {
     const atRisk = students.filter(s => s.rating === 'needs_attention' || s.rating === 'bad');
     if (atRisk.length === 0) return { text: "🎉 Great news! All active candidates are currently performing well." };
-    let resp = `### ⚠️ **Candidates Requiring Follow-Up (${atRisk.length})**\n\n`;
+    let resp = `### ⚠️ Candidates Requiring Follow-Up (${atRisk.length})\n\n`;
     atRisk.forEach(s => {
       resp += `- **${s.name}** (${s.progress}% progress) - Rating: \`${s.rating.toUpperCase()}\`\n`;
     });
@@ -76,11 +203,11 @@ function generateAiResponse(query, students) {
 
   // 5. Query about Mock Interviews / Scores
   if (q.includes('mock') || q.includes('score') || q.includes('interview') || q.includes('evaluator')) {
-    let resp = `### 🎙️ **Mock Interview Roster Summary**\n\n`;
+    let resp = `### 🎙️ Mock Interview Roster Summary\n\n`;
     const mocked = students.filter(s => s.mockSessions && s.mockSessions.length > 0);
     mocked.slice(0, 5).forEach(s => {
       const last = s.mockSessions[s.mockSessions.length - 1];
-      resp += `- **${s.name}**: Score **${last.score}/10** (Evaluated by ${last.evaluator}, Category: ${last.category})\n`;
+      resp += `- **${s.name}**: Score **${last.score}/10** (Evaluator: ${last.evaluator}, Category: ${last.category})\n`;
     });
     return { text: resp };
   }
@@ -91,12 +218,12 @@ function generateAiResponse(query, students) {
   const placedCount = students.filter(s => s.rating === 'placed').length;
 
   return {
-    text: `I'm **Skarion AI Assistant**! I can answer questions about any candidate in your audit roster.\n\n` +
+    text: `Hello! I'm **Skarion AI Assistant** (◕‿◕). I can answer questions about any candidate in your audit roster.\n\n` +
           `Currently tracking **${total} candidates** (${active} active, ${placedCount} placed).\n\n` +
           `**Try asking me:**\n` +
-          `- *"Tell me about Maahir Azmain Chowdhury"* \n` +
-          `- *"Show me Ahmed Chowdhury's feedback"* \n` +
-          `- *"Who is ready for placement?"* \n` +
+          `- *"Tell me about Maahir Azmain Chowdhury"*\n` +
+          `- *"Show me Ahmed Chowdhury's feedback"*\n` +
+          `- *"Who is ready for placement?"*\n` +
           `- *"Which candidates need attention?"*`
   };
 }
@@ -110,7 +237,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
     {
       id: 'welcome-1',
       sender: 'ai',
-      text: `Hello! I'm **Skarion AI Assistant**. Ask me about candidate progress, mock scores, evaluators, or placement status!`,
+      text: `Hello! I'm **Skarion AI Assistant** (◕‿◕✿). Ask me about candidate progress, mock scores, evaluators, or placement status!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -152,7 +279,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
       };
       setMessages(prev => [...prev, aiMsg]);
       setIsTyping(false);
-    }, 500);
+    }, 450);
   };
 
   const handlePromptChipClick = (promptText) => {
@@ -161,7 +288,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
 
   return (
     <>
-      {/* Floating AI Chatbot Button */}
+      {/* Floating AI Chatbot Button with Cute Mascot */}
       <div 
         style={{ 
           position: 'fixed', 
@@ -175,11 +302,11 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.6rem',
+            gap: '0.65rem',
             background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
             color: '#ffffff',
-            border: '2px solid rgba(255, 255, 255, 0.2)',
-            padding: '0.75rem 1.25rem',
+            border: '2px solid rgba(255, 255, 255, 0.25)',
+            padding: '0.6rem 1.15rem 0.6rem 0.75rem',
             borderRadius: '99px',
             boxShadow: '0 8px 25px rgba(124, 58, 237, 0.45)',
             cursor: 'pointer',
@@ -191,7 +318,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
           className="btn-primary"
           title="Open Skarion AI Assistant"
         >
-          <Bot size={22} color="#ffffff" />
+          <CuteMascotAvatar size={34} />
           <span>Skarion AI</span>
           <span style={{ 
             width: '9px', 
@@ -225,32 +352,22 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
             overflow: 'hidden'
           }}
         >
-          {/* AI Header */}
+          {/* AI Header with Cute Mascot */}
           <div style={{
-            padding: '1rem 1.25rem',
+            padding: '0.95rem 1.25rem',
             background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justify: 'space-between'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <div style={{ 
-                width: '36px', 
-                height: '36px', 
-                borderRadius: '50%', 
-                background: 'rgba(255, 255, 255, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justify: 'center'
-              }}>
-                <Sparkles size={20} color="#ffffff" />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <CuteMascotAvatar size={38} />
               <div>
                 <h3 style={{ margin: 0, fontSize: '0.96rem', fontWeight: '900', color: '#ffffff' }}>
-                  Skarion AI Assistant
+                  Skarion AI Assistant (◕‿◕✿)
                 </h3>
-                <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.8)', fontWeight: '600' }}>
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: '600' }}>
                   Active Roster Intelligence
                 </span>
               </div>
@@ -352,18 +469,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
                 }}
               >
                 {msg.sender === 'ai' ? (
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justify: 'center',
-                    flexShrink: 0
-                  }}>
-                    <Bot size={18} color="#ffffff" />
-                  </div>
+                  <CuteMascotAvatar size={32} />
                 ) : (
                   <div style={{
                     width: '32px',
@@ -390,9 +496,13 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
                   lineHeight: '1.55',
                   boxShadow: 'var(--shadow-sm)'
                 }}>
-                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {msg.text}
-                  </div>
+                  {msg.sender === 'ai' ? (
+                    renderFormattedMessage(msg.text)
+                  ) : (
+                    <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {msg.text}
+                    </div>
+                  )}
 
                   {msg.studentId && (
                     <button
@@ -436,17 +546,7 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
 
             {isTyping && (
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'center'
-                }}>
-                  <Bot size={18} color="#ffffff" />
-                </div>
+                <CuteMascotAvatar size={30} />
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', fontStyle: 'italic' }}>
                   Analyzing roster intelligence...
                 </span>
