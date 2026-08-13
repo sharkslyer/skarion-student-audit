@@ -11,6 +11,7 @@ import PlacedCandidatesView from './components/PlacedCandidatesView';
 import MockInterviewView from './components/MockInterviewView';
 import StudentFormModal from './components/StudentFormModal';
 import StudentDetailModal from './components/StudentDetailModal';
+import AiChatbotModal from './components/AiChatbotModal';
 
 // Defensive sanitizer to ensure no corrupted candidate object can ever crash the React render
 function sanitizeStudents(data) {
@@ -377,6 +378,12 @@ export default function App() {
           setEditingStudent(student);
           setIsAddEditModalOpen(true);
         }}
+      />
+
+      {/* Skarion AI Roster Assistant Floating Chatbot */}
+      <AiChatbotModal 
+        students={safeStudentsList}
+        onSelectStudent={(student) => setSelectedDetailStudent(student)}
       />
     </div>
   );
