@@ -1,7 +1,7 @@
 // SKARION NeonDB PostgreSQL Realtime Sync Engine
 // Connects to NeonDB Cloud Database on https://skarion.vercel.app/api/students
 
-export const STORAGE_KEY = 'SKARION_AUDIT_LOG_NEONDB_V20';
+export const STORAGE_KEY = 'SKARION_AUDIT_LOG_NEONDB_V25';
 export const API_URL = '/api/students';
 
 let broadcastChannel = null;
