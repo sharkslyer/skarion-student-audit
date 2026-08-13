@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
+import { parseAndOrganizeTranscript } from '../utils/transcriptParser';
 
 export default function MockInterviewView({ students, onSaveStudent, onSelectStudent, showToast }) {
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
@@ -80,6 +81,9 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     const studentToUpdate = students.find(s => s.id === targetStudentId);
     if (!studentToUpdate) return;
 
+    // Automatically parse raw transcript if pasted in form
+    const cleanedTranscript = parseAndOrganizeTranscript(mockTranscript.trim());
+
     const newSession = {
       id: `mock-${Date.now()}`,
       date: mockDate || getTodayLocalDate(),
@@ -89,7 +93,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       feedback: mockFeedback.trim(),
       strengths: mockStrengths.trim(),
       improvement: mockImprovement.trim(),
-      transcript: mockTranscript.trim()
+      transcript: cleanedTranscript
     };
 
     const existingSessions = studentToUpdate.mockSessions || [];
@@ -145,13 +149,23 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     setIsEditingTranscript(editMode);
   };
 
+  // Auto-clean raw Teams / Zoom / Meet copy-paste transcript
+  const handleAutoCleanTranscript = () => {
+    if (!transcriptTextBuffer) return;
+    const cleaned = parseAndOrganizeTranscript(transcriptTextBuffer);
+    setTranscriptTextBuffer(cleaned);
+    if (showToast) showToast('Raw meeting transcript auto-cleaned & organized!');
+  };
+
   // Save Transcript changes
   const handleSaveTranscript = () => {
     if (!activeTranscriptSession || !currentStudent) return;
 
+    const cleanedText = parseAndOrganizeTranscript(transcriptTextBuffer.trim());
+
     const updatedSessions = mockSessions.map(s => {
       if (s.id === activeTranscriptSession.id) {
-        return { ...s, transcript: transcriptTextBuffer.trim() };
+        return { ...s, transcript: cleanedText };
       }
       return s;
     });
@@ -164,8 +178,9 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     onSaveStudent(updatedStudent);
     setActiveTranscriptSession({
       ...activeTranscriptSession,
-      transcript: transcriptTextBuffer.trim()
+      transcript: cleanedText
     });
+    setTranscriptTextBuffer(cleanedText);
     setIsEditingTranscript(false);
     if (showToast) showToast('Transcript saved successfully!');
   };
@@ -183,35 +198,54 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     return text.trim().split(/\s+/).length;
   };
 
-  // Helper to format line dialogue nicely
+  // Helper to format line dialogue nicely with timestamps & distinct speaker badges
   const formatDialogueLine = (line) => {
-    const speakerMatch = line.match(/^([^:\n]+):(.*)$/);
+    const speakerMatch = line.match(/^([^:\[\n]+)(?:\s*\[(\d{1,2}:\d{2})\])?\s*:(.*)$/);
     if (speakerMatch) {
-      const speaker = speakerMatch[1].trim();
-      const dialogue = speakerMatch[2];
-      const isInterviewer = /interviewer|mayukh|kasshaf|faisal|saki|ferdous|piyas/i.test(speaker);
+      const rawSpeaker = speakerMatch[1].trim();
+      const timeTag = speakerMatch[2];
+      const dialogue = speakerMatch[3];
+      
+      const evalCfg = EVALUATOR_CONFIG[rawSpeaker];
+      const isInterviewer = Boolean(evalCfg) || /interviewer|mayukh|kasshaf|faisal|saki|ferdous|piyas/i.test(rawSpeaker);
+
+      const badgeStyle = evalCfg ? {
+        color: evalCfg.text,
+        background: evalCfg.bg,
+        border: `1px solid ${evalCfg.border}`
+      } : {
+        color: isInterviewer ? '#0284c7' : '#7c3aed',
+        background: isInterviewer ? 'rgba(56, 189, 248, 0.15)' : 'rgba(124, 58, 237, 0.15)',
+        border: `1px solid ${isInterviewer ? '#bae6fd' : '#ddd6fe'}`
+      };
+
       return (
-        <div style={{ marginBottom: '0.6rem', lineHeight: '1.6' }}>
-          <span style={{ 
-            fontWeight: '800', 
-            fontSize: '0.78rem',
-            background: isInterviewer ? 'rgba(56, 189, 248, 0.15)' : 'rgba(124, 58, 237, 0.15)',
-            color: isInterviewer ? '#0284c7' : '#7c3aed',
-            padding: '2px 8px',
-            borderRadius: '6px',
-            marginRight: '0.5rem',
-            border: `1px solid ${isInterviewer ? '#bae6fd' : '#ddd6fe'}`
-          }}>
-            {speaker}
-          </span>
-          <span style={{ fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)' }}>
-            {dialogue}
-          </span>
+        <div style={{ marginBottom: '0.85rem', background: 'var(--bg-surface)', padding: '0.85rem 1.15rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <span style={{ 
+              fontWeight: '800', 
+              fontSize: '0.78rem',
+              padding: '2px 9px',
+              borderRadius: '6px',
+              ...badgeStyle
+            }}>
+              {rawSpeaker}
+            </span>
+            {timeTag && (
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700', background: 'var(--bg-surface-subtle)', padding: '1px 7px', borderRadius: '4px' }}>
+                [{timeTag}]
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)', lineHeight: '1.65' }}>
+            {dialogue.trim()}
+          </div>
         </div>
       );
     }
+
     return (
-      <div style={{ marginBottom: '0.4rem', fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)', lineHeight: '1.6' }}>
+      <div style={{ marginBottom: '0.55rem', fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)', lineHeight: '1.65' }}>
         {line}
       </div>
     );
@@ -924,15 +958,17 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
               {/* Optional Large Text Box for Copy-Pasting Full Transcript */}
               <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ fontSize: '0.76rem', fontWeight: '800', color: '#7c3aed', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
-                  <FileText size={15} /> Copy-Paste Full Mock Transcript (Optional)
+                <label style={{ fontSize: '0.76rem', fontWeight: '800', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <FileText size={15} /> Copy-Paste Full Mock Transcript (Teams / Zoom / Meet supported)
+                  </span>
                 </label>
                 <textarea 
                   value={mockTranscript} 
                   onChange={(e) => setMockTranscript(e.target.value)} 
                   rows={5} 
                   className="input-control" 
-                  placeholder="Paste verbatim dialogue, transcript text, Q&A logs, or audio-to-text logs here..." 
+                  placeholder="Paste verbatim dialogue from Teams, Zoom, Google Meet or raw text here. It will be automatically formatted!" 
                   style={{ fontSize: '0.84rem', fontFamily: 'inherit', lineHeight: '1.5' }} 
                 />
               </div>
@@ -1048,16 +1084,35 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
               {isEditingTranscript ? (
                 /* EDIT MODE: Large spacious text box for copy-pasting raw transcripts */
                 <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '800', color: '#7c3aed', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>Paste or Edit Raw Mock Transcript Text:</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      {getWordCount(transcriptTextBuffer)} Words | {transcriptTextBuffer.length} Characters
-                    </span>
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: '800', color: '#7c3aed' }}>
+                      Paste Raw Transcript (Teams / Zoom / Meet supported):
+                    </label>
+
+                    {/* Auto-Clean & Organize Button */}
+                    <button 
+                      type="button"
+                      className="btn-primary"
+                      onClick={handleAutoCleanTranscript}
+                      style={{
+                        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                        fontSize: '0.78rem',
+                        height: '34px',
+                        padding: '0 0.85rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                      title="Cleans Teams initials, double timestamps, and groups speaker dialogue cleanly!"
+                    >
+                      <Sparkles size={14} /> Auto-Clean & Format Raw Transcript
+                    </button>
+                  </div>
+
                   <textarea 
                     value={transcriptTextBuffer}
                     onChange={(e) => setTranscriptTextBuffer(e.target.value)}
-                    placeholder="Paste full interview transcript dialogue here (e.g. Interviewer: ..., Candidate: ...)..."
+                    placeholder="Paste full interview transcript copy-paste here from Teams, Zoom, or Google Meet..."
                     style={{ 
                       flex: '1', 
                       width: '100%', 
@@ -1073,17 +1128,24 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       outline: 'none'
                     }}
                   />
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '1rem' }}>
-                    <button className="btn-secondary" onClick={() => setIsEditingTranscript(false)}>
-                      Cancel
-                    </button>
-                    <button 
-                      className="btn-primary" 
-                      onClick={handleSaveTranscript}
-                      style={{ background: '#7c3aed', padding: '0 1.5rem', height: '40px' }}
-                    >
-                      <Send size={15} /> Save Transcript
-                    </button>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+                      {getWordCount(transcriptTextBuffer)} Words | {transcriptTextBuffer.length} Characters
+                    </span>
+
+                    <div style={{ display: 'flex', gap: '0.65rem' }}>
+                      <button className="btn-secondary" onClick={() => setIsEditingTranscript(false)}>
+                        Cancel
+                      </button>
+                      <button 
+                        className="btn-primary" 
+                        onClick={handleSaveTranscript}
+                        style={{ background: '#7c3aed', padding: '0 1.5rem', height: '40px' }}
+                      >
+                        <Send size={15} /> Save Transcript
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -1118,7 +1180,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         No Full Transcript Paste Recorded Yet
                       </h4>
                       <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
-                        Click "Edit Transcript" above to paste the full dialogue log or Q&A transcript for this mock session.
+                        Click "Edit Transcript" above to paste the raw MS Teams or Zoom meeting transcript for this mock session.
                       </p>
                       <button className="btn-primary" onClick={() => setIsEditingTranscript(true)} style={{ background: '#7c3aed' }}>
                         <Plus size={16} /> Paste Transcript Now
@@ -1135,10 +1197,10 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         </span>
                       </div>
 
-                      <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {transcriptTextBuffer.split('\n').map((line, idx) => (
+                      <div>
+                        {parseAndOrganizeTranscript(transcriptTextBuffer).split('\n\n').map((paragraph, idx) => (
                           <React.Fragment key={idx}>
-                            {line.trim() ? formatDialogueLine(line) : <div style={{ height: '0.75rem' }} />}
+                            {formatDialogueLine(paragraph)}
                           </React.Fragment>
                         ))}
                       </div>
