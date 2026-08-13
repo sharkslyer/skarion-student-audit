@@ -6,26 +6,26 @@ export default function TickerBar({ students, onSelectStudent }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [fadeKey, setFadeKey] = useState(0); // Triggers card switch animation
 
-  // Collect all audit notes sorted by date descending
+  // Collect top 10 latest audit notes sorted by date descending
   const recentNotes = students.flatMap(student => 
     (student.stickyNotes || []).map(note => ({
       ...note,
       studentId: student.id,
       studentName: student.name
     }))
-  ).sort((a, b) => new Date(b.date) - new Date(a.date));
+  ).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
 
   const totalNotes = recentNotes.length;
 
-  // Auto-cycle through observations every 4.0 seconds (4000ms) with smooth progress bar
+  // Auto-cycle through top 10 observations every 4.0 seconds (4000ms) with smooth progress bar
   useEffect(() => {
     if (totalNotes <= 1 || isPaused) return;
 
     // Reset progress bar on new card
     setProgress(0);
 
-    // Progress bar update tick every 40ms
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) return 100;
@@ -33,9 +33,9 @@ export default function TickerBar({ students, onSelectStudent }) {
       });
     }, 40);
 
-    // Card change timer every 4 seconds (4000ms)
     const cardTimer = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % totalNotes);
+      setFadeKey(prev => prev + 1);
       setProgress(0);
     }, 4000);
 
@@ -55,16 +55,16 @@ export default function TickerBar({ students, onSelectStudent }) {
   const handlePrev = (e) => {
     e?.stopPropagation();
     setCurrentIndex(prev => (prev - 1 + totalNotes) % totalNotes);
+    setFadeKey(prev => prev + 1);
     setProgress(0);
   };
 
   const handleNext = (e) => {
     e?.stopPropagation();
     setCurrentIndex(prev => (prev + 1) % totalNotes);
+    setFadeKey(prev => prev + 1);
     setProgress(0);
   };
-
-  const initials = (currentNote.author || 'M').substring(0, 2).toUpperCase();
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '1.75rem' }}>
@@ -84,7 +84,7 @@ export default function TickerBar({ students, onSelectStudent }) {
           boxShadow: '0 12px 35px rgba(255, 82, 82, 0.15)',
           position: 'relative',
           overflow: 'hidden',
-          transition: 'all 0.3s ease'
+          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         
@@ -120,7 +120,7 @@ export default function TickerBar({ students, onSelectStudent }) {
               boxShadow: '0 4px 14px rgba(255, 82, 82, 0.4)'
             }}>
               <Sparkles size={15} color="#ffffff" />
-              <span>LIVE OBSERVATION SPOTLIGHT</span>
+              <span>TOP 10 LATEST AUDITS</span>
               <span style={{ 
                 width: '8px', 
                 height: '8px', 
@@ -128,12 +128,12 @@ export default function TickerBar({ students, onSelectStudent }) {
                 background: '#ffffff',
                 display: 'inline-block',
                 marginLeft: '2px',
-                animation: 'pulse 1.5s infinite'
+                animation: 'pulseRing 1.5s infinite'
               }} />
             </div>
 
             <span style={{ fontSize: '0.8rem', fontWeight: '900', color: 'var(--skarion-navy)' }}>
-              #{currentIndex + 1} / {totalNotes}
+              Top #{currentIndex + 1} of {totalNotes}
             </span>
           </div>
 
@@ -208,17 +208,19 @@ export default function TickerBar({ students, onSelectStudent }) {
               display: 'flex',
               alignItems: 'center',
               justify: 'center',
-              transition: 'all 0.2s ease',
+              transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease',
               outline: 'none'
             }}
-            title="Previous Audit Observation"
+            title="Previous Top 10 Audit"
           >
             <ChevronLeft size={24} color="var(--skarion-navy)" />
           </button>
 
-          {/* Main Hero Spotlight Quote Card */}
+          {/* Main Hero Spotlight Quote Card with Fade Animation */}
           <div 
+            key={fadeKey}
             onClick={() => student && onSelectStudent(student)}
+            className="animate-pop-in"
             style={{ 
               flex: '1', 
               background: 'var(--bg-surface)', 
@@ -228,7 +230,7 @@ export default function TickerBar({ students, onSelectStudent }) {
               cursor: 'pointer',
               boxShadow: 'var(--shadow-sm)',
               position: 'relative',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
           >
             {/* Candidate Title & Date Bar */}
@@ -281,10 +283,10 @@ export default function TickerBar({ students, onSelectStudent }) {
               display: 'flex',
               alignItems: 'center',
               justify: 'center',
-              transition: 'all 0.2s ease',
+              transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease',
               outline: 'none'
             }}
-            title="Next Audit Observation"
+            title="Next Top 10 Audit"
           >
             <ChevronRight size={24} color="var(--skarion-navy)" />
           </button>
@@ -300,6 +302,7 @@ export default function TickerBar({ students, onSelectStudent }) {
                 onClick={(e) => {
                   e.stopPropagation();
                   setCurrentIndex(i);
+                  setFadeKey(prev => prev + 1);
                   setProgress(0);
                 }}
                 style={{
@@ -308,9 +311,9 @@ export default function TickerBar({ students, onSelectStudent }) {
                   borderRadius: '4px',
                   background: i === currentIndex ? 'var(--skarion-orange)' : 'var(--border-color)',
                   cursor: 'pointer',
-                  transition: 'all 0.25s ease'
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}
-                title={`Jump to observation #${i + 1}`}
+                title={`Jump to top 10 audit #${i + 1}`}
               />
             ))}
           </div>
