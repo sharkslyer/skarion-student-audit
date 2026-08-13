@@ -295,29 +295,32 @@ export default function App() {
         showToast={showToast}
       />
 
-      {/* Side-Swiping Live Ticker Headline Bar */}
-      <TickerBar 
-        students={safeStudentsList}
-        onSelectStudent={(student) => setSelectedDetailStudent(student)}
-      />
-
-      {/* Metrics Overview Bar */}
-      <MetricsOverview 
-        students={safeStudentsList}
-        selectedRatingFilter={selectedRatingFilter}
-        setSelectedRatingFilter={setSelectedRatingFilter}
-      />
-
       {/* Main Content Area with Smooth Tab Switching Animation */}
       <div key={activeView} className="animate-fade-in-up">
         {activeView === 'table' && (
-          <StudentTable 
-            students={filteredStudents}
-            onUpdateStudent={handleUpdateStudent}
-            onDeleteStudent={handleDeleteStudent}
-            onSelectStudent={(student) => setSelectedDetailStudent(student)}
-            onAddNoteForStudent={(student) => setSelectedDetailStudent(student)}
-          />
+          <>
+            {/* Top 10 Latest Audits Spotlight Card (Roster Tab Only) */}
+            <TickerBar 
+              students={safeStudentsList}
+              onSelectStudent={(student) => setSelectedDetailStudent(student)}
+            />
+
+            {/* Metrics Overview Bar */}
+            <MetricsOverview 
+              students={safeStudentsList}
+              selectedRatingFilter={selectedRatingFilter}
+              setSelectedRatingFilter={setSelectedRatingFilter}
+            />
+
+            {/* Roster Candidate Data Table */}
+            <StudentTable 
+              students={filteredStudents}
+              onUpdateStudent={handleUpdateStudent}
+              onDeleteStudent={handleDeleteStudent}
+              onSelectStudent={(student) => setSelectedDetailStudent(student)}
+              onAddNoteForStudent={(student) => setSelectedDetailStudent(student)}
+            />
+          </>
         )}
 
         {activeView === 'sticky' && (
