@@ -43,6 +43,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [transcriptTextBuffer, setTranscriptTextBuffer] = useState('');
   const [transcriptFontSize, setTranscriptFontSize] = useState(15); // Font size in px
   const [transcriptSpeakerFilter, setTranscriptSpeakerFilter] = useState('all'); // Speaker filter in viewer
+  const [transcriptWordSearch, setTranscriptWordSearch] = useState(''); // Word search inside transcript viewer
 
   // Form state for logging a new mock session
   const [targetStudentId, setTargetStudentId] = useState(students[0]?.id || '');
@@ -206,7 +207,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   };
 
   // Helper to render chat-style interview dialogue bubbles with rich speaker colors
-  const renderChatBubble = (line, index) => {
+  const renderChatBubble = (line, index, searchTerm = '') => {
     const speakerMatch = line.match(/^([^:\[\n]+)(?:\s*\[(\d{1,2}:\d{2})\])?\s*:(.*)$/);
     
     if (!speakerMatch) {
@@ -354,7 +355,14 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word'
           }}>
-            {dialogue}
+            {searchTerm ? (() => {
+              const parts = dialogue.split(new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+              return parts.map((part, i) =>
+                part.toLowerCase() === searchTerm.toLowerCase()
+                  ? <mark key={i} style={{ background: '#fde047', color: '#1e1b4b', borderRadius: '3px', padding: '0 2px', fontWeight: '800' }}>{part}</mark>
+                  : part
+              );
+            })() : dialogue}
           </div>
         </div>
       </div>
@@ -443,23 +451,10 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
         </button>
       </div>
 
-      {/* Friendly Search Bar & Candidate Switcher Section */}
+      {/* Candidate Switcher Section */}
       <div className="card-panel" style={{ padding: '1.25rem', marginBottom: '1.5rem', background: 'var(--bg-surface-subtle)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.85rem' }}>
           
-          {/* Search Input */}
-          <div style={{ flex: '1', minWidth: '260px', maxWidth: '400px', position: 'relative' }}>
-            <Search size={16} color="var(--text-dim)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
-            <input 
-              type="text"
-              placeholder="Search candidate by name..."
-              value={candidateSearchQuery}
-              onChange={(e) => setCandidateSearchQuery(e.target.value)}
-              className="input-control"
-              style={{ paddingLeft: '2.5rem', height: '40px', fontSize: '0.86rem' }}
-            />
-          </div>
-
           {/* Candidate Dropdown Selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <label style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--skarion-navy)', whiteSpace: 'nowrap' }}>
@@ -778,13 +773,23 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
         )}
       </div>
 
-      {/* Mock Session History Cards */}
-      <h3 style={{ fontSize: '1.05rem', fontWeight: '800', marginBottom: '0.85rem', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>Mock Interview Performance History ({sortedSessions.length})</span>
-        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-          Showing all recorded mock evaluations for {currentStudent.name}
-        </span>
-      </h3>
+      {/* Search bar right above roster */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+        <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--skarion-navy)', margin: 0 }}>
+          Candidate Audit Roster — {currentStudent.name} <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>({sortedSessions.length} mocks)</span>
+        </h3>
+        <div style={{ position: 'relative', minWidth: '240px', maxWidth: '340px', flex: '1' }}>
+          <Search size={15} color="var(--text-dim)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            placeholder="Search candidate by name..."
+            value={candidateSearchQuery}
+            onChange={(e) => setCandidateSearchQuery(e.target.value)}
+            className="input-control"
+            style={{ paddingLeft: '2.2rem', height: '38px', fontSize: '0.84rem' }}
+          />
+        </div>
+      </div>
 
       {sortedSessions.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', background: 'var(--bg-surface-subtle)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
@@ -1314,6 +1319,35 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     </div>
                   ) : (
                     <div>
+                      {/* Word Search Panel */}
+                      <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
+                          <Search size={14} color="var(--text-dim)" style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                          <input
+                            type="text"
+                            placeholder="Search words in transcript..."
+                            value={transcriptWordSearch}
+                            onChange={(e) => setTranscriptWordSearch(e.target.value)}
+                            className="input-control"
+                            style={{ paddingLeft: '2.1rem', height: '36px', fontSize: '0.84rem' }}
+                          />
+                        </div>
+                        {transcriptWordSearch.trim() && (() => {
+                          const q = transcriptWordSearch.trim().toLowerCase();
+                          const matchCount = parsedDialogueParagraphs.filter(p => p.toLowerCase().includes(q)).length;
+                          return (
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: matchCount > 0 ? '#059669' : '#dc2626', whiteSpace: 'nowrap' }}>
+                              {matchCount > 0 ? `${matchCount} bubble${matchCount !== 1 ? 's' : ''} matched` : 'No matches'}
+                            </span>
+                          );
+                        })()}
+                        {transcriptWordSearch && (
+                          <button onClick={() => setTranscriptWordSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                            <X size={15} />
+                          </button>
+                        )}
+                      </div>
+
                       {/* Interactive Speaker Filter Pills Bar */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.65rem', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '0.65rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -1366,11 +1400,13 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
                       {/* Chat Bubbles Container */}
                       <div>
-                        {parsedDialogueParagraphs.map((paragraph, idx) => (
-                          <React.Fragment key={idx}>
-                            {renderChatBubble(paragraph, idx)}
-                          </React.Fragment>
-                        ))}
+                        {parsedDialogueParagraphs
+                          .filter(p => !transcriptWordSearch.trim() || p.toLowerCase().includes(transcriptWordSearch.trim().toLowerCase()))
+                          .map((paragraph, idx) => (
+                            <React.Fragment key={idx}>
+                              {renderChatBubble(paragraph, idx, transcriptWordSearch.trim())}
+                            </React.Fragment>
+                          ))}
                       </div>
                     </div>
                   )}
