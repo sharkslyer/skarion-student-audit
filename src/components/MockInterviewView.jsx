@@ -439,7 +439,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           onClick={() => { setTargetStudentId(selectedStudentId); setIsLogModalOpen(true); }}
           style={{ height: '42px', padding: '0 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
         >
-          <Plus size={18} /> + Log Mock Interview
+          <Plus size={18} /> Log Mock Interview
         </button>
       </div>
 
@@ -876,45 +876,28 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
                     {hasTranscript ? (
                       <button 
-                        className="btn-transcript-cool"
+                        className="btn-primary"
                         onClick={() => openTranscriptModal(session, false)}
                         style={{ 
                           width: '100%', 
-                          background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #4c1d95 100%)', 
+                          background: 'var(--skarion-orange)', 
                           color: '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '0.6rem 1rem',
+                          justify: 'center',
+                          gap: '0.55rem',
                           height: '42px',
                           borderRadius: '12px',
-                          fontSize: '0.84rem',
+                          fontSize: '0.88rem',
                           fontWeight: '800',
-                          border: '1px solid rgba(255, 255, 255, 0.25)',
-                          boxShadow: '0 6px 20px rgba(124, 58, 237, 0.35)',
+                          border: 'none',
+                          boxShadow: '0 4px 14px rgba(255, 82, 82, 0.3)',
                           cursor: 'pointer',
-                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+                          transition: 'all 0.2s ease'
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                          <BookOpen size={16} color="#ffffff" />
-                          <span>View Full Dialogue Transcript</span>
-                        </div>
-                        <div style={{
-                          background: 'rgba(255, 255, 255, 0.2)',
-                          backdropFilter: 'blur(4px)',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '20px',
-                          fontSize: '0.74rem',
-                          fontWeight: '800',
-                          border: '1px solid rgba(255, 255, 255, 0.3)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}>
-                          <span>{wordCount} words</span>
-                          <ArrowRight size={13} />
-                        </div>
+                        <BookOpen size={16} color="#ffffff" />
+                        <span>View Full Transcript ({wordCount} words)</span>
                       </button>
                     ) : (
                       <button 
