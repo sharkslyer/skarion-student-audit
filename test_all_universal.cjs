@@ -1,15 +1,6 @@
-/**
- * Universal Transcript Auto-Organizer Utility
- * Clean Chat Bubble Parser for MS Teams, Zoom, & Google Meet Transcripts
- * Evaluator Whitelist: Kasshaf, Faisal, Saki, Ferdous, Piyas, Mayukh, Tashfia
- * Candidate Matching: ANY non-evaluator speaker name is dynamically recognized as a Candidate!
- */
+const fs = require('fs');
 
-const ALLOWED_EVALUATOR_NAMES = [
-  'kasshaf', 'faisal', 'saki', 'ferdous', 'piyas', 'mayukh', 'tashfia'
-];
-
-export function cleanSpeakerName(name) {
+function cleanSpeakerName(name) {
   if (!name) return '';
   let cleaned = name.replace(/\d+.*$/, '').replace(/[\(\)\[\]:]/g, '').trim();
   const lower = cleaned.toLowerCase();
@@ -29,39 +20,7 @@ export function cleanSpeakerName(name) {
   return parts[0] || cleaned;
 }
 
-export function extractTimestamp(str) {
-  if (!str) return '';
-  const s = str.trim();
-
-  // Pattern 1: "0 minutes 4 seconds"
-  const minSecMatch = s.match(/(\d+)\s*minutes?\s*(\d+)?\s*seconds?/i);
-  if (minSecMatch) {
-    const mins = String(minSecMatch[1]).padStart(2, '0');
-    const secs = String(minSecMatch[2] || '0').padStart(2, '0');
-    return `${mins}:${secs}`;
-  }
-
-  // Pattern 2: "12:35" or "0:04" or "1:00:18"
-  const colonMatch = s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-  if (colonMatch) {
-    if (colonMatch[3]) {
-      return `${colonMatch[1]}:${colonMatch[2]}:${colonMatch[3]}`;
-    }
-    const mins = String(colonMatch[1]).padStart(2, '0');
-    const secs = String(colonMatch[2]).padStart(2, '0');
-    return `${mins}:${secs}`;
-  }
-
-  // Pattern 3: Standalone seconds count like "04", "07"
-  if (/^\d{1,2}$/.test(s)) {
-    const secs = String(s).padStart(2, '0');
-    return `00:${secs}`;
-  }
-
-  return '';
-}
-
-export function parseAndOrganizeTranscript(rawText) {
+function parseAndOrganizeTranscriptUniversal(rawText) {
   if (!rawText || !rawText.trim()) return '';
 
   const lines = rawText.split('\n');
@@ -91,14 +50,13 @@ export function parseAndOrganizeTranscript(rawText) {
     const line = lines[i].trim();
     if (!line) continue;
 
-    // Skip system metadata header/footer lines
     if (isSystemMetadataLine(line)) continue;
 
     let detectedSpeaker = '';
     let detectedTime = '';
     let contentAfterHeader = '';
 
-    // Pattern 1: Formatted line like "Name [MM:SS]: Dialogue..." or "Name: Dialogue..."
+    // Pattern 1: Formatted line "Speaker [MM:SS]: Dialogue" or "Speaker: Dialogue"
     const formattedMatch = line.match(/^([^:\[\n]{2,35})(?:\s*\[(\d{1,2}:\d{2}(?::\d{2})?)\])?\s*:(.*)$/);
     if (formattedMatch) {
       const candidateName = cleanSpeakerName(formattedMatch[1]);
@@ -109,20 +67,19 @@ export function parseAndOrganizeTranscript(rawText) {
       }
     }
 
-    // Pattern 2: MS Teams header line like "Mahbubul Alam   0:03" or "Bhaskar Roy   0:03" or "Md Ali Ahnaf Abid Mayukh   0:03"
+    // Pattern 2: MS Teams header line "Speaker Name   0:03" or "Speaker Name   1:00:18"
     if (!detectedSpeaker && (/^[A-Za-z\s\.\-]{2,45}\s+\d+(?::\d{2}){1,2}$/i.test(line) || /^[A-Za-z\s\.\-]{2,45}\s+\d+\s*minutes?/i.test(line))) {
       const parts = line.match(/^(.*?)\s+(\d+(?::\d{2}){1,2}|\d+\s*minutes?.*)$/i);
       if (parts) {
         const candidateName = cleanSpeakerName(parts[1]);
         if (candidateName && candidateName.length >= 2) {
           detectedSpeaker = candidateName;
-          detectedTime = extractTimestamp(parts[2]);
+          detectedTime = parts[2];
         }
       }
     }
 
     if (detectedSpeaker) {
-      // Flush previous speaker's dialogue block
       if (currentSpeaker && currentLines.length > 0) {
         const textContent = currentLines.join(' ').trim();
         if (textContent) {
@@ -151,7 +108,6 @@ export function parseAndOrganizeTranscript(rawText) {
     }
   }
 
-  // Push last block
   if (currentSpeaker && currentLines.length > 0) {
     const textContent = currentLines.join(' ').trim();
     if (textContent) {
@@ -176,4 +132,21 @@ export function parseAndOrganizeTranscript(rawText) {
   }
 
   return rawText.trim();
+}
+
+// Test on all transcripts in initialData.js
+const initialDataText = fs.readFileSync('./src/data/initialData.js', 'utf8');
+
+const matches = initialDataText.match(/name:\s*'([^']+)'[\s\S]*?mockSessions:\s*\[([\s\S]*?)\]\s*,/g);
+if (matches) {
+  matches.forEach(m => {
+    const nameMatch = m.match(/name:\s*'([^']+)'/);
+    const transcriptMatch = m.match(/transcript:\s*`([\s\S]*?)`/);
+    if (nameMatch && transcriptMatch) {
+      const candidateName = nameMatch[1];
+      const parsed = parseAndOrganizeTranscriptUniversal(transcriptMatch[1]);
+      const speakers = [...new Set(parsed.split('\n\n').map(b => b.split(' ')[0].replace(/[:\[].*$/, '')))];
+      console.log(`Candidate: ${candidateName} | Blocks: ${parsed.split('\n\n').length} | Speakers:`, speakers);
+    }
+  });
 }

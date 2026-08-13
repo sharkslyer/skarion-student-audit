@@ -273,77 +273,7 @@ export const INITIAL_STUDENTS = [
         feedback: 'Preliminary OSP mock interview. Above average performance for a first-timer. Good technical foundation and clear explanation of FTTX and right-of-way concepts.',
         strengths: 'Handhold & ROW domain concept comprehension, adaptable learning mindset',
         improvement: 'Articulating CV experience alignment with deeper technical context',
-        transcript: `Mayukh [00:04]: Hello!
-
-Ahmed Chowdhury [00:07]: Hello?
-
-Mayukh [00:08]: Yeah, can you hear me?
-
-Ahmed Chowdhury [00:09]: Yes.
-
-Mayukh [00:11]: All right, how's everything back?
-
-Ahmed Chowdhury [00:14]: Good, a bit nervous with the interview because not really not great in interviews.
-
-Mayukh [00:18]: Ohh, it's fine. Yeah, no one is great actually. Even if I'm just put in a chair to attend an interview, I'm going to mess up real bad. I'm going to stutter. But it's absolutely fine. The more you practice, the more you improve, all right? So it's a preliminary mock, not because it's a first one, but because your resume is not ready.
-
-Ahmed Chowdhury [00:28]: Yes. Ms.
-
-Mayukh [00:40]: We're going to run this mock with your old resume for now with just some preliminary stuff, but we're going to prepare another resume and we're going to schedule another mock based on your new and more strong resume that's appropriate for OSP Engineering role.
-
-Ahmed Chowdhury [01:03]: Gotcha.
-
-Mayukh [01:04]: All right, yeah. All right, so I'm going to keep the recording on and I'm going to keep the rest of the meeting in English so that I can generate a summary out of it. Tell me about yourself.
-
-Ahmed Chowdhury [02:06]: I'm an OSP engineer. My name is Ahmed. I do designing for in top level.
-
-Mayukh [02:32]: Just remember, this interview is going to be based on your old resume.
-
-Ahmed Chowdhury [02:48]: Okay, my name is Ahmed. I am currently doing data Engineering at freelance. I build ETL pipelines using Azure Data Factory.
-
-Mayukh [03:18]: All right. Why are you interested in OSP design engineering when your background is in computer engineering?
-
-Ahmed Chowdhury [03:25]: I found it interesting working with fiber, seeing how fiber optic cables work and how it is built around cities.
-
-Mayukh [03:54]: All right, do you know what is FTTX?
-
-Ahmed Chowdhury [04:01]: Yes, it's basically fiber to home users.
-
-Mayukh [04:19]: Can you explain what is the ROW?
-
-Ahmed Chowdhury [04:25]: So the right of way is basically the boundary where we cannot work after. We have to work between the right of way and the easement.
-
-Mayukh [04:38]: And what is a handhold?
-
-Ahmed Chowdhury [04:46]: A handhold is a small dugout where we do splicing and where we store extra wires in case of future growth.
-
-Mayukh [05:05]: Have you worked with AutoCAD?
-
-Ahmed Chowdhury [05:10]: Yes, I have built high-level designs and diagrams laying out handholds, fiber distribution hubs, and splice points.
-
-Mayukh [06:03]: How does your data engineering experience relate to OSP?
-
-Ahmed Chowdhury [06:16]: In data engineering we require a lot of automation and efficiency. OSP engineering has similar needs to automate recurring issues.
-
-Mayukh [07:00]: How do you approach learning a software that is unfamiliar?
-
-Ahmed Chowdhury [07:15]: Hands-on learning. I choose a small project and learn the primary tools within that software.
-
-Mayukh [07:51]: Why should we hire you over someone who has direct OSP experience?
-
-Ahmed Chowdhury [08:03]: In my previous roles I brought productivity and efficiency increases, bringing reliability and accountability.
-
-Mayukh [09:05]: All right, I think we can wrap it up here. As a first timer, you were able to answer some questions seamlessly. Above average performance.
-
-Ahmed Chowdhury [15:15]: Alright, perfect. Thank you.
-
-Mayukh [15:17]: You're welcome. Take care.
-
-Ahmed Chowdhury [15:18]: Alright, bye.
-
-Mayukh [15:24]: Today, more.
-
-Piyas [15:27]: Let me stop.`
+        transcript: "Mayukh [00:04]: Hello!\n\nAhmed [00:07]: Hello?\n\nMayukh [00:08]: Yeah, can you hear me?\n\nAhmed [00:09]: Yes.\n\nMayukh [00:11]: All right, how's everything back?\n\nAhmed [00:14]: Good, a bit nervous with the interview because not really not great in interviews.\n\nMayukh [00:18]: Ohh, it's fine. Yeah, no one is great actually. Even if I'm just put in a chair to attend an interview, I'm going to mess up real bad. I'm going to stutter. But it's absolutely fine. The more you practice, the more you improve, all right? So it's a preliminary mock, not because it's a first one, but because your resume is not ready.\n\nAhmed [00:28]: Yes. Ms.\n\nMayukh [00:40]: We're going to run this mock with your old resume for now with just some preliminary stuff, but we're going to prepare another resume and we're going to schedule another mock based on your new and more strong resume that's appropriate for OSP Engineering role.\n\nAhmed [01:03]: Gotcha.\n\nMayukh [01:04]: All right, yeah. All right, so I'm going to keep the recording on and I'm going to keep the rest of the meeting in English so that I can generate a summary out of it. Tell me about yourself.\n\nAhmed [02:06]: I'm an OSP engineer. My name is Ahmed. I do designing for in top level.\n\nMayukh [02:32]: Just remember, this interview is going to be based on your old resume.\n\nAhmed [02:48]: Okay, my name is Ahmed. I am currently doing data Engineering at freelance. I build ETL pipelines using Azure Data Factory.\n\nMayukh [03:18]: All right. Why are you interested in OSP design engineering when your background is in computer engineering?\n\nAhmed [03:25]: I found it interesting working with fiber, seeing how fiber optic cables work and how it is built around cities.\n\nMayukh [03:54]: All right, do you know what is FTTX?\n\nAhmed [04:01]: Yes, it's basically fiber to home users.\n\nMayukh [04:19]: Can you explain what is the ROW?\n\nAhmed [04:25]: So the right of way is basically the boundary where we cannot work after. We have to work between the right of way and the easement.\n\nMayukh [04:38]: And what is a handhold?\n\nAhmed [04:46]: A handhold is a small dugout where we do splicing and where we store extra wires in case of future growth.\n\nMayukh [05:05]: Have you worked with AutoCAD?\n\nAhmed [05:10]: Yes, I have built high-level designs and diagrams laying out handholds, fiber distribution hubs, and splice points.\n\nMayukh [06:03]: How does your data engineering experience relate to OSP?\n\nAhmed [06:16]: In data engineering we require a lot of automation and efficiency. OSP engineering has similar needs to automate recurring issues.\n\nMayukh [07:00]: How do you approach learning a software that is unfamiliar?\n\nAhmed [07:15]: Hands-on learning. I choose a small project and learn the primary tools within that software.\n\nMayukh [07:51]: Why should we hire you over someone who has direct OSP experience?\n\nAhmed [08:03]: In my previous roles I brought productivity and efficiency increases, bringing reliability and accountability.\n\nMayukh [09:05]: All right, I think we can wrap it up here. As a first timer, you were able to answer some questions seamlessly. Above average performance.\n\nAhmed [15:15]: Alright, perfect. Thank you.\n\nMayukh [15:17]: You're welcome. Take care.\n\nAhmed [15:18]: Alright, bye.\n\nMayukh [15:24]: Today, more.\n\nPiyas [15:27]: Let me stop."
       }
     ],
     stickyNotes: [
