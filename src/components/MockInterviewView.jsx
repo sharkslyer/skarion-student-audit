@@ -16,7 +16,14 @@ import {
   Send,
   Sparkles,
   Search,
-  Check
+  Check,
+  FileText,
+  Copy,
+  Edit3,
+  BookOpen,
+  ZoomIn,
+  ZoomOut,
+  AlignLeft
 } from 'lucide-react';
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
@@ -27,6 +34,12 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [hoveredPointIndex, setHoveredPointIndex] = useState(null);
 
+  // Transcript Reader / Editor Modal State
+  const [activeTranscriptSession, setActiveTranscriptSession] = useState(null);
+  const [isEditingTranscript, setIsEditingTranscript] = useState(false);
+  const [transcriptTextBuffer, setTranscriptTextBuffer] = useState('');
+  const [transcriptFontSize, setTranscriptFontSize] = useState(15); // Font size in px
+
   // Form state for logging a new mock session
   const [targetStudentId, setTargetStudentId] = useState(students[0]?.id || '');
   const [mockDate, setMockDate] = useState(getTodayLocalDate());
@@ -36,6 +49,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [mockFeedback, setMockFeedback] = useState('');
   const [mockStrengths, setMockStrengths] = useState('');
   const [mockImprovement, setMockImprovement] = useState('');
+  const [mockTranscript, setMockTranscript] = useState('');
 
   // Filter candidates matching search query
   const searchableCandidates = students.filter(s => 
@@ -74,7 +88,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       category: mockCategory,
       feedback: mockFeedback.trim(),
       strengths: mockStrengths.trim(),
-      improvement: mockImprovement.trim()
+      improvement: mockImprovement.trim(),
+      transcript: mockTranscript.trim()
     };
 
     const existingSessions = studentToUpdate.mockSessions || [];
@@ -106,6 +121,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     setMockFeedback('');
     setMockStrengths('');
     setMockImprovement('');
+    setMockTranscript('');
     setIsLogModalOpen(false);
   };
 
@@ -120,6 +136,85 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     };
     onSaveStudent(updatedStudent);
     if (showToast) showToast('Deleted mock interview record');
+  };
+
+  // Open Transcript Reader / Editor Modal
+  const openTranscriptModal = (session, editMode = false) => {
+    setActiveTranscriptSession(session);
+    setTranscriptTextBuffer(session.transcript || '');
+    setIsEditingTranscript(editMode);
+  };
+
+  // Save Transcript changes
+  const handleSaveTranscript = () => {
+    if (!activeTranscriptSession || !currentStudent) return;
+
+    const updatedSessions = mockSessions.map(s => {
+      if (s.id === activeTranscriptSession.id) {
+        return { ...s, transcript: transcriptTextBuffer.trim() };
+      }
+      return s;
+    });
+
+    const updatedStudent = {
+      ...currentStudent,
+      mockSessions: updatedSessions
+    };
+
+    onSaveStudent(updatedStudent);
+    setActiveTranscriptSession({
+      ...activeTranscriptSession,
+      transcript: transcriptTextBuffer.trim()
+    });
+    setIsEditingTranscript(false);
+    if (showToast) showToast('Transcript saved successfully!');
+  };
+
+  // Copy full transcript to clipboard
+  const handleCopyTranscript = () => {
+    if (!transcriptTextBuffer) return;
+    navigator.clipboard.writeText(transcriptTextBuffer);
+    if (showToast) showToast('Transcript copied to clipboard! 📋');
+  };
+
+  // Helper to count words in transcript
+  const getWordCount = (text) => {
+    if (!text || !text.trim()) return 0;
+    return text.trim().split(/\s+/).length;
+  };
+
+  // Helper to format line dialogue nicely
+  const formatDialogueLine = (line) => {
+    const speakerMatch = line.match(/^([^:\n]+):(.*)$/);
+    if (speakerMatch) {
+      const speaker = speakerMatch[1].trim();
+      const dialogue = speakerMatch[2];
+      const isInterviewer = /interviewer|mayukh|kasshaf|faisal|saki|ferdous|piyas/i.test(speaker);
+      return (
+        <div style={{ marginBottom: '0.6rem', lineHeight: '1.6' }}>
+          <span style={{ 
+            fontWeight: '800', 
+            fontSize: '0.78rem',
+            background: isInterviewer ? 'rgba(56, 189, 248, 0.15)' : 'rgba(124, 58, 237, 0.15)',
+            color: isInterviewer ? '#0284c7' : '#7c3aed',
+            padding: '2px 8px',
+            borderRadius: '6px',
+            marginRight: '0.5rem',
+            border: `1px solid ${isInterviewer ? '#bae6fd' : '#ddd6fe'}`
+          }}>
+            🗣️ {speaker}
+          </span>
+          <span style={{ fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)' }}>
+            {dialogue}
+          </span>
+        </div>
+      );
+    }
+    return (
+      <div style={{ marginBottom: '0.4rem', fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)', lineHeight: '1.6' }}>
+        {line}
+      </div>
+    );
   };
 
   // Graph dimensions for SVG performance chart
@@ -181,7 +276,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
             </h2>
           </div>
           <p style={{ fontSize: '0.86rem', color: '#cbd5e1' }}>
-            Track each candidate's mock interview progression, ratings out of 10, evaluator feedback, and interactive score graph.
+            Track each candidate's mock interview progression, ratings out of 10, evaluator feedback, and copy-paste full transcripts.
           </p>
         </div>
 
@@ -393,14 +488,9 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
               "{points[hoveredPointIndex].session.feedback}"
             </p>
 
-            {points[hoveredPointIndex].session.strengths && (
-              <div style={{ fontSize: '0.74rem', color: '#059669', fontWeight: '700', marginTop: '0.3rem' }}>
-                ✔️ Strength: {points[hoveredPointIndex].session.strengths}
-              </div>
-            )}
-            {points[hoveredPointIndex].session.improvement && (
-              <div style={{ fontSize: '0.74rem', color: '#d97706', fontWeight: '700', marginTop: '0.2rem' }}>
-                🎯 Improvement: {points[hoveredPointIndex].session.improvement}
+            {points[hoveredPointIndex].session.transcript && (
+              <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: '800', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                📜 Full Transcript Saved ({getWordCount(points[hoveredPointIndex].session.transcript)} words)
               </div>
             )}
           </div>
@@ -549,10 +639,12 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: '1rem' }}>
           {[...sortedSessions].reverse().map((session) => {
             const evalCfg = EVALUATOR_CONFIG[session.evaluator] || EVALUATOR_CONFIG.Mayukh;
             const scoreColor = getScoreColor(session.score);
+            const hasTranscript = session.transcript && session.transcript.trim().length > 0;
+            const wordCount = getWordCount(session.transcript);
 
             return (
               <div 
@@ -621,10 +713,53 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     </div>
                   )}
                   {session.improvement && (
-                    <div style={{ fontSize: '0.76rem', color: '#d97706', fontWeight: '700' }}>
+                    <div style={{ fontSize: '0.76rem', color: '#d97706', fontWeight: '700', marginBottom: '0.6rem' }}>
                       🎯 Improvement: {session.improvement}
                     </div>
                   )}
+
+                  {/* 📜 Prominent Mock Transcript Storage & 1-Click Reader Button */}
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
+                    {hasTranscript ? (
+                      <button 
+                        className="btn-primary"
+                        onClick={() => openTranscriptModal(session, false)}
+                        style={{ 
+                          width: '100%', 
+                          background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', 
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                          height: '38px',
+                          fontSize: '0.82rem',
+                          boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
+                        }}
+                      >
+                        <BookOpen size={16} /> 📜 View Full Transcript ({wordCount} words)
+                      </button>
+                    ) : (
+                      <button 
+                        className="btn-secondary"
+                        onClick={() => openTranscriptModal(session, true)}
+                        style={{ 
+                          width: '100%', 
+                          display: 'flex',
+                          alignItems: 'center',
+                          justify: 'center',
+                          gap: '0.45rem',
+                          height: '36px',
+                          fontSize: '0.8rem',
+                          border: '1px dashed #7c3aed',
+                          color: '#7c3aed'
+                        }}
+                      >
+                        <Plus size={15} /> 📜 Add / Paste Mock Transcript
+                      </button>
+                    )}
+                  </div>
+
                 </div>
               </div>
             );
@@ -635,7 +770,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       {/* Log New Mock Interview Modal */}
       {isLogModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsLogModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px', padding: '1.75rem' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', padding: '1.75rem' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -750,7 +885,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                 <textarea 
                   value={mockFeedback} 
                   onChange={(e) => setMockFeedback(e.target.value)} 
-                  rows={3} 
+                  rows={2} 
                   className="input-control" 
                   placeholder="Record interviewer observations, coding speed, communication, and technical depth..." 
                   required 
@@ -758,7 +893,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
               </div>
 
               {/* Strengths & Improvement */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1rem' }}>
                 <div>
                   <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
                     Key Strengths Noted
@@ -787,6 +922,21 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                 </div>
               </div>
 
+              {/* Optional Large Text Box for Copy-Pasting Full Transcript */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: '800', color: '#7c3aed', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                  <FileText size={15} /> Copy-Paste Full Mock Transcript (Optional)
+                </label>
+                <textarea 
+                  value={mockTranscript} 
+                  onChange={(e) => setMockTranscript(e.target.value)} 
+                  rows={5} 
+                  className="input-control" 
+                  placeholder="Paste verbatim dialogue, transcript text, Q&A logs, or audio-to-text logs here..." 
+                  style={{ fontSize: '0.84rem', fontFamily: 'inherit', lineHeight: '1.5' }} 
+                />
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem' }}>
                 <button type="button" className="btn-secondary" onClick={() => setIsLogModalOpen(false)}>
                   Cancel
@@ -796,6 +946,210 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 📜 User-Friendly Long Screen Reader & Editor Modal Dialog */}
+      {activeTranscriptSession && (
+        <div className="modal-backdrop" onClick={() => setActiveTranscriptSession(null)}>
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              maxWidth: '880px', 
+              width: '94%',
+              height: '86vh', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              padding: '1.5rem',
+              borderRadius: '20px',
+              border: '2px solid #7c3aed',
+              boxShadow: '0 20px 50px rgba(124, 58, 237, 0.25)'
+            }}
+          >
+            
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    📜 Mock Interview Transcript
+                  </h3>
+                  <span style={{ 
+                    background: getScoreColor(activeTranscriptSession.score) + '20', 
+                    color: getScoreColor(activeTranscriptSession.score),
+                    fontWeight: '900', 
+                    fontSize: '0.85rem',
+                    padding: '2px 8px',
+                    borderRadius: '6px'
+                  }}>
+                    ⭐ {activeTranscriptSession.score} / 10
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                  {currentStudent.name} • {activeTranscriptSession.date} • 🎯 {activeTranscriptSession.category} • ✍️ {activeTranscriptSession.evaluator}
+                </p>
+              </div>
+
+              {/* Reader Action Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                
+                {/* Font size adjuster */}
+                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface-subtle)', padding: '2px 6px', borderRadius: '8px', border: '1px solid var(--border-color)', gap: '4px' }}>
+                  <button 
+                    className="btn-icon" 
+                    style={{ height: '28px', width: '28px' }} 
+                    onClick={() => setTranscriptFontSize(Math.max(12, transcriptFontSize - 1))}
+                    title="Decrease Text Size"
+                  >
+                    <ZoomOut size={14} />
+                  </button>
+                  <span style={{ fontSize: '0.76rem', fontWeight: '800', color: 'var(--skarion-navy)', minWidth: '32px', textAlign: 'center' }}>
+                    {transcriptFontSize}px
+                  </span>
+                  <button 
+                    className="btn-icon" 
+                    style={{ height: '28px', width: '28px' }} 
+                    onClick={() => setTranscriptFontSize(Math.min(24, transcriptFontSize + 1))}
+                    title="Increase Text Size"
+                  >
+                    <ZoomIn size={14} />
+                  </button>
+                </div>
+
+                {/* Copy full transcript */}
+                <button 
+                  className="btn-secondary" 
+                  onClick={handleCopyTranscript}
+                  style={{ height: '36px', padding: '0 0.85rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Copy size={15} /> Copy Text
+                </button>
+
+                {/* Toggle Edit Mode */}
+                <button 
+                  className={isEditingTranscript ? "btn-primary" : "btn-secondary"} 
+                  onClick={() => setIsEditingTranscript(!isEditingTranscript)}
+                  style={{ height: '36px', padding: '0 0.85rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Edit3 size={15} /> {isEditingTranscript ? 'View Mode' : 'Edit Transcript'}
+                </button>
+
+                <button className="btn-icon" onClick={() => setActiveTranscriptSession(null)}>
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body Container */}
+            <div style={{ flex: '1', overflow: 'hidden', paddingTop: '1rem', display: 'flex', flexDirection: 'column' }}>
+              
+              {isEditingTranscript ? (
+                /* EDIT MODE: Large spacious text box for copy-pasting raw transcripts */
+                <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '800', color: '#7c3aed', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>Paste or Edit Raw Mock Transcript Text:</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {getWordCount(transcriptTextBuffer)} Words | {transcriptTextBuffer.length} Characters
+                    </span>
+                  </label>
+                  <textarea 
+                    value={transcriptTextBuffer}
+                    onChange={(e) => setTranscriptTextBuffer(e.target.value)}
+                    placeholder="Paste full interview transcript dialogue here (e.g. Interviewer: ..., Candidate: ...)..."
+                    style={{ 
+                      flex: '1', 
+                      width: '100%', 
+                      padding: '1.25rem', 
+                      borderRadius: '12px', 
+                      border: '2px solid #7c3aed', 
+                      background: 'var(--bg-surface-subtle)', 
+                      color: 'var(--text-main)', 
+                      fontSize: `${transcriptFontSize}px`,
+                      fontFamily: 'inherit',
+                      lineHeight: '1.65',
+                      resize: 'none',
+                      outline: 'none'
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '1rem' }}>
+                    <button className="btn-secondary" onClick={() => setIsEditingTranscript(false)}>
+                      Cancel
+                    </button>
+                    <button 
+                      className="btn-primary" 
+                      onClick={handleSaveTranscript}
+                      style={{ background: '#7c3aed', padding: '0 1.5rem', height: '40px' }}
+                    >
+                      <Send size={15} /> Save Transcript
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* VIEW MODE: High-readability clean formatted screen */
+                <div style={{ flex: '1', overflowY: 'auto', background: 'var(--bg-surface-subtle)', padding: '1.5rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+                  
+                  {/* Feedback Summary Banner */}
+                  <div style={{ background: 'var(--bg-surface)', padding: '1rem 1.15rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.25rem' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+                      MOCK EVALUATION FEEDBACK OVERVIEW
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontStyle: 'italic', margin: '0.2rem 0' }}>
+                      "{activeTranscriptSession.feedback}"
+                    </p>
+                    {activeTranscriptSession.strengths && (
+                      <div style={{ fontSize: '0.78rem', color: '#059669', fontWeight: '700', marginTop: '0.4rem' }}>
+                        ✔️ Strengths: {activeTranscriptSession.strengths}
+                      </div>
+                    )}
+                    {activeTranscriptSession.improvement && (
+                      <div style={{ fontSize: '0.78rem', color: '#d97706', fontWeight: '700', marginTop: '0.2rem' }}>
+                        🎯 Areas for Improvement: {activeTranscriptSession.improvement}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Transcript Content Box */}
+                  {!transcriptTextBuffer || !transcriptTextBuffer.trim() ? (
+                    <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                      <FileText size={42} color="var(--text-dim)" style={{ marginBottom: '0.75rem' }} />
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.3rem' }}>
+                        No Full Transcript Paste Recorded Yet
+                      </h4>
+                      <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+                        Click "Edit Transcript" above to paste the full dialogue log or Q&A transcript for this mock session.
+                      </p>
+                      <button className="btn-primary" onClick={() => setIsEditingTranscript(true)} style={{ background: '#7c3aed' }}>
+                        <Plus size={16} /> Paste Transcript Now
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          📜 Verbatim Mock Interview Dialogue Log
+                        </span>
+                        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+                          {getWordCount(transcriptTextBuffer)} Words Recorded
+                        </span>
+                      </div>
+
+                      <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {transcriptTextBuffer.split('\n').map((line, idx) => (
+                          <React.Fragment key={idx}>
+                            {line.trim() ? formatDialogueLine(line) : <div style={{ height: '0.75rem' }} />}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+            </div>
+
           </div>
         </div>
       )}
