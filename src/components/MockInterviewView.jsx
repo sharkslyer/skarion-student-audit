@@ -235,21 +235,24 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       text: evalCfg.text,
       badgeBg: evalCfg.badgeBg || evalCfg.text,
       badgeText: '#ffffff',
-      avatarGradient: `linear-gradient(135deg, ${evalCfg.text} 0%, ${evalCfg.border} 100%)`
+      gradientStart: evalCfg.text,
+      gradientEnd: evalCfg.border
     } : isCandidate ? {
       bg: 'rgba(99, 102, 241, 0.08)',
       border: 'rgba(99, 102, 241, 0.3)',
       text: '#4f46e5',
       badgeBg: '#4f46e5',
       badgeText: '#ffffff',
-      avatarGradient: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)'
+      gradientStart: '#6366f1',
+      gradientEnd: '#4338ca'
     } : {
       bg: 'rgba(2, 132, 199, 0.08)',
       border: 'rgba(2, 132, 199, 0.3)',
       text: '#0284c7',
       badgeBg: '#0284c7',
       badgeText: '#ffffff',
-      avatarGradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
+      gradientStart: '#0284c7',
+      gradientEnd: '#0369a1'
     };
 
     return (
@@ -263,39 +266,27 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           alignItems: 'flex-start'
         }}
       >
-        {/* Avatar Circle with Dead Center Initials */}
-        <div style={{
-          width: '40px',
-          height: '40px',
-          minWidth: '40px',
-          minHeight: '40px',
-          borderRadius: '50%',
-          background: speakerTheme.avatarGradient,
-          color: '#ffffff',
-          display: 'flex',
-          alignItems: 'center',
-          justify: 'center',
-          fontWeight: '900',
-          fontSize: '0.85rem',
-          flexShrink: 0,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          border: '2px solid var(--bg-surface)',
-          textAlign: 'center',
-          lineHeight: '1',
-          userSelect: 'none'
-        }}>
-          <span style={{
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'center',
-            width: '100%',
-            height: '100%',
-            textAlign: 'center',
-            lineHeight: '1'
-          }}>
+        <svg width="42" height="42" viewBox="0 0 42 42" style={{ flexShrink: 0, userSelect: 'none', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.12))' }}>
+          <defs>
+            <linearGradient id={`avatar-grad-${rawSpeaker.replace(/\s+/g, '_')}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={speakerTheme.gradientStart} />
+              <stop offset="100%" stopColor={speakerTheme.gradientEnd} />
+            </linearGradient>
+          </defs>
+          <circle cx="21" cy="21" r="19" fill={`url(#avatar-grad-${rawSpeaker.replace(/\s+/g, '_')})`} stroke="var(--bg-surface)" strokeWidth="2.5" />
+          <text 
+            x="21" 
+            y="21.5" 
+            fill="#ffffff" 
+            fontSize="14" 
+            fontWeight="900" 
+            textAnchor="middle" 
+            dominantBaseline="central"
+            fontFamily="var(--font-main)"
+          >
             {initials}
-          </span>
-        </div>
+          </text>
+        </svg>
 
         {/* Chat Speech Bubble */}
         <div 
