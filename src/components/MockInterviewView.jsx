@@ -263,10 +263,12 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           alignItems: 'flex-start'
         }}
       >
-        {/* Avatar Circle */}
+        {/* Avatar Circle with Dead Center Initials */}
         <div style={{
-          width: '38px',
-          height: '38px',
+          width: '40px',
+          height: '40px',
+          minWidth: '40px',
+          minHeight: '40px',
           borderRadius: '50%',
           background: speakerTheme.avatarGradient,
           color: '#ffffff',
@@ -274,12 +276,25 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           alignItems: 'center',
           justify: 'center',
           fontWeight: '900',
-          fontSize: '0.82rem',
+          fontSize: '0.85rem',
           flexShrink: 0,
-          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.12)',
-          border: '2px solid #ffffff'
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          border: '2px solid var(--bg-surface)',
+          textAlign: 'center',
+          lineHeight: '1',
+          userSelect: 'none'
         }}>
-          {initials}
+          <span style={{
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            width: '100%',
+            height: '100%',
+            textAlign: 'center',
+            lineHeight: '1'
+          }}>
+            {initials}
+          </span>
         </div>
 
         {/* Chat Speech Bubble */}

@@ -14,6 +14,7 @@ export function parseAndOrganizeTranscript(rawText) {
 
   // Helper to extract clean name from raw name line
   const cleanSpeakerName = (name) => {
+    if (!name) return '';
     const cleaned = name.replace(/\d+.*$/, '').replace(/[\(\)\[\]]/g, '').trim();
     const lower = cleaned.toLowerCase();
     
@@ -27,9 +28,9 @@ export function parseAndOrganizeTranscript(rawText) {
     if (lower.includes('interviewer')) return 'Interviewer';
     if (lower.includes('candidate')) return 'Candidate';
     
-    // Return first name if multi-word name
+    // Return clean name
     const parts = cleaned.split(/\s+/).filter(p => !['md', 'ali', 'ahnaf', 'abid', 'hasan', 'akash', 'bhattacharjee', 'mahmud', 'ahmad'].includes(p.toLowerCase()));
-    return parts[0] || cleaned;
+    return parts.length > 0 ? parts.join(' ') : cleaned;
   };
 
   // Helper to extract timestamp (e.g. "0 minutes 4 seconds", "0:04", "34:02")
@@ -51,16 +52,30 @@ export function parseAndOrganizeTranscript(rawText) {
   };
 
   const isInitialsLine = (line) => /^[A-Z]{1,3}$/.test(line.trim());
-  const isNoiseLine = (line) => /^\d+\s*minutes?\s*\d*\s*seconds?\d+:\d+$/i.test(line.trim());
+  const isTeamsNoiseLine = (line) => 
+    /^\d+\s*minutes?\s*\d*\s*seconds?\d+:\d+$/i.test(line.trim()) ||
+    /^\d+\s*minutes?\s*\d*\s*seconds?$/i.test(line.trim()) ||
+    /^\d+:\d{2}$/.test(line.trim());
+
+  // Clean sentence text formatting
+  const cleanDialogueText = (linesArr) => {
+    let joined = linesArr.join(' ')
+      .replace(/\s+/g, ' ')
+      .replace(/\s+([,\.\?\!])/g, '$1')
+      .replace(/\.\s*\./g, '.')
+      .trim();
+
+    return joined;
+  };
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
-    // Skip Teams avatar initials noise (e.g. "AB", "M", "KA")
+    // Skip Teams avatar initials noise (e.g. "AB", "M", "KA", "FM", "FH")
     if (isInitialsLine(line)) continue;
-    // Skip Teams duplicate header noise (e.g. "0 minutes 4 seconds0:04")
-    if (isNoiseLine(line)) continue;
+    // Skip Teams timestamp noise lines
+    if (isTeamsNoiseLine(line)) continue;
 
     let detectedSpeaker = '';
     let detectedTime = '';
@@ -73,25 +88,27 @@ export function parseAndOrganizeTranscript(rawText) {
         detectedTime = extractTimestamp(parts[2]);
       }
     } else {
-      // Check if line is just a speaker name
+      // Check if line is just a speaker name or known evaluator/candidate
       const possibleName = cleanSpeakerName(line);
-      const isKnownSpeaker = ['Mayukh', 'Avirup', 'Faisal', 'Ferdous', 'Kasshaf', 'Piyas', 'Saki', 'Interviewer', 'Candidate'].includes(possibleName);
-      if (isKnownSpeaker && !line.includes('minutes') && !/^\d+:\d{2}$/.test(line)) {
+      const knownSpeakers = ['Mayukh', 'Avirup', 'Faisal', 'Ferdous', 'Kasshaf', 'Piyas', 'Saki', 'Interviewer', 'Candidate'];
+      const isKnown = knownSpeakers.some(k => possibleName.toLowerCase().includes(k.toLowerCase()));
+
+      if (isKnown && !line.includes('minutes') && !/^\d+:\d{2}$/.test(line) && line.length < 40) {
         detectedSpeaker = possibleName;
       }
     }
 
     if (detectedSpeaker) {
       if (currentSpeaker && currentLines.length > 0) {
-        const fullText = currentLines.join(' ').trim();
-        if (fullText) {
+        const textContent = cleanDialogueText(currentLines);
+        if (textContent) {
           if (blocks.length > 0 && blocks[blocks.length - 1].speaker === currentSpeaker) {
-            blocks[blocks.length - 1].text += ' ' + fullText;
+            blocks[blocks.length - 1].text = cleanDialogueText([blocks[blocks.length - 1].text, textContent]);
           } else {
             blocks.push({
               speaker: currentSpeaker,
               timestamp: currentTimestamp,
-              text: fullText
+              text: textContent
             });
           }
         }
@@ -101,7 +118,7 @@ export function parseAndOrganizeTranscript(rawText) {
       currentSpeaker = detectedSpeaker;
       if (detectedTime) currentTimestamp = detectedTime;
     } else {
-      // Check if timestamp is on line by itself
+      // Check if line contains timestamp by itself
       const timeOnly = extractTimestamp(line);
       if (timeOnly && line.length < 30 && !currentTimestamp) {
         currentTimestamp = timeOnly;
@@ -115,23 +132,23 @@ export function parseAndOrganizeTranscript(rawText) {
     }
   }
 
-  // Push last block
+  // Push final block
   if (currentSpeaker && currentLines.length > 0) {
-    const fullText = currentLines.join(' ').trim();
-    if (fullText) {
+    const textContent = cleanDialogueText(currentLines);
+    if (textContent) {
       if (blocks.length > 0 && blocks[blocks.length - 1].speaker === currentSpeaker) {
-        blocks[blocks.length - 1].text += ' ' + fullText;
+        blocks[blocks.length - 1].text = cleanDialogueText([blocks[blocks.length - 1].text, textContent]);
       } else {
         blocks.push({
           speaker: currentSpeaker,
           timestamp: currentTimestamp,
-          text: fullText
+          text: textContent
         });
       }
     }
   }
 
-  // If structured dialogue blocks were successfully extracted
+  // Return organized, structured transcript markdown
   if (blocks.length > 0) {
     return blocks.map(b => {
       const timeStr = b.timestamp ? ` [${b.timestamp}]` : '';
