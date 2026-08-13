@@ -23,7 +23,8 @@ import {
   BookOpen,
   ZoomIn,
   ZoomOut,
-  AlignLeft
+  AlignLeft,
+  MessageSquare
 } from 'lucide-react';
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
@@ -40,6 +41,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [isEditingTranscript, setIsEditingTranscript] = useState(false);
   const [transcriptTextBuffer, setTranscriptTextBuffer] = useState('');
   const [transcriptFontSize, setTranscriptFontSize] = useState(15); // Font size in px
+  const [transcriptSpeakerFilter, setTranscriptSpeakerFilter] = useState('all'); // Speaker filter in viewer
 
   // Form state for logging a new mock session
   const [targetStudentId, setTargetStudentId] = useState(students[0]?.id || '');
@@ -147,6 +149,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     setActiveTranscriptSession(session);
     setTranscriptTextBuffer(session.transcript || '');
     setIsEditingTranscript(editMode);
+    setTranscriptSpeakerFilter('all');
   };
 
   // Auto-clean raw Teams / Zoom / Meet copy-paste transcript
@@ -198,55 +201,145 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     return text.trim().split(/\s+/).length;
   };
 
-  // Helper to format line dialogue nicely with timestamps & distinct speaker badges
-  const formatDialogueLine = (line) => {
+  // Helper to render chat-style interview dialogue bubbles with rich speaker colors
+  const renderChatBubble = (line, index) => {
     const speakerMatch = line.match(/^([^:\[\n]+)(?:\s*\[(\d{1,2}:\d{2})\])?\s*:(.*)$/);
-    if (speakerMatch) {
-      const rawSpeaker = speakerMatch[1].trim();
-      const timeTag = speakerMatch[2];
-      const dialogue = speakerMatch[3];
-      
-      const evalCfg = EVALUATOR_CONFIG[rawSpeaker];
-      const isInterviewer = Boolean(evalCfg) || /interviewer|mayukh|kasshaf|faisal|saki|ferdous|piyas/i.test(rawSpeaker);
-
-      const badgeStyle = evalCfg ? {
-        color: evalCfg.text,
-        background: evalCfg.bg,
-        border: `1px solid ${evalCfg.border}`
-      } : {
-        color: isInterviewer ? '#0284c7' : '#7c3aed',
-        background: isInterviewer ? 'rgba(56, 189, 248, 0.15)' : 'rgba(124, 58, 237, 0.15)',
-        border: `1px solid ${isInterviewer ? '#bae6fd' : '#ddd6fe'}`
-      };
-
+    
+    if (!speakerMatch) {
       return (
-        <div style={{ marginBottom: '0.85rem', background: 'var(--bg-surface)', padding: '0.85rem 1.15rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-            <span style={{ 
-              fontWeight: '800', 
-              fontSize: '0.78rem',
-              padding: '2px 9px',
-              borderRadius: '6px',
-              ...badgeStyle
-            }}>
-              {rawSpeaker}
-            </span>
-            {timeTag && (
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700', background: 'var(--bg-surface-subtle)', padding: '1px 7px', borderRadius: '4px' }}>
-                [{timeTag}]
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)', lineHeight: '1.65' }}>
-            {dialogue.trim()}
-          </div>
+        <div key={index} style={{ marginBottom: '0.65rem', fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)', lineHeight: '1.65' }}>
+          {line}
         </div>
       );
     }
 
+    const rawSpeaker = speakerMatch[1].trim();
+    const timeTag = speakerMatch[2];
+    const dialogue = speakerMatch[3].trim();
+    
+    // Filter speaker if filter is active
+    if (transcriptSpeakerFilter !== 'all' && rawSpeaker.toLowerCase() !== transcriptSpeakerFilter.toLowerCase()) {
+      return null;
+    }
+
+    const evalCfg = EVALUATOR_CONFIG[rawSpeaker];
+    const isCandidate = !evalCfg && !/interviewer|mayukh|kasshaf|faisal|saki|ferdous|piyas/i.test(rawSpeaker);
+
+    // Initials for avatar circle
+    const initials = rawSpeaker.split(/\s+/).map(p => p[0]).join('').substring(0, 2).toUpperCase();
+
+    // Distinct Evaluator & Candidate Color Themes
+    const speakerTheme = evalCfg ? {
+      bg: evalCfg.bg,
+      border: evalCfg.border,
+      text: evalCfg.text,
+      badgeBg: evalCfg.badgeBg || evalCfg.text,
+      badgeText: '#ffffff',
+      avatarGradient: `linear-gradient(135deg, ${evalCfg.text} 0%, ${evalCfg.border} 100%)`
+    } : isCandidate ? {
+      bg: 'rgba(99, 102, 241, 0.08)',
+      border: 'rgba(99, 102, 241, 0.3)',
+      text: '#4f46e5',
+      badgeBg: '#4f46e5',
+      badgeText: '#ffffff',
+      avatarGradient: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)'
+    } : {
+      bg: 'rgba(2, 132, 199, 0.08)',
+      border: 'rgba(2, 132, 199, 0.3)',
+      text: '#0284c7',
+      badgeBg: '#0284c7',
+      badgeText: '#ffffff',
+      avatarGradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
+    };
+
     return (
-      <div style={{ marginBottom: '0.55rem', fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)', lineHeight: '1.65' }}>
-        {line}
+      <div 
+        key={index}
+        style={{ 
+          display: 'flex', 
+          flexDirection: isCandidate ? 'row-reverse' : 'row',
+          gap: '0.85rem', 
+          marginBottom: '1.15rem',
+          alignItems: 'flex-start'
+        }}
+      >
+        {/* Avatar Circle */}
+        <div style={{
+          width: '38px',
+          height: '38px',
+          borderRadius: '50%',
+          background: speakerTheme.avatarGradient,
+          color: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justify: 'center',
+          fontWeight: '900',
+          fontSize: '0.82rem',
+          flexShrink: 0,
+          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.12)',
+          border: '2px solid #ffffff'
+        }}>
+          {initials}
+        </div>
+
+        {/* Chat Speech Bubble */}
+        <div 
+          style={{ 
+            maxWidth: '84%',
+            background: speakerTheme.bg,
+            border: `1.5px solid ${speakerTheme.border}`,
+            borderRadius: isCandidate ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+            padding: '0.9rem 1.15rem',
+            boxShadow: '0 3px 12px rgba(0, 0, 0, 0.04)',
+            transition: 'transform 0.15s ease'
+          }}
+        >
+          {/* Top Bar: Speaker Name & Role + Timestamp */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <span style={{ fontWeight: '900', fontSize: '0.86rem', color: speakerTheme.text }}>
+                {rawSpeaker}
+              </span>
+              <span style={{ 
+                fontSize: '0.66rem', 
+                fontWeight: '800', 
+                background: speakerTheme.badgeBg, 
+                color: speakerTheme.badgeText, 
+                padding: '1px 6px', 
+                borderRadius: '4px',
+                textTransform: 'uppercase'
+              }}>
+                {isCandidate ? 'Candidate' : 'Interviewer'}
+              </span>
+            </div>
+
+            {timeTag && (
+              <span style={{ 
+                fontSize: '0.72rem', 
+                color: 'var(--text-muted)', 
+                fontWeight: '800', 
+                background: 'var(--bg-surface)', 
+                padding: '2px 8px', 
+                borderRadius: '6px',
+                border: '1px solid var(--border-color)' 
+              }}>
+                {timeTag}
+              </span>
+            )}
+          </div>
+
+          {/* Dialogue Body Text */}
+          <div style={{ 
+            fontSize: `${transcriptFontSize}px`, 
+            color: 'var(--text-main)', 
+            lineHeight: '1.68', 
+            fontWeight: '400',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+          }}>
+            {dialogue}
+          </div>
+        </div>
       </div>
     );
   };
@@ -283,6 +376,16 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     if (score >= 5) return '#0284c7'; // Blue
     return '#dc2626'; // Red
   };
+
+  const parsedDialogueParagraphs = parseAndOrganizeTranscript(transcriptTextBuffer).split('\n\n');
+  const availableSpeakers = Array.from(new Set(
+    parsedDialogueParagraphs
+      .map(p => {
+        const match = p.match(/^([^:\[\n]+)/);
+        return match ? match[1].trim() : null;
+      })
+      .filter(Boolean)
+  ));
 
   return (
     <div className="card-panel" style={{ padding: '1.75rem' }}>
@@ -993,9 +1096,9 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
             className="modal-content" 
             onClick={(e) => e.stopPropagation()} 
             style={{ 
-              maxWidth: '880px', 
-              width: '94%',
-              height: '86vh', 
+              maxWidth: '900px', 
+              width: '95%',
+              height: '88vh', 
               display: 'flex', 
               flexDirection: 'column', 
               padding: '1.5rem',
@@ -1010,7 +1113,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    Mock Interview Transcript
+                    Mock Interview Transcript Reader
                   </h3>
                   <span style={{ 
                     background: getScoreColor(activeTranscriptSession.score) + '20', 
@@ -1149,13 +1252,13 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   </div>
                 </div>
               ) : (
-                /* VIEW MODE: High-readability clean formatted screen */
+                /* VIEW MODE: Ultra-friendly Chat Bubble Screen */
                 <div style={{ flex: '1', overflowY: 'auto', background: 'var(--bg-surface-subtle)', padding: '1.5rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
                   
                   {/* Feedback Summary Banner */}
-                  <div style={{ background: 'var(--bg-surface)', padding: '1rem 1.15rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.25rem' }}>
-                    <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
-                      MOCK EVALUATION FEEDBACK OVERVIEW
+                  <div style={{ background: 'var(--bg-surface)', padding: '1rem 1.15rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                      MOCK EVALUATION SUMMARY
                     </div>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontStyle: 'italic', margin: '0.2rem 0' }}>
                       "{activeTranscriptSession.feedback}"
@@ -1177,7 +1280,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
                       <FileText size={42} color="var(--text-dim)" style={{ marginBottom: '0.75rem' }} />
                       <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.3rem' }}>
-                        No Full Transcript Paste Recorded Yet
+                        No Full Transcript Recorded Yet
                       </h4>
                       <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
                         Click "Edit Transcript" above to paste the raw MS Teams or Zoom meeting transcript for this mock session.
@@ -1188,19 +1291,61 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     </div>
                   ) : (
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          Verbatim Mock Interview Dialogue Log
-                        </span>
-                        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: '700' }}>
-                          {getWordCount(transcriptTextBuffer)} Words Recorded
-                        </span>
+                      {/* Interactive Speaker Filter Pills Bar */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.65rem', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '0.65rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <MessageSquare size={16} color="#7c3aed" />
+                          <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--skarion-navy)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                            Interview Dialogue Feed
+                          </span>
+                        </div>
+
+                        {/* Speaker filter selector pills */}
+                        {availableSpeakers.length > 1 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--text-muted)' }}>Filter:</span>
+                            <button
+                              onClick={() => setTranscriptSpeakerFilter('all')}
+                              style={{
+                                background: transcriptSpeakerFilter === 'all' ? '#7c3aed' : 'var(--bg-surface)',
+                                color: transcriptSpeakerFilter === 'all' ? '#ffffff' : 'var(--text-main)',
+                                border: '1px solid var(--border-color)',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '0.74rem',
+                                fontWeight: '700',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              All
+                            </button>
+                            {availableSpeakers.map(spk => (
+                              <button
+                                key={spk}
+                                onClick={() => setTranscriptSpeakerFilter(spk)}
+                                style={{
+                                  background: transcriptSpeakerFilter === spk ? '#7c3aed' : 'var(--bg-surface)',
+                                  color: transcriptSpeakerFilter === spk ? '#ffffff' : 'var(--text-main)',
+                                  border: '1px solid var(--border-color)',
+                                  padding: '2px 8px',
+                                  borderRadius: '12px',
+                                  fontSize: '0.74rem',
+                                  fontWeight: '700',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {spk}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
+                      {/* Chat Bubbles Container */}
                       <div>
-                        {parseAndOrganizeTranscript(transcriptTextBuffer).split('\n\n').map((paragraph, idx) => (
+                        {parsedDialogueParagraphs.map((paragraph, idx) => (
                           <React.Fragment key={idx}>
-                            {formatDialogueLine(paragraph)}
+                            {renderChatBubble(paragraph, idx)}
                           </React.Fragment>
                         ))}
                       </div>
