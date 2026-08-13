@@ -130,7 +130,7 @@ export default function StudentDetailModal({
         {/* Post New Audit Entry Form */}
         <form onSubmit={handlePostNote} style={{ background: 'var(--bg-surface-subtle)', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
           <h4 style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            📝 Add Candidate Observation Record
+            Add Candidate Observation Record
           </h4>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '0.85rem' }}>
@@ -138,7 +138,7 @@ export default function StudentDetailModal({
               <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Evaluator</label>
               <select value={newNoteAuthor} onChange={(e) => setNewNoteAuthor(e.target.value)} className="input-control" style={{ fontSize: '0.82rem', fontWeight: '700' }}>
                 {EVALUATORS.map(e => (
-                  <option key={e} value={e}>✍️ {e}</option>
+                  <option key={e} value={e}>{e}</option>
                 ))}
               </select>
             </div>
@@ -215,7 +215,7 @@ export default function StudentDetailModal({
                       borderRadius: '5px',
                       border: `1px solid ${evalCfg.border}`
                     }}>
-                      ✍️ {n.author}
+                      {n.author}
                     </span>
                     <span>{new Date(n.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   </div>

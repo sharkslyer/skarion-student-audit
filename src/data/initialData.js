@@ -1,11 +1,11 @@
 export const RATING_CONFIG = {
   placed: {
-    label: 'Placed 🎓',
+    label: 'Placed',
     badgeClass: 'badge-placed',
     color: '#8b5cf6',
     bg: '#f5f3ff',
     border: '#ddd6fe',
-    icon: '🎓',
+    icon: '',
     desc: 'Hired & Placed in tech company!'
   },
   excellent: {
@@ -14,7 +14,7 @@ export const RATING_CONFIG = {
     color: '#059669',
     bg: '#ecfdf5',
     border: '#a7f3d0',
-    icon: '🌟',
+    icon: '',
     desc: 'Top performer, high code quality & ready for tech rounds'
   },
   good: {
@@ -23,7 +23,7 @@ export const RATING_CONFIG = {
     color: '#0284c7',
     bg: '#f0f9ff',
     border: '#bae6fd',
-    icon: '👍',
+    icon: '',
     desc: 'Steady progress, good comprehension & attendance'
   },
   needs_attention: {
@@ -32,7 +32,7 @@ export const RATING_CONFIG = {
     color: '#d97706',
     bg: '#fffbeb',
     border: '#fde68a',
-    icon: '⚠️',
+    icon: '',
     desc: 'Needs push in assignments, projects or mock practice'
   },
   bad: {
@@ -41,7 +41,7 @@ export const RATING_CONFIG = {
     color: '#dc2626',
     bg: '#fef2f2',
     border: '#fecaca',
-    icon: '🔴',
+    icon: '',
     desc: 'Immediate intervention required, unresponsive or missing deadlines'
   }
 };
@@ -56,7 +56,7 @@ export const EVALUATOR_CONFIG = {
     border: '#7dd3fc',
     badgeBg: '#0284c7',
     badgeText: '#ffffff',
-    icon: '👤'
+    icon: ''
   },
   Mayukh: {
     label: 'Mayukh',
@@ -65,7 +65,7 @@ export const EVALUATOR_CONFIG = {
     border: '#fecdd3',
     badgeBg: '#e11d48',
     badgeText: '#ffffff',
-    icon: '👤'
+    icon: ''
   },
   Faisal: {
     label: 'Faisal',
@@ -74,7 +74,7 @@ export const EVALUATOR_CONFIG = {
     border: '#86efac',
     badgeBg: '#15803d',
     badgeText: '#ffffff',
-    icon: '👤'
+    icon: ''
   },
   Saki: {
     label: 'Saki',
@@ -83,7 +83,7 @@ export const EVALUATOR_CONFIG = {
     border: '#fef08a',
     badgeBg: '#ca8a04',
     badgeText: '#ffffff',
-    icon: '👤'
+    icon: ''
   },
   Ferdous: {
     label: 'Ferdous',
@@ -92,7 +92,7 @@ export const EVALUATOR_CONFIG = {
     border: '#ddd6fe',
     badgeBg: '#7c3aed',
     badgeText: '#ffffff',
-    icon: '👤'
+    icon: ''
   },
   Piyas: {
     label: 'Piyas',
@@ -101,7 +101,7 @@ export const EVALUATOR_CONFIG = {
     border: '#fed7aa',
     badgeBg: '#ea580c',
     badgeText: '#ffffff',
-    icon: '👤'
+    icon: ''
   }
 };
 
@@ -137,6 +137,7 @@ export const MOCK_ROUND_TYPES = [
   'Behavioral',
   'Practical',
   'Technological',
+  'Overall',
   'Other'
 ];
 

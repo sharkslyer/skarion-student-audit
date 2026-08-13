@@ -168,14 +168,14 @@ export default function Header({
             onClick={() => setActiveView('mock')}
             style={{ background: activeView === 'mock' ? 'var(--skarion-orange)' : 'transparent', color: activeView === 'mock' ? '#ffffff' : 'inherit' }}
           >
-            <Mic size={15} /> Mock Hub 🎙️
+            <Mic size={15} /> Mock Hub
           </button>
           <button 
             className={`tab-pill ${activeView === 'placed' ? 'active' : ''}`}
             onClick={() => setActiveView('placed')}
             style={{ background: activeView === 'placed' ? '#7c3aed' : 'transparent', color: activeView === 'placed' ? '#ffffff' : 'inherit' }}
           >
-            <GraduationCap size={15} /> Placed 🎓
+            <GraduationCap size={15} /> Placed
           </button>
         </div>
 

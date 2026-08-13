@@ -174,7 +174,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const handleCopyTranscript = () => {
     if (!transcriptTextBuffer) return;
     navigator.clipboard.writeText(transcriptTextBuffer);
-    if (showToast) showToast('Transcript copied to clipboard! 📋');
+    if (showToast) showToast('Transcript copied to clipboard!');
   };
 
   // Helper to count words in transcript
@@ -202,7 +202,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
             marginRight: '0.5rem',
             border: `1px solid ${isInterviewer ? '#bae6fd' : '#ddd6fe'}`
           }}>
-            🗣️ {speaker}
+            {speaker}
           </span>
           <span style={{ fontSize: `${transcriptFontSize}px`, color: 'var(--text-main)' }}>
             {dialogue}
@@ -272,7 +272,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
             <Mic size={30} color="var(--skarion-orange)" />
             <h2 style={{ fontSize: '1.45rem', fontWeight: '900', letterSpacing: '-0.02em', color: '#ffffff' }}>
-              Candidate Mock Interview Performance Hub 🎙️
+              Candidate Mock Interview Performance Hub
             </h2>
           </div>
           <p style={{ fontSize: '0.86rem', color: '#cbd5e1' }}>
@@ -354,7 +354,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   boxShadow: isSelected ? 'var(--shadow-sm)' : 'none'
                 }}
               >
-                <span>👤 {student.name}</span>
+                <span>{student.name}</span>
                 <span style={{ 
                   fontSize: '0.68rem', 
                   opacity: 0.85,
@@ -418,7 +418,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
             )}
           </div>
           <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>
-            {isImproving ? '📈 Performance Improving' : isDeclining ? '📉 Needs Performance Push' : '➡️ Consistent Rating'}
+            {isImproving ? 'Performance Improving' : isDeclining ? 'Needs Performance Push' : 'Consistent Rating'}
           </span>
         </div>
 
@@ -440,7 +440,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       <div className="card-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📈 Score Progression Graph (Hover points to view exact log details)
+            Score Progression Graph (Hover points to view exact log details)
           </h3>
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>
             {currentStudent.name}'s Score Progression Trail
@@ -476,12 +476,12 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                 padding: '2px 8px',
                 borderRadius: '6px'
               }}>
-                ⭐ {points[hoveredPointIndex].session.score} / 10
+                {points[hoveredPointIndex].session.score} / 10
               </span>
             </div>
 
             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '0.35rem' }}>
-              🎯 {points[hoveredPointIndex].session.category} • ✍️ {points[hoveredPointIndex].session.evaluator}
+              {points[hoveredPointIndex].session.category} • {points[hoveredPointIndex].session.evaluator}
             </div>
 
             <p style={{ fontSize: '0.84rem', color: 'var(--text-main)', fontStyle: 'italic', background: 'var(--bg-surface-subtle)', padding: '0.5rem 0.75rem', borderRadius: '8px', margin: '0.4rem 0', lineHeight: '1.4' }}>
@@ -490,7 +490,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
             {points[hoveredPointIndex].session.transcript && (
               <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: '800', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                📜 Full Transcript Saved ({getWordCount(points[hoveredPointIndex].session.transcript)} words)
+                Full Transcript Saved ({getWordCount(points[hoveredPointIndex].session.transcript)} words)
               </div>
             )}
           </div>
@@ -670,7 +670,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       borderRadius: '8px',
                       border: `1px solid ${scoreColor}40`
                     }}>
-                      ⭐ {session.score} / 10 Rating
+                      {session.score} / 10 Rating
                     </span>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -683,7 +683,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         borderRadius: '5px',
                         border: `1px solid ${evalCfg.border}`
                       }}>
-                        ✍️ {session.evaluator}
+                        {session.evaluator}
                       </span>
                       <button 
                         onClick={() => handleDeleteMock(session.id)}
@@ -697,7 +697,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
                   {/* Round Category & Date */}
                   <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <span>🎯 Category: {session.category}</span>
+                    <span>Category: {session.category}</span>
                     <span style={{ color: 'var(--text-dim)' }}>• {session.date}</span>
                   </div>
 
@@ -709,16 +709,16 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   {/* Strengths & Improvement Points */}
                   {session.strengths && (
                     <div style={{ fontSize: '0.76rem', color: '#059669', fontWeight: '700', marginBottom: '0.2rem' }}>
-                      ✔️ Strength: {session.strengths}
+                      Strength: {session.strengths}
                     </div>
                   )}
                   {session.improvement && (
                     <div style={{ fontSize: '0.76rem', color: '#d97706', fontWeight: '700', marginBottom: '0.6rem' }}>
-                      🎯 Improvement: {session.improvement}
+                      Improvement: {session.improvement}
                     </div>
                   )}
 
-                  {/* 📜 Prominent Mock Transcript Storage & 1-Click Reader Button */}
+                  {/* Prominent Mock Transcript Storage & 1-Click Reader Button */}
                   <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
                     {hasTranscript ? (
                       <button 
@@ -730,14 +730,14 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           color: '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
+                          justify: 'center',
                           gap: '0.5rem',
                           height: '38px',
                           fontSize: '0.82rem',
                           boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
                         }}
                       >
-                        <BookOpen size={16} /> 📜 View Full Transcript ({wordCount} words)
+                        <BookOpen size={16} /> View Full Transcript ({wordCount} words)
                       </button>
                     ) : (
                       <button 
@@ -755,7 +755,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           color: '#7c3aed'
                         }}
                       >
-                        <Plus size={15} /> 📜 Add / Paste Mock Transcript
+                        <Plus size={15} /> Add / Paste Mock Transcript
                       </button>
                     )}
                   </div>
@@ -774,7 +774,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                🎙️ Log Candidate Mock Interview Performance
+                Log Candidate Mock Interview Performance
               </h3>
               <button className="btn-icon" onClick={() => setIsLogModalOpen(false)}>
                 <X size={18} />
@@ -826,7 +826,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     style={{ fontSize: '0.86rem', fontWeight: '700' }}
                   >
                     {EVALUATORS.map(e => (
-                      <option key={e} value={e}>✍️ {e}</option>
+                      <option key={e} value={e}>{e}</option>
                     ))}
                   </select>
                 </div>
@@ -950,7 +950,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
         </div>
       )}
 
-      {/* 📜 User-Friendly Long Screen Reader & Editor Modal Dialog */}
+      {/* User-Friendly Long Screen Reader & Editor Modal Dialog */}
       {activeTranscriptSession && (
         <div className="modal-backdrop" onClick={() => setActiveTranscriptSession(null)}>
           <div 
@@ -974,7 +974,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    📜 Mock Interview Transcript
+                    Mock Interview Transcript
                   </h3>
                   <span style={{ 
                     background: getScoreColor(activeTranscriptSession.score) + '20', 
@@ -984,11 +984,11 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     padding: '2px 8px',
                     borderRadius: '6px'
                   }}>
-                    ⭐ {activeTranscriptSession.score} / 10
+                    {activeTranscriptSession.score} / 10
                   </span>
                 </div>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                  {currentStudent.name} • {activeTranscriptSession.date} • 🎯 {activeTranscriptSession.category} • ✍️ {activeTranscriptSession.evaluator}
+                  {currentStudent.name} • {activeTranscriptSession.date} • Category: {activeTranscriptSession.category} • Evaluator: {activeTranscriptSession.evaluator}
                 </p>
               </div>
 
@@ -1100,12 +1100,12 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     </p>
                     {activeTranscriptSession.strengths && (
                       <div style={{ fontSize: '0.78rem', color: '#059669', fontWeight: '700', marginTop: '0.4rem' }}>
-                        ✔️ Strengths: {activeTranscriptSession.strengths}
+                        Strengths: {activeTranscriptSession.strengths}
                       </div>
                     )}
                     {activeTranscriptSession.improvement && (
                       <div style={{ fontSize: '0.78rem', color: '#d97706', fontWeight: '700', marginTop: '0.2rem' }}>
-                        🎯 Areas for Improvement: {activeTranscriptSession.improvement}
+                        Areas for Improvement: {activeTranscriptSession.improvement}
                       </div>
                     )}
                   </div>
@@ -1128,7 +1128,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
                         <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          📜 Verbatim Mock Interview Dialogue Log
+                          Verbatim Mock Interview Dialogue Log
                         </span>
                         <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: '700' }}>
                           {getWordCount(transcriptTextBuffer)} Words Recorded

@@ -26,7 +26,7 @@ export default function PlacedCandidatesView({ students, onSelectStudent, onOpen
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.35rem' }}>
             <GraduationCap size={32} color="#c4b5fd" />
             <h2 style={{ fontSize: '1.45rem', fontWeight: '900', letterSpacing: '-0.02em', color: '#ffffff' }}>
-              SKARION Placed Alumni Hall of Fame 🎓
+              SKARION Placed Alumni Hall of Fame
             </h2>
           </div>
           <p style={{ fontSize: '0.86rem', color: '#c4b5fd' }}>
@@ -55,7 +55,7 @@ export default function PlacedCandidatesView({ students, onSelectStudent, onOpen
             No candidates marked as Placed yet
           </h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
-            When candidates secure job offers, set their rating mark to 🎓 Placed in the roster!
+            When candidates secure job offers, set their rating mark to Placed in the roster!
           </p>
           <button className="btn-primary" onClick={onOpenAddModal}>
             + Add Placed Candidate Record
@@ -84,7 +84,7 @@ export default function PlacedCandidatesView({ students, onSelectStudent, onOpen
                 {/* Top header bar */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <span className="status-badge badge-placed" style={{ fontWeight: '800' }}>
-                    🎓 HIRED ALUMNI
+                    HIRED ALUMNI
                   </span>
                   <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#7c3aed', background: 'rgba(124, 58, 237, 0.12)', padding: '2px 8px', borderRadius: '6px' }}>
                     {student.mockInterviews || 0} Mocks Passed

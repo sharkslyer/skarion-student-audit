@@ -25,7 +25,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       <div className="card-panel" style={{ padding: '1.15rem 1.35rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--skarion-navy)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            👥 Candidate Roster Overview
+            Candidate Roster Overview
           </span>
           <span style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-muted)' }}>
             {avgProgress}% Avg Completion
@@ -78,7 +78,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
             }}
           >
             <div style={{ fontSize: '1.45rem', fontWeight: '800', color: '#7c3aed', lineHeight: '1' }}>{placed}</div>
-            <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#7c3aed' }}>Placed 🎓</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#7c3aed' }}>Placed</span>
           </div>
         </div>
       </div>
@@ -87,7 +87,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       <div className="card-panel" style={{ padding: '1.15rem 1.35rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--skarion-navy)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            📊 Candidate Health Distribution
+            Candidate Health Distribution
           </span>
           <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Click pill to filter</span>
         </div>
@@ -163,7 +163,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
       <div className="card-panel" style={{ padding: '1.15rem 1.35rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--skarion-navy)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem' }}>
-            🎙️ Mock Interviews Conducted
+            Mock Interviews Conducted
           </span>
           <div style={{ fontSize: '1.85rem', fontWeight: '900', color: 'var(--skarion-orange)', lineHeight: '1' }}>
             {totalMocks} Sessions

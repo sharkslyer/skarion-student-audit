@@ -122,7 +122,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
               className="input-control"
               style={{ height: '38px', fontSize: '0.84rem', minWidth: '170px' }}
             >
-              <option value="all">👥 All Candidates ({students.length})</option>
+              <option value="all">All Candidates ({students.length})</option>
               {students.map(s => (
                 <option key={s.id} value={s.id}>{s.name} ({s.stickyNotes?.length || 0})</option>
               ))}
@@ -138,7 +138,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
               className="input-control"
               style={{ height: '38px', fontSize: '0.84rem', minWidth: '150px' }}
             >
-              <option value="all">🏷️ All Categories</option>
+              <option value="all">All Categories</option>
               {categories.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -154,7 +154,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
               className="input-control"
               style={{ height: '38px', fontSize: '0.84rem', minWidth: '150px' }}
             >
-              <option value="all">✍️ All Evaluators</option>
+              <option value="all">All Evaluators</option>
               {EVALUATORS.map(ev => {
                 const cfg = EVALUATOR_CONFIG[ev];
                 return <option key={ev} value={ev}>{ev}</option>;
@@ -363,12 +363,12 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
                     alignItems: 'center',
                     gap: '0.3rem'
                   }}>
-                    ✍️ {note.author}
+                    {note.author}
                   </span>
                   
                   {note.pinned && (
                     <span style={{ color: 'var(--skarion-orange)', fontWeight: '800', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      📌 PINNED
+                      PINNED
                     </span>
                   )}
                 </div>

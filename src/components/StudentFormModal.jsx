@@ -162,7 +162,6 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
                       transition: 'all 0.2s'
                     }}
                   >
-                    <span style={{ fontSize: '1.1rem' }}>{cfg.icon}</span>
                     <div>
                       <div style={{ fontWeight: '800', fontSize: '0.82rem', color: isSelected ? cfg.color : 'var(--skarion-navy)' }}>
                         {cfg.label}

@@ -152,7 +152,7 @@ export default function CalendarView({ students, onSelectStudent }) {
                   const evalCfg = EVALUATOR_CONFIG[n.author] || EVALUATOR_CONFIG.Mayukh;
                   return (
                     <div key={n.id} style={{ fontSize: '0.68rem', background: evalCfg.bg, color: evalCfg.text, border: `1px solid ${evalCfg.border}`, padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
-                      📝 {n.studentName}
+                      {n.studentName}
                     </div>
                   );
                 })}
@@ -168,7 +168,7 @@ export default function CalendarView({ students, onSelectStudent }) {
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ padding: '1.75rem', maxWidth: '650px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                📅 Audit Events for {selectedDayNotes.formattedDate}
+                Audit Events for {selectedDayNotes.formattedDate}
               </h3>
               <button className="btn-secondary" style={{ height: '36px' }} onClick={() => setSelectedDayNotes(null)}>Close</button>
             </div>
@@ -177,7 +177,7 @@ export default function CalendarView({ students, onSelectStudent }) {
             {selectedDayNotes.joiningStudents.length > 0 && (
               <div style={{ marginBottom: '1.25rem' }}>
                 <h4 style={{ fontSize: '0.88rem', color: '#059669', fontWeight: '800', marginBottom: '0.65rem' }}>
-                  🚀 Candidates Joined on this Date:
+                  Candidates Joined on this Date:
                 </h4>
                 {selectedDayNotes.joiningStudents.map(s => (
                   <div 
@@ -196,7 +196,7 @@ export default function CalendarView({ students, onSelectStudent }) {
             {selectedDayNotes.notesOnDay.length > 0 && (
               <div>
                 <h4 style={{ fontSize: '0.88rem', color: 'var(--skarion-orange)', fontWeight: '800', marginBottom: '0.65rem' }}>
-                  📝 Mentor Audit Notes on this Date:
+                  Mentor Audit Notes on this Date:
                 </h4>
                 {selectedDayNotes.notesOnDay.map(n => {
                   const evalCfg = EVALUATOR_CONFIG[n.author] || EVALUATOR_CONFIG.Mayukh;
@@ -211,7 +211,7 @@ export default function CalendarView({ students, onSelectStudent }) {
                           borderRadius: '5px',
                           border: `1px solid ${evalCfg.border}` 
                         }}>
-                          ✍️ {n.author}
+                          {n.author}
                         </span>
                       </div>
                       <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '500' }}>"{n.content}"</p>

@@ -165,7 +165,7 @@ export default function StudentTable({
                       >
                         {Object.entries(RATING_CONFIG).map(([key, cfg]) => (
                           <option key={key} value={key} style={{ background: 'var(--bg-surface)', color: cfg.color, fontWeight: 'bold' }}>
-                            {cfg.icon} {cfg.label}
+                            {cfg.label}
                           </option>
                         ))}
                       </select>
