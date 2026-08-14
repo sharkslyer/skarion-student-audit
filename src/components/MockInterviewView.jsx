@@ -25,7 +25,14 @@ import {
   ZoomOut,
   AlignLeft,
   MessageSquare,
-  ArrowRight
+  ArrowRight,
+  Clock,
+  Activity,
+  ExternalLink,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Filter
 } from 'lucide-react';
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
@@ -36,6 +43,12 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [hoveredPointIndex, setHoveredPointIndex] = useState(null);
+
+  // Recent Mocks Panel State
+  const [recentEvaluatorFilter, setRecentEvaluatorFilter] = useState('all');
+  const [recentMocksSearch, setRecentMocksSearch] = useState('');
+  const [isRecentMocksExpanded, setIsRecentMocksExpanded] = useState(false);
+  const [activeTranscriptStudent, setActiveTranscriptStudent] = useState(null);
 
   // Transcript Reader / Editor Modal State
   const [activeTranscriptSession, setActiveTranscriptSession] = useState(null);
@@ -76,6 +89,43 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const scoreDiff = (latestScore - firstScore).toFixed(1);
   const isImproving = Number(scoreDiff) > 0;
   const isDeclining = Number(scoreDiff) < 0;
+
+  // Extract and sort all recent mock sessions across the entire candidate database
+  const allRecentMocks = students.flatMap(student => 
+    (student.mockSessions || []).map(session => ({
+      ...session,
+      studentId: student.id,
+      studentName: student.name,
+      studentRating: student.rating,
+      studentTargetRole: student.targetRole || student.domain || '',
+      studentData: student
+    }))
+  ).sort((a, b) => {
+    const dateA = new Date(a.date).getTime() || 0;
+    const dateB = new Date(b.date).getTime() || 0;
+    if (dateB !== dateA) return dateB - dateA;
+    return String(b.id).localeCompare(String(a.id));
+  });
+
+  const evaluatorsWithMocks = Array.from(new Set(allRecentMocks.map(m => m.evaluator).filter(Boolean)));
+
+  const filteredRecentMocks = allRecentMocks.filter(mock => {
+    if (recentEvaluatorFilter !== 'all' && mock.evaluator !== recentEvaluatorFilter) {
+      return false;
+    }
+    if (recentMocksSearch.trim()) {
+      const q = recentMocksSearch.trim().toLowerCase();
+      const matchName = mock.studentName?.toLowerCase().includes(q);
+      const matchCategory = mock.category?.toLowerCase().includes(q);
+      const matchFeedback = mock.feedback?.toLowerCase().includes(q);
+      const matchEvaluator = mock.evaluator?.toLowerCase().includes(q);
+      const matchStrengths = mock.strengths?.toLowerCase().includes(q);
+      if (!matchName && !matchCategory && !matchFeedback && !matchEvaluator && !matchStrengths) return false;
+    }
+    return true;
+  });
+
+  const displayedRecentMocks = isRecentMocksExpanded ? filteredRecentMocks : filteredRecentMocks.slice(0, 4);
 
   // Handle submitting new mock interview record
   const handleLogMock = (e) => {
@@ -148,11 +198,17 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   };
 
   // Open Transcript Reader / Editor Modal
-  const openTranscriptModal = (session, editMode = false) => {
+  const openTranscriptModal = (session, editMode = false, student = null) => {
+    const targetStudent = student || currentStudent;
+    setActiveTranscriptStudent(targetStudent);
+    if (student && student.id !== selectedStudentId) {
+      setSelectedStudentId(student.id);
+    }
     setActiveTranscriptSession(session);
     setTranscriptTextBuffer(session.transcript || '');
     setIsEditingTranscript(editMode);
     setTranscriptSpeakerFilter('all');
+    setTranscriptWordSearch('');
   };
 
   // Auto-clean raw Teams / Zoom / Meet copy-paste transcript
@@ -166,12 +222,14 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
   // Save Transcript changes
   const handleSaveTranscript = () => {
-    if (!activeTranscriptSession || !currentStudent) return;
+    const studentToUpdate = activeTranscriptStudent || currentStudent;
+    if (!activeTranscriptSession || !studentToUpdate) return;
 
     const studentRosterNames = (students || []).map(s => s?.name).filter(Boolean);
     const cleanedText = parseAndOrganizeTranscript(transcriptTextBuffer.trim(), studentRosterNames);
 
-    const updatedSessions = mockSessions.map(s => {
+    const studentSessions = studentToUpdate.mockSessions || [];
+    const updatedSessions = studentSessions.map(s => {
       if (s.id === activeTranscriptSession.id) {
         return { ...s, transcript: cleanedText };
       }
@@ -179,7 +237,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     });
 
     const updatedStudent = {
-      ...currentStudent,
+      ...studentToUpdate,
       mockSessions: updatedSessions
     };
 
@@ -449,6 +507,365 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
         >
           <Plus size={18} /> Log Mock Interview
         </button>
+      </div>
+
+      {/* Recent Mock Interviews Activity Feed Panel */}
+      <div 
+        className="card-panel" 
+        style={{ 
+          padding: '1.4rem', 
+          marginBottom: '1.5rem', 
+          background: 'var(--bg-surface)', 
+          border: '1px solid var(--border-color)',
+          borderRadius: '16px',
+          boxShadow: 'var(--shadow-sm)'
+        }}
+      >
+        {/* Panel Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.85rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.2rem', flexWrap: 'wrap' }}>
+              <div style={{ 
+                background: 'rgba(255, 82, 82, 0.12)', 
+                color: 'var(--skarion-orange)', 
+                padding: '6px', 
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Activity size={18} />
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: 0, letterSpacing: '-0.01em' }}>
+                Recent Mock Interviews Activity Feed
+              </h3>
+              <span style={{ 
+                background: 'linear-gradient(135deg, #132247 0%, #1e293b 100%)', 
+                color: '#38bdf8', 
+                fontSize: '0.72rem', 
+                fontWeight: '800', 
+                padding: '2px 8px', 
+                borderRadius: '12px',
+                border: '1px solid rgba(56, 189, 248, 0.3)'
+              }}>
+                {allRecentMocks.length} Recorded Across Academy
+              </span>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+              Instantly view and inspect the latest mock evaluations and transcripts taken across all candidates without manual searching.
+            </p>
+          </div>
+
+          {/* Quick Search within Recent Mocks */}
+          <div style={{ position: 'relative', minWidth: '220px', maxWidth: '300px', flex: '1' }}>
+            <Search size={14} color="var(--text-dim)" style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <input 
+              type="text"
+              placeholder="Filter recent by name, topic..."
+              value={recentMocksSearch}
+              onChange={(e) => setRecentMocksSearch(e.target.value)}
+              className="input-control"
+              style={{ paddingLeft: '2.1rem', height: '36px', fontSize: '0.82rem', borderRadius: '10px' }}
+            />
+            {recentMocksSearch && (
+              <button 
+                onClick={() => setRecentMocksSearch('')} 
+                style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Evaluator Quick Filter Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.15rem' }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <Filter size={12} /> Evaluator:
+          </span>
+          <button
+            onClick={() => setRecentEvaluatorFilter('all')}
+            style={{
+              background: recentEvaluatorFilter === 'all' ? 'var(--skarion-navy)' : 'var(--bg-surface-subtle)',
+              color: recentEvaluatorFilter === 'all' ? '#ffffff' : 'var(--text-main)',
+              border: '1px solid var(--border-color)',
+              padding: '3px 10px',
+              borderRadius: '14px',
+              fontSize: '0.74rem',
+              fontWeight: '800',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            All Evaluators ({allRecentMocks.length})
+          </button>
+          {evaluatorsWithMocks.map(evaluatorName => {
+            const isSelected = recentEvaluatorFilter === evaluatorName;
+            const evalCfg = EVALUATOR_CONFIG[evaluatorName] || EVALUATOR_CONFIG.Mayukh;
+            const count = allRecentMocks.filter(m => m.evaluator === evaluatorName).length;
+            return (
+              <button
+                key={evaluatorName}
+                onClick={() => setRecentEvaluatorFilter(evaluatorName)}
+                style={{
+                  background: isSelected ? evalCfg.badgeBg || evalCfg.text : 'var(--bg-surface-subtle)',
+                  color: isSelected ? '#ffffff' : evalCfg.text,
+                  border: isSelected ? `1px solid ${evalCfg.border}` : '1px solid var(--border-color)',
+                  padding: '3px 10px',
+                  borderRadius: '14px',
+                  fontSize: '0.74rem',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem'
+                }}
+              >
+                <span>{evaluatorName}</span>
+                <span style={{ 
+                  background: isSelected ? 'rgba(255,255,255,0.25)' : evalCfg.bg, 
+                  color: isSelected ? '#ffffff' : evalCfg.text,
+                  padding: '0 4px', 
+                  borderRadius: '6px', 
+                  fontSize: '0.68rem' 
+                }}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Recent Mocks Grid */}
+        {filteredRecentMocks.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: 'var(--bg-surface-subtle)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
+            <FileText size={32} color="var(--text-dim)" style={{ marginBottom: '0.5rem' }} />
+            <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--skarion-navy)', marginBottom: '0.2rem' }}>
+              No Recent Mocks Found
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+              {recentMocksSearch ? 'No mock interviews match your search filter.' : 'Log a new mock interview above to see it appear in this live stream.'}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+              {displayedRecentMocks.map(mock => {
+                const scoreColor = getScoreColor(mock.score);
+                const evalCfg = EVALUATOR_CONFIG[mock.evaluator] || EVALUATOR_CONFIG.Mayukh;
+                const hasTranscript = mock.transcript && mock.transcript.trim().length > 0;
+                const wordCount = getWordCount(mock.transcript);
+                const isCurrentSelected = mock.studentId === selectedStudentId;
+
+                // Initials for avatar circle
+                const initials = mock.studentName.split(/\s+/).map(p => p[0]).join('').substring(0, 2).toUpperCase();
+
+                return (
+                  <div
+                    key={mock.id}
+                    className="card-panel"
+                    style={{
+                      padding: '1.15rem',
+                      background: isCurrentSelected ? 'var(--bg-surface)' : 'var(--bg-surface)',
+                      border: isCurrentSelected ? '2px solid var(--skarion-navy)' : '1px solid var(--border-color)',
+                      borderLeft: `5px solid ${scoreColor}`,
+                      borderRadius: '14px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      position: 'relative',
+                      boxShadow: isCurrentSelected ? '0 4px 16px rgba(19, 34, 71, 0.12)' : 'var(--shadow-sm)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div>
+                      {/* Top Header: Candidate Name, Avatar & Score */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
+                        <div 
+                          onClick={() => {
+                            setSelectedStudentId(mock.studentId);
+                            document.getElementById('candidate-mock-history')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}
+                          title={`Select ${mock.studentName} and view audit history`}
+                        >
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, var(--skarion-navy) 0%, #0284c7 100%)',
+                            color: '#ffffff',
+                            fontWeight: '900',
+                            fontSize: '0.78rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {initials}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--skarion-navy)', lineHeight: '1.2', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <span>{mock.studentName}</span>
+                              {isCurrentSelected && (
+                                <span style={{ fontSize: '0.64rem', background: 'var(--skarion-navy)', color: '#ffffff', padding: '1px 5px', borderRadius: '4px' }}>Active</span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                              {mock.studentTargetRole || mock.category}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Rating Score Badge */}
+                        <span style={{
+                          background: getScoreColor(mock.score) + '20',
+                          color: scoreColor,
+                          fontWeight: '900',
+                          fontSize: '0.88rem',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '8px',
+                          border: `1px solid ${scoreColor}40`,
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {mock.score} / 10
+                        </span>
+                      </div>
+
+                      {/* Evaluator, Category & Date Metadata Pills */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
+                        <span style={{
+                          color: evalCfg.text,
+                          fontWeight: '800',
+                          fontSize: '0.72rem',
+                          background: evalCfg.bg,
+                          padding: '0.12rem 0.5rem',
+                          borderRadius: '5px',
+                          border: `1px solid ${evalCfg.border}`
+                        }}>
+                          {mock.evaluator}
+                        </span>
+
+                        <span style={{ fontSize: '0.72rem', fontWeight: '700', background: 'var(--bg-surface-subtle)', color: 'var(--skarion-navy)', padding: '0.12rem 0.45rem', borderRadius: '5px', border: '1px solid var(--border-color)' }}>
+                          {mock.category}
+                        </span>
+
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.2rem', marginLeft: 'auto' }}>
+                          <Calendar size={11} /> {mock.date}
+                        </span>
+                      </div>
+
+                      {/* Feedback Excerpt */}
+                      <p style={{
+                        fontSize: '0.84rem',
+                        color: 'var(--text-main)',
+                        fontStyle: 'italic',
+                        marginBottom: '0.65rem',
+                        lineHeight: '1.4',
+                        background: 'var(--bg-surface-subtle)',
+                        padding: '0.55rem 0.75rem',
+                        borderRadius: '8px',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        "{mock.feedback}"
+                      </p>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div style={{ display: 'flex', gap: '0.45rem', paddingTop: '0.55rem', borderTop: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
+                      {hasTranscript && (
+                        <button
+                          className="btn-primary"
+                          onClick={() => openTranscriptModal(mock, false, mock.studentData)}
+                          style={{
+                            flex: '1',
+                            minWidth: '130px',
+                            background: 'var(--skarion-orange)',
+                            color: '#ffffff',
+                            height: '34px',
+                            fontSize: '0.78rem',
+                            fontWeight: '800',
+                            borderRadius: '8px',
+                            padding: '0 0.65rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.35rem'
+                          }}
+                          title="Read full interview dialogue transcript"
+                        >
+                          <BookOpen size={13} /> View Transcript ({wordCount}w)
+                        </button>
+                      )}
+
+                      <button
+                        className="btn-secondary"
+                        onClick={() => {
+                          setSelectedStudentId(mock.studentId);
+                          document.getElementById('candidate-mock-history')?.scrollIntoView({ behavior: 'smooth' });
+                          if (showToast) showToast(`Loaded performance history for ${mock.studentName}`);
+                        }}
+                        style={{
+                          flex: hasTranscript ? 'initial' : '1',
+                          height: '34px',
+                          fontSize: '0.78rem',
+                          fontWeight: '800',
+                          borderRadius: '8px',
+                          padding: '0 0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.3rem',
+                          color: 'var(--skarion-navy)',
+                          borderColor: isCurrentSelected ? 'var(--skarion-navy)' : 'var(--border-color)'
+                        }}
+                        title={`Select ${mock.studentName} and view audit history`}
+                      >
+                        <span>Details</span>
+                        <ChevronRight size={13} />
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Expand / Collapse All Recent Mocks Button */}
+            {filteredRecentMocks.length > 4 && (
+              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                <button
+                  className="btn-secondary"
+                  onClick={() => setIsRecentMocksExpanded(!isRecentMocksExpanded)}
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '800',
+                    padding: '0.45rem 1.25rem',
+                    borderRadius: '20px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: 'var(--bg-surface-subtle)'
+                  }}
+                >
+                  {isRecentMocksExpanded ? (
+                    <>
+                      <ChevronUp size={15} /> Show Less (Top 4)
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={15} /> View All {filteredRecentMocks.length} Recent Mock Sessions
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Candidate Switcher Section */}
@@ -774,7 +1191,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       </div>
 
       {/* Search bar right above roster */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+      <div id="candidate-mock-history" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem', scrollMarginTop: '1.5rem' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--skarion-navy)', margin: 0 }}>
           Candidate Audit Roster — {currentStudent.name} <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>({sortedSessions.length} mocks)</span>
         </h3>
@@ -1155,7 +1572,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   </span>
                 </div>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                  {currentStudent.name} • {activeTranscriptSession.date} • Category: {activeTranscriptSession.category} • Evaluator: {activeTranscriptSession.evaluator}
+                  {(activeTranscriptStudent || currentStudent)?.name} • {activeTranscriptSession.date} • Category: {activeTranscriptSession.category} • Evaluator: {activeTranscriptSession.evaluator}
                 </p>
               </div>
 
