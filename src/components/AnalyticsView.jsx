@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { 
   BarChart2, 
   TrendingUp, 
-  TrendingDown, 
   Award, 
   Users, 
   User, 
@@ -20,13 +19,13 @@ import {
   PieChart as PieIcon,
   Activity,
   Layers,
-  HelpCircle,
   ExternalLink,
   Target,
-  ShieldCheck,
-  Star,
   Zap,
-  Check
+  Check,
+  Edit3,
+  BookOpen,
+  Sliders
 } from 'lucide-react';
 import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG } from '../data/initialData';
 
@@ -94,144 +93,36 @@ function SvgDonutChart({ data, size = 260, strokeWidth = 36, centerTitle = "Tota
   );
 }
 
-// 5-Pillar Pure SVG Spider / Radar Chart
-function SvgRadarChart({ dimensions, size = 300 }) {
-  const count = dimensions.length;
-  const center = size / 2;
-  const radius = size * 0.38;
-  const angleStep = (Math.PI * 2) / count;
-
-  // Grid polygon rings (20%, 40%, 60%, 80%, 100%)
-  const levels = [0.2, 0.4, 0.6, 0.8, 1.0];
-
-  // Calculate coordinates
-  const getCoordinates = (angle, dist) => ({
-    x: center + dist * Math.cos(angle - Math.PI / 2),
-    y: center + dist * Math.sin(angle - Math.PI / 2)
-  });
-
-  // Calculate polygon points for candidate scores
-  const polygonPoints = dimensions.map((dim, idx) => {
-    const angle = idx * angleStep;
-    const dist = (dim.score / 100) * radius;
-    const pt = getCoordinates(angle, dist);
-    return `${pt.x},${pt.y}`;
-  }).join(' ');
-
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: 'visible' }}>
-        {/* Background Grid Rings */}
-        {levels.map(level => {
-          const ringPoints = Array.from({ length: count }).map((_, idx) => {
-            const angle = idx * angleStep;
-            const pt = getCoordinates(angle, radius * level);
-            return `${pt.x},${pt.y}`;
-          }).join(' ');
-
-          return (
-            <polygon
-              key={level}
-              points={ringPoints}
-              fill={level === 1.0 ? 'var(--bg-surface-subtle)' : 'transparent'}
-              stroke="var(--border-color)"
-              strokeWidth="1"
-              strokeDasharray={level === 1.0 ? 'none' : '3,3'}
-            />
-          );
-        })}
-
-        {/* Radial Axis Lines */}
-        {dimensions.map((dim, idx) => {
-          const angle = idx * angleStep;
-          const pt = getCoordinates(angle, radius);
-          return (
-            <line
-              key={dim.skill}
-              x1={center}
-              y1={center}
-              x2={pt.x}
-              y2={pt.y}
-              stroke="var(--border-color)"
-              strokeWidth="1.2"
-            />
-          );
-        })}
-
-        {/* Filled Data Polygon */}
-        <polygon
-          points={polygonPoints}
-          fill="rgba(255, 82, 82, 0.25)"
-          stroke="var(--skarion-orange)"
-          strokeWidth="2.5"
-          style={{ filter: 'drop-shadow(0 4px 10px rgba(255, 82, 82, 0.35))' }}
-        />
-
-        {/* Data Point Dots & Labels */}
-        {dimensions.map((dim, idx) => {
-          const angle = idx * angleStep;
-          const dist = (dim.score / 100) * radius;
-          const pt = getCoordinates(angle, dist);
-          const labelPt = getCoordinates(angle, radius + 24);
-
-          return (
-            <g key={dim.skill}>
-              <circle
-                cx={pt.x}
-                cy={pt.y}
-                r="5"
-                fill="var(--skarion-orange)"
-                stroke="#ffffff"
-                strokeWidth="2"
-              />
-              <text
-                x={labelPt.x}
-                y={labelPt.y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize="11"
-                fontWeight="800"
-                fill="var(--skarion-navy)"
-              >
-                {dim.skill} ({dim.score}%)
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-// Speedometer Gauge Component for Placement Readiness Index
-function SvgSpeedometerGauge({ score = 85, size = 240 }) {
-  const radius = size * 0.4;
-  const strokeWidth = 24;
-  const center = size / 2;
-  const startAngle = Math.PI * 0.8;
-  const endAngle = Math.PI * 2.2;
+// Clean, Perfectly Spaced Speedometer Gauge with Zero Overlap
+function SvgSpeedometerGauge({ score = 85, size = 260 }) {
+  const radius = size * 0.42;
+  const strokeWidth = 22;
+  const cx = size / 2;
+  const cy = size * 0.55;
+  const startAngle = Math.PI * 0.85;
+  const endAngle = Math.PI * 2.15;
   const totalArc = endAngle - startAngle;
 
-  const currentAngle = startAngle + (score / 100) * totalArc;
+  const currentAngle = startAngle + (Math.min(100, Math.max(0, score)) / 100) * totalArc;
 
   const polarToCartesian = (cx, cy, r, angle) => ({
     x: cx + r * Math.cos(angle),
     y: cy + r * Math.sin(angle)
   });
 
-  const p1 = polarToCartesian(center, center, radius, startAngle);
-  const p2 = polarToCartesian(center, center, radius, endAngle);
+  const p1 = polarToCartesian(cx, cy, radius, startAngle);
+  const p2 = polarToCartesian(cx, cy, radius, endAngle);
   const bgPath = `M ${p1.x} ${p1.y} A ${radius} ${radius} 0 1 1 ${p2.x} ${p2.y}`;
 
-  const cp = polarToCartesian(center, center, radius, currentAngle);
+  const cp = polarToCartesian(cx, cy, radius, currentAngle);
   const largeArcFlag = (currentAngle - startAngle) > Math.PI ? 1 : 0;
   const fillPath = `M ${p1.x} ${p1.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${cp.x} ${cp.y}`;
 
-  const gaugeColor = score >= 80 ? '#059669' : score >= 60 ? '#0284c7' : '#dc2626';
+  const gaugeColor = score >= 80 ? '#059669' : score >= 60 ? '#0284c7' : score >= 40 ? '#d97706' : '#dc2626';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-      <svg width={size} height={size * 0.72} viewBox={`0 0 ${size} ${size * 0.72}`} style={{ overflow: 'visible' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.5rem 0' }}>
+      <svg width={size} height={size * 0.65} viewBox={`0 0 ${size} ${size * 0.65}`} style={{ overflow: 'visible' }}>
         {/* Background Track */}
         <path
           d={bgPath}
@@ -248,24 +139,24 @@ function SvgSpeedometerGauge({ score = 85, size = 240 }) {
           stroke={gaugeColor}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
-          style={{ filter: `drop-shadow(0 4px 12px ${gaugeColor}50)` }}
+          style={{ filter: `drop-shadow(0 4px 10px ${gaugeColor}40)` }}
         />
       </svg>
 
-      {/* Centered Stat */}
-      <div style={{ textAlign: 'center', marginTop: '-42px' }}>
-        <div style={{ fontSize: '2.4rem', fontWeight: '900', color: gaugeColor, lineHeight: '1' }}>
+      {/* Clean Spaced Stat & Label with ZERO text overlap */}
+      <div style={{ textAlign: 'center', marginTop: '0.85rem' }}>
+        <div style={{ fontSize: '2.5rem', fontWeight: '900', color: gaugeColor, lineHeight: '1' }}>
           {score}%
         </div>
-        <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--skarion-navy)', marginTop: '4px' }}>
-          {score >= 80 ? '🔥 Job Interview Ready' : score >= 60 ? '⚡ Good Progress / Polish Needed' : '⚠️ Intensive Practice Required'}
+        <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--skarion-navy)', marginTop: '0.45rem' }}>
+          {score >= 80 ? '🔥 Job Interview Ready' : score >= 60 ? '⚡ Good Progress / Polish Needed' : score >= 40 ? '📚 Needs Practice in Mock Rounds' : '⚠️ Intensive Practice Required'}
         </div>
       </div>
     </div>
   );
 }
 
-export default function AnalyticsView({ students, onSelectStudent }) {
+export default function AnalyticsView({ students, onSelectStudent, onSaveStudent, showToast }) {
   const [activeSection, setActiveSection] = useState('batch'); // 'batch' | 'candidate' | 'evaluators'
   const [selectedStudentId, setSelectedStudentId] = useState(() => students[0]?.id || '');
   const [candidateSearch, setCandidateSearch] = useState('');
@@ -366,13 +257,6 @@ export default function AnalyticsView({ students, onSelectStudent }) {
       { label: 'At Risk', value: badCount, color: '#dc2626' }
     ].filter(i => i.value > 0);
 
-    // Mock Round Category Distribution
-    const categoryCounts = {};
-    allMocks.forEach(m => {
-      const cat = m.category || 'Technological';
-      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-    });
-
     return {
       totalCandidates,
       placedCount,
@@ -388,8 +272,7 @@ export default function AnalyticsView({ students, onSelectStudent }) {
       evaluatorStats,
       domainCounts,
       domainPieData,
-      statusPieData,
-      categoryCounts
+      statusPieData
     };
   }, [students]);
 
@@ -405,27 +288,39 @@ export default function AnalyticsView({ students, onSelectStudent }) {
       ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) 
       : '0.0';
 
-    const latestScore = scores.length > 0 ? scores[scores.length - 1] : 0;
-    const firstScore = scores.length > 0 ? scores[0] : 0;
-    const scoreDiff = (latestScore - firstScore).toFixed(1);
+    // Mock Categories Breakdown from real candidate session records
+    const categoryMap = {};
+    mocks.forEach(m => {
+      const cat = m.category || 'General';
+      if (!categoryMap[cat]) {
+        categoryMap[cat] = { count: 0, totalScore: 0, scores: [], evaluators: new Set() };
+      }
+      categoryMap[cat].count += 1;
+      const sc = Number(m.score);
+      if (!isNaN(sc)) {
+        categoryMap[cat].totalScore += sc;
+        categoryMap[cat].scores.push(sc);
+      }
+      if (m.evaluator) categoryMap[cat].evaluators.add(m.evaluator);
+    });
 
-    // Compute 5 Skill Dimensions (Out of 100%)
-    const basePct = Math.min(100, Math.max(25, Number(avgScore) * 10));
+    const categoryBreakdown = Object.entries(categoryMap).map(([category, data]) => ({
+      category,
+      count: data.count,
+      avgScore: data.scores.length > 0 ? (data.totalScore / data.scores.length).toFixed(1) : 'N/A',
+      evaluators: Array.from(data.evaluators).join(', ')
+    }));
 
-    const skillDimensions = [
-      { skill: 'Problem Solving', score: Math.min(98, Math.round(basePct * 0.95 + (mocks.length > 2 ? 8 : 2))), color: '#38bdf8' },
-      { skill: 'System Design', score: Math.min(95, Math.round(basePct * 0.9 + (currentStudent.rating === 'excellent' ? 12 : 0))), color: '#a78bfa' },
-      { skill: 'Code Speed & Quality', score: Math.min(96, Math.round(basePct * 1.02)), color: '#34d399' },
-      { skill: 'Communication', score: Math.min(99, Math.round(basePct * 0.98 + (notes.length > 2 ? 6 : 0))), color: '#fb923c' },
-      { skill: 'Technical Depth', score: Math.min(97, Math.round(basePct * 0.94 + (currentStudent.rating === 'placed' ? 15 : 4))), color: '#f43f5e' }
-    ];
-
-    // Readiness Index (0 - 100%)
-    const readinessIndex = Math.min(100, Math.round(
+    // Manual or Computed Readiness Score
+    const defaultCalculated = Math.min(100, Math.round(
       Number(avgScore) * 7.5 + 
       (mocks.length * 3) + 
       (currentStudent.rating === 'placed' ? 30 : currentStudent.rating === 'excellent' ? 20 : 10)
     ));
+
+    const effectiveReadiness = currentStudent.placementReadiness !== undefined 
+      ? Number(currentStudent.placementReadiness) 
+      : defaultCalculated;
 
     // Evaluator observations on this candidate
     const evaluatorFeedbackList = EVALUATORS.map(evaluator => {
@@ -449,13 +344,22 @@ export default function AnalyticsView({ students, onSelectStudent }) {
       mocks,
       notes,
       avgScore,
-      latestScore,
-      scoreDiff,
-      skillDimensions,
-      readinessIndex,
+      categoryBreakdown,
+      readinessIndex: effectiveReadiness,
       evaluatorFeedbackList
     };
   }, [currentStudent]);
+
+  // Handle Manual Readiness Edit
+  const handleUpdateReadiness = (newScore) => {
+    if (!currentStudent || !onSaveStudent) return;
+    const clamped = Math.min(100, Math.max(0, newScore));
+    onSaveStudent({
+      ...currentStudent,
+      placementReadiness: clamped
+    });
+    if (showToast) showToast(`Updated ${currentStudent.name}'s Placement Readiness to ${clamped}%`);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -855,7 +759,7 @@ export default function AnalyticsView({ students, onSelectStudent }) {
                   🎯 Select Candidate for Deep Dive Analysis:
                 </h3>
                 <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
-                  View technical competency spider radar, score progression curve, and readiness meter
+                  Inspect candidate's evaluated mock performance, readiness index, and mentor feedback
                 </span>
               </div>
 
@@ -992,36 +896,155 @@ export default function AnalyticsView({ students, onSelectStudent }) {
                 </div>
               </div>
 
-              {/* TWO LARGE VISUAL CHARTS: 5-Pillar Radar Chart + Speedometer Readiness Gauge */}
+              {/* TWO LARGE VISUAL CARDS: Real Mock Category Performance + Interactive Speedometer Readiness Meter */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: '1.5rem' }}>
                 
-                {/* Visual Chart: 5-Pillar Spider / Radar Chart */}
-                <div className="card-panel" style={{ padding: '2rem' }}>
-                  <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Target size={22} color="var(--skarion-orange)" /> 5-Pillar Competency Spider / Radar Chart
-                    </h3>
-                    <span style={{ fontSize: '0.86rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                      Multidimensional competency evaluation for {currentStudent.name}
-                    </span>
+                {/* Visual Card 1: Verified Mock Category Performance & Milestone Breakdown */}
+                <div className="card-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Target size={22} color="var(--skarion-orange)" /> Mock Evaluation Categories & Progress Breakdown
+                      </h3>
+                      <span style={{ fontSize: '0.86rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                        Verified evaluation scores grouped by evaluated interview round category
+                      </span>
+                    </div>
+
+                    {/* Course Progress Bar */}
+                    <div style={{ background: 'var(--bg-surface-subtle)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                        <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                          <BookOpen size={16} color="var(--skarion-orange)" /> Overall Curriculum Progress
+                        </span>
+                        <span style={{ fontSize: '0.95rem', fontWeight: '900', color: 'var(--skarion-orange)' }}>
+                          {currentStudent.progress || 0}% Complete
+                        </span>
+                      </div>
+                      <div style={{ height: '8px', width: '100%', background: 'var(--border-color)', borderRadius: '99px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${currentStudent.progress || 0}%`, background: 'var(--skarion-orange)', borderRadius: '99px' }} />
+                      </div>
+                    </div>
+
+                    {/* Category Breakdown Items */}
+                    {candidateMetrics.categoryBreakdown.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                        No categorized mock interview sessions logged yet for this candidate.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        {candidateMetrics.categoryBreakdown.map(catItem => {
+                          const avgScoreNum = Number(catItem.avgScore);
+                          const scoreColor = avgScoreNum >= 8 ? '#059669' : avgScoreNum >= 6 ? '#0284c7' : '#d97706';
+                          const pct = Math.min(100, Math.round(avgScoreNum * 10));
+
+                          return (
+                            <div key={catItem.category} style={{ background: 'var(--bg-surface-subtle)', padding: '0.85rem 1.15rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                <div>
+                                  <span style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--skarion-navy)' }}>
+                                    {catItem.category} Round
+                                  </span>
+                                  <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginLeft: '8px' }}>
+                                    ({catItem.count} Session{catItem.count !== 1 ? 's' : ''} by {catItem.evaluators})
+                                  </span>
+                                </div>
+                                <span style={{ fontSize: '0.95rem', fontWeight: '900', color: scoreColor }}>
+                                  {catItem.avgScore} / 10
+                                </span>
+                              </div>
+                              <div style={{ height: '6px', width: '100%', background: 'var(--border-color)', borderRadius: '99px', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${pct}%`, background: scoreColor, borderRadius: '99px' }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
-                  <SvgRadarChart dimensions={candidateMetrics.skillDimensions} size={320} />
+                  {/* Summary Footer */}
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.85rem', marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                      Audit Observations Filed: <strong>{candidateMetrics.notes.length} notes</strong>
+                    </span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--skarion-navy)', fontWeight: '800' }}>
+                      Joined: {currentStudent.joiningDate}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Visual Chart: Placement Readiness Speedometer Gauge */}
-                <div className="card-panel" style={{ padding: '2rem' }}>
-                  <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Zap size={22} color="#059669" /> Job Market Placement Readiness Meter
-                    </h3>
-                    <span style={{ fontSize: '0.86rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                      Composite readiness index based on mock scores, attendance, and feedback consistency
-                    </span>
+                {/* Visual Card 2: Interactive Manually Editable Job Market Placement Readiness Meter */}
+                <div className="card-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Zap size={22} color="#059669" /> Job Market Placement Readiness Meter
+                        </h3>
+                        <span style={{ fontSize: '0.86rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                          Manually adjustable interview readiness meter with instant slider controls
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.76rem', fontWeight: '800', color: '#059669', background: 'rgba(5, 150, 105, 0.12)', padding: '3px 9px', borderRadius: '6px' }}>
+                        <Sliders size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} /> Editable
+                      </span>
+                    </div>
+
+                    {/* Perfectly Spaced Speedometer Gauge */}
+                    <SvgSpeedometerGauge score={candidateMetrics.readinessIndex} size={280} />
                   </div>
 
-                  <div style={{ paddingTop: '1.5rem' }}>
-                    <SvgSpeedometerGauge score={candidateMetrics.readinessIndex} size={280} />
+                  {/* Interactive Slider & Presets Controls */}
+                  <div style={{ background: 'var(--bg-surface-subtle)', padding: '1.15rem', borderRadius: '14px', border: '1px solid var(--border-color)', marginTop: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Edit3 size={15} color="var(--skarion-orange)" /> Adjust Readiness Level:
+                      </label>
+                      <span style={{ fontSize: '0.95rem', fontWeight: '900', color: 'var(--skarion-navy)' }}>
+                        {candidateMetrics.readinessIndex}%
+                      </span>
+                    </div>
+
+                    {/* Range Slider */}
+                    <input 
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={candidateMetrics.readinessIndex}
+                      onChange={(e) => handleUpdateReadiness(Number(e.target.value))}
+                      style={{ width: '100%', accentColor: 'var(--skarion-orange)', cursor: 'pointer', height: '6px' }}
+                    />
+
+                    {/* Quick Preset Buttons */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.45rem', marginTop: '0.85rem' }}>
+                      {[
+                        { label: '30% Early', val: 30, color: '#dc2626' },
+                        { label: '60% Polish', val: 60, color: '#d97706' },
+                        { label: '85% Ready', val: 85, color: '#0284c7' },
+                        { label: '100% Placed', val: 100, color: '#059669' }
+                      ].map(preset => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => handleUpdateReadiness(preset.val)}
+                          style={{
+                            background: candidateMetrics.readinessIndex === preset.val ? preset.color : 'var(--bg-surface)',
+                            color: candidateMetrics.readinessIndex === preset.val ? '#ffffff' : 'var(--text-main)',
+                            border: `1px solid ${preset.color}`,
+                            padding: '5px 4px',
+                            borderRadius: '8px',
+                            fontSize: '0.74rem',
+                            fontWeight: '800',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

@@ -381,6 +381,8 @@ export default function App() {
           <AnalyticsView 
             students={safeStudentsList}
             onSelectStudent={(student) => setSelectedDetailStudent(student)}
+            onSaveStudent={handleSaveStudent}
+            showToast={showToast}
           />
         )}
       </div>

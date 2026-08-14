@@ -9,18 +9,13 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
   const good = students.filter(s => s.rating === 'good').length;
   const needsAttention = students.filter(s => s.rating === 'needs_attention').length;
   const bad = students.filter(s => s.rating === 'bad').length;
-
-  const totalMocks = students.reduce((acc, s) => {
-    const sessionCount = Array.isArray(s.mockSessions) ? s.mockSessions.length : 0;
-    return acc + (sessionCount > 0 ? sessionCount : (Number(s.mockInterviews) || 0));
-  }, 0);
   const avgProgress = total > 0 ? Math.round(students.reduce((acc, s) => acc + (s.progress || 0), 0) / total) : 0;
 
   return (
     <div style={{ 
       display: 'grid', 
-      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-      gap: '1rem', 
+      gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', 
+      gap: '1.25rem', 
       marginBottom: '1.5rem' 
     }}>
       
@@ -159,25 +154,6 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
             <div style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--rating-bad-color)', lineHeight: '1' }}>{bad}</div>
             <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--rating-bad-color)' }}>At Risk</span>
           </div>
-        </div>
-      </div>
-
-      {/* Group 3: Evaluation Activity KPI */}
-      <div className="card-panel" style={{ padding: '1.15rem 1.35rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--skarion-navy)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem' }}>
-            Mock Interviews Conducted
-          </span>
-          <div style={{ fontSize: '1.85rem', fontWeight: '900', color: 'var(--skarion-orange)', lineHeight: '1' }}>
-            {totalMocks} Sessions
-          </div>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-            {(totalMocks / (total || 1)).toFixed(1)} avg mock interviews per candidate
-          </p>
-        </div>
-
-        <div style={{ background: 'rgba(255, 82, 82, 0.15)', padding: '0.85rem', borderRadius: '14px' }}>
-          <Mic size={28} color="var(--skarion-orange)" />
         </div>
       </div>
 
