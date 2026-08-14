@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, FileText, Ch
 import { RATING_CONFIG, EVALUATOR_CONFIG } from '../data/initialData';
 
 export default function CalendarView({ students, onSelectStudent }) {
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 6, 1)); // Default July 2026
+  const [currentDate, setCurrentDate] = useState(() => new Date()); // Always loads at current month & year
   const [selectedDayNotes, setSelectedDayNotes] = useState(null);
 
   const year = currentDate.getFullYear();
@@ -36,7 +36,14 @@ export default function CalendarView({ students, onSelectStudent }) {
         .map(n => ({ ...n, studentName: s.name, studentRating: s.rating, studentId: s.id }))
     );
 
-    return { joiningStudents, notesOnDay, formattedDate };
+    // Mock interviews on this day
+    const mocksOnDay = students.flatMap(s => 
+      (s.mockSessions || [])
+        .filter(m => m.date === formattedDate)
+        .map(m => ({ ...m, studentName: s.name, studentRating: s.rating, studentId: s.id }))
+    );
+
+    return { joiningStudents, notesOnDay, mocksOnDay, formattedDate };
   };
 
   const dayGrid = [];
@@ -103,14 +110,14 @@ export default function CalendarView({ students, onSelectStudent }) {
             );
           }
 
-          const { joiningStudents, notesOnDay, formattedDate } = getDayEvents(dayNum);
-          const hasEvents = joiningStudents.length > 0 || notesOnDay.length > 0;
+          const { joiningStudents, notesOnDay, mocksOnDay, formattedDate } = getDayEvents(dayNum);
+          const hasEvents = joiningStudents.length > 0 || notesOnDay.length > 0 || (mocksOnDay && mocksOnDay.length > 0);
           const isToday = new Date().toDateString() === new Date(year, month, dayNum).toDateString();
 
           return (
             <div
               key={dayNum}
-              onClick={() => hasEvents && setSelectedDayNotes({ dayNum, formattedDate, joiningStudents, notesOnDay })}
+              onClick={() => hasEvents && setSelectedDayNotes({ dayNum, formattedDate, joiningStudents, notesOnDay, mocksOnDay })}
               style={{
                 minHeight: '115px',
                 background: isToday ? 'rgba(255, 82, 82, 0.08)' : 'var(--bg-surface)',
@@ -121,7 +128,7 @@ export default function CalendarView({ students, onSelectStudent }) {
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 flexDirection: 'column',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 boxShadow: hasEvents ? 'var(--shadow-sm)' : 'none'
               }}
             >
@@ -135,7 +142,7 @@ export default function CalendarView({ students, onSelectStudent }) {
                 </span>
                 {hasEvents && (
                   <span style={{ fontSize: '0.7rem', background: 'var(--skarion-orange)', color: 'white', padding: '1px 6px', borderRadius: '99px', fontWeight: '800' }}>
-                    {joiningStudents.length + notesOnDay.length}
+                    {joiningStudents.length + notesOnDay.length + mocksOnDay.length}
                   </span>
                 )}
               </div>
@@ -145,6 +152,12 @@ export default function CalendarView({ students, onSelectStudent }) {
                 {joiningStudents.map(s => (
                   <div key={s.id} style={{ fontSize: '0.68rem', background: 'rgba(5, 150, 105, 0.12)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
                     🚀 {s.name} Joined
+                  </div>
+                ))}
+
+                {mocksOnDay.map(m => (
+                  <div key={m.id} style={{ fontSize: '0.68rem', background: 'rgba(124, 58, 237, 0.12)', color: '#7c3aed', border: '1px solid rgba(124, 58, 237, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
+                    🎙️ {m.studentName} ({m.score}/10)
                   </div>
                 ))}
 
@@ -187,6 +200,31 @@ export default function CalendarView({ students, onSelectStudent }) {
                   >
                     <span style={{ fontWeight: '800', color: 'var(--skarion-navy)', fontSize: '0.92rem' }}>{s.name}</span>
                     <span className={`status-badge badge-${s.rating}`}>{RATING_CONFIG[s.rating]?.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Mock Interviews on this Date */}
+            {selectedDayNotes.mocksOnDay && selectedDayNotes.mocksOnDay.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.88rem', color: '#7c3aed', fontWeight: '800', marginBottom: '0.65rem' }}>
+                  Mock Interviews on this Date:
+                </h4>
+                {selectedDayNotes.mocksOnDay.map(m => (
+                  <div 
+                    key={m.id} 
+                    style={{ background: 'var(--bg-surface-subtle)', padding: '0.85rem 1rem', borderRadius: '12px', marginBottom: '0.5rem', border: '1px solid var(--border-color)' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                      <span style={{ fontWeight: '800', color: 'var(--skarion-navy)', fontSize: '0.92rem' }}>{m.studentName} ({m.category})</span>
+                      <span style={{ background: 'rgba(124, 58, 237, 0.12)', color: '#7c3aed', padding: '2px 8px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '800', border: '1px solid rgba(124, 58, 237, 0.25)' }}>
+                        Score: {m.score}/10 • Evaluator: {m.evaluator}
+                      </span>
+                    </div>
+                    {m.feedback && (
+                      <p style={{ fontSize: '0.84rem', color: 'var(--text-main)', fontStyle: 'italic', margin: 0 }}>"{m.feedback}"</p>
+                    )}
                   </div>
                 ))}
               </div>
