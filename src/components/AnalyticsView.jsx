@@ -161,6 +161,7 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
   const [selectedStudentId, setSelectedStudentId] = useState(() => students[0]?.id || '');
   const [candidateSearch, setCandidateSearch] = useState('');
   const [hoveredBarIndex, setHoveredBarIndex] = useState(null);
+  const [showRubrics, setShowRubrics] = useState(false);
 
   // Selected candidate object
   const currentStudent = useMemo(() => {
@@ -349,6 +350,44 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
       evaluatorFeedbackList
     };
   }, [currentStudent]);
+
+  // Compute Rubric Assessment Breakdown based on candidate's database milestones
+  const rubricScores = useMemo(() => {
+    if (!currentStudent || !candidateMetrics) return null;
+    const progress = currentStudent.progress || 0;
+    const mocks = currentStudent.mockSessions || [];
+    const avgScore = Number(candidateMetrics.avgScore) || 0;
+
+    // Pillar 1: Curriculum & Capstone Project Completion (Max 25 pts)
+    const curriculumPts = Math.min(25, Math.round((progress / 100) * 25));
+
+    // Pillar 2: Technical Mock Interview Evaluations (Max 30 pts)
+    const mockCountPts = Math.min(15, mocks.length * 5);
+    const mockScorePts = Math.min(15, Math.round((avgScore / 10) * 15));
+    const mockEvalPts = mockCountPts + mockScorePts;
+
+    // Pillar 3: Target Domain & System Design Depth (Max 25 pts)
+    const domainPts = currentStudent.rating === 'placed' ? 25 
+      : currentStudent.rating === 'excellent' ? 23 
+      : currentStudent.rating === 'good' ? 18 
+      : currentStudent.rating === 'needs_attention' ? 12 : 8;
+
+    // Pillar 4: Technical Communication & Behavioral Presence (Max 20 pts)
+    const commPts = currentStudent.rating === 'placed' ? 20 
+      : currentStudent.rating === 'excellent' ? 18 
+      : currentStudent.rating === 'good' ? 14 
+      : currentStudent.rating === 'needs_attention' ? 10 : 6;
+
+    const totalCalculated = curriculumPts + mockEvalPts + domainPts + commPts;
+
+    return {
+      curriculumPts,
+      mockEvalPts,
+      domainPts,
+      commPts,
+      totalCalculated: Math.min(100, Math.max(0, totalCalculated))
+    };
+  }, [currentStudent, candidateMetrics]);
 
   // Handle Manual Readiness Edit
   const handleUpdateReadiness = (newScore) => {
@@ -974,7 +1013,7 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
                   </div>
                 </div>
 
-                {/* Visual Card 2: Interactive Manually Editable Job Market Placement Readiness Meter */}
+                {/* Visual Card 2: Interactive Manually Editable Job Market Placement Readiness Meter with Rubrics */}
                 <div className="card-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -983,27 +1022,138 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
                           <Zap size={22} color="#059669" /> Job Market Placement Readiness Meter
                         </h3>
                         <span style={{ fontSize: '0.86rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                          Manually adjustable interview readiness meter with instant slider controls
+                          Evaluation rubrics matrix with manual number input & instant slider controls
                         </span>
                       </div>
-                      <span style={{ fontSize: '0.76rem', fontWeight: '800', color: '#059669', background: 'rgba(5, 150, 105, 0.12)', padding: '3px 9px', borderRadius: '6px' }}>
-                        <Sliders size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} /> Editable
-                      </span>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => setShowRubrics(!showRubrics)}
+                          style={{
+                            background: showRubrics ? 'var(--skarion-navy)' : 'var(--bg-surface-subtle)',
+                            color: showRubrics ? '#ffffff' : 'var(--text-main)',
+                            border: '1px solid var(--border-color)',
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            fontSize: '0.78rem',
+                            fontWeight: '800',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <BookOpen size={13} /> {showRubrics ? 'Hide Rubrics' : 'View Rubrics'}
+                        </button>
+
+                        <span style={{ fontSize: '0.76rem', fontWeight: '800', color: '#059669', background: 'rgba(5, 150, 105, 0.12)', padding: '4px 9px', borderRadius: '6px' }}>
+                          <Sliders size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} /> Editable
+                        </span>
+                      </div>
                     </div>
 
                     {/* Perfectly Spaced Speedometer Gauge */}
                     <SvgSpeedometerGauge score={candidateMetrics.readinessIndex} size={280} />
                   </div>
 
-                  {/* Interactive Slider & Presets Controls */}
-                  <div style={{ background: 'var(--bg-surface-subtle)', padding: '1.15rem', borderRadius: '14px', border: '1px solid var(--border-color)', marginTop: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <label style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Edit3 size={15} color="var(--skarion-orange)" /> Adjust Readiness Level:
+                  {/* Rubrics Assessment Matrix Panel (Collapsible) */}
+                  {showRubrics && rubricScores && (
+                    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '1.25rem', marginTop: '1rem', boxShadow: 'var(--shadow-sm)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.86rem', fontWeight: '900', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          📋 Official Placement Assessment Rubrics:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateReadiness(rubricScores.totalCalculated)}
+                          style={{
+                            background: 'linear-gradient(135deg, var(--skarion-orange) 0%, #e04343 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '0.76rem',
+                            fontWeight: '900',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Zap size={12} /> Apply Rubric Score ({rubricScores.totalCalculated}%)
+                        </button>
+                      </div>
+
+                      {/* 4 Rubric Criteria Rows */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.82rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-subtle)', padding: '0.5rem 0.75rem', borderRadius: '8px' }}>
+                          <div>
+                            <strong>1. Curriculum & Capstone Progress (Max 25 pts):</strong>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{currentStudent.progress || 0}% coursework completed</div>
+                          </div>
+                          <span style={{ fontWeight: '900', color: '#0284c7' }}>{rubricScores.curriculumPts} / 25 pts</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-subtle)', padding: '0.5rem 0.75rem', borderRadius: '8px' }}>
+                          <div>
+                            <strong>2. Technical Mock Interviews (Max 30 pts):</strong>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{candidateMetrics.mocks.length} mocks attended • Avg {candidateMetrics.avgScore}/10</div>
+                          </div>
+                          <span style={{ fontWeight: '900', color: 'var(--skarion-orange)' }}>{rubricScores.mockEvalPts} / 30 pts</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-subtle)', padding: '0.5rem 0.75rem', borderRadius: '8px' }}>
+                          <div>
+                            <strong>3. Domain Depth & Applied Skills (Max 25 pts):</strong>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Technical audit rating: {RATING_CONFIG[currentStudent.rating]?.label}</div>
+                          </div>
+                          <span style={{ fontWeight: '900', color: '#7c3aed' }}>{rubricScores.domainPts} / 25 pts</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-subtle)', padding: '0.5rem 0.75rem', borderRadius: '8px' }}>
+                          <div>
+                            <strong>4. Verbal Communication & Soft Skills (Max 20 pts):</strong>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Clarity, confidence, and trade-off articulation</div>
+                          </div>
+                          <span style={{ fontWeight: '900', color: '#059669' }}>{rubricScores.commPts} / 20 pts</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Interactive Direct Number Input, Slider & Presets Controls */}
+                  <div style={{ background: 'var(--bg-surface-subtle)', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)', marginTop: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <label style={{ fontSize: '0.84rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Edit3 size={15} color="var(--skarion-orange)" /> Manual Score Input & Slider:
                       </label>
-                      <span style={{ fontSize: '0.95rem', fontWeight: '900', color: 'var(--skarion-navy)' }}>
-                        {candidateMetrics.readinessIndex}%
-                      </span>
+                      
+                      {/* Direct Manual Number Input Box */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <input 
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={candidateMetrics.readinessIndex}
+                          onChange={(e) => handleUpdateReadiness(Number(e.target.value))}
+                          style={{
+                            width: '64px',
+                            height: '34px',
+                            textAlign: 'center',
+                            fontSize: '1rem',
+                            fontWeight: '900',
+                            color: 'var(--skarion-navy)',
+                            background: 'var(--bg-surface)',
+                            border: '2px solid var(--skarion-orange)',
+                            borderRadius: '8px',
+                            outline: 'none',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                          }}
+                        />
+                        <span style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--skarion-navy)' }}>%</span>
+                      </div>
                     </div>
 
                     {/* Range Slider */}
@@ -1032,7 +1182,7 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
                             background: candidateMetrics.readinessIndex === preset.val ? preset.color : 'var(--bg-surface)',
                             color: candidateMetrics.readinessIndex === preset.val ? '#ffffff' : 'var(--text-main)',
                             border: `1px solid ${preset.color}`,
-                            padding: '5px 4px',
+                            padding: '6px 4px',
                             borderRadius: '8px',
                             fontSize: '0.74rem',
                             fontWeight: '800',
