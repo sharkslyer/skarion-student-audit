@@ -650,7 +650,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
           </div>
         ) : (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
               {displayedRecentMocks.map(mock => {
                 const scoreColor = getScoreColor(mock.score);
                 const evalCfg = EVALUATOR_CONFIG[mock.evaluator] || EVALUATOR_CONFIG.Mayukh;
@@ -676,7 +676,10 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       justifyContent: 'space-between',
                       position: 'relative',
                       boxShadow: isCurrentSelected ? '0 4px 16px rgba(19, 34, 71, 0.12)' : 'var(--shadow-sm)',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      boxSizing: 'border-box',
+                      overflow: 'hidden',
+                      minWidth: 0
                     }}
                   >
                     <div>
@@ -796,34 +799,45 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     </div>
 
                     {/* Action Bar */}
-                    <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)', alignItems: 'center' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '0.45rem', 
+                      paddingTop: '0.65rem', 
+                      borderTop: '1px solid var(--border-color)', 
+                      alignItems: 'center',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}>
                       {hasTranscript && (
                         <button
                           className="btn-primary"
                           onClick={() => openTranscriptModal(mock, false, mock.studentData)}
                           style={{
-                            flex: '1',
+                            flex: '1 1 auto',
+                            minWidth: 0,
                             background: 'var(--skarion-orange)',
                             color: '#ffffff',
                             height: '38px',
-                            fontSize: '0.82rem',
+                            fontSize: '0.8rem',
                             fontWeight: '700',
                             borderRadius: '10px',
-                            padding: '0 0.75rem',
+                            padding: '0 0.65rem',
                             display: 'inline-flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '0.4rem',
+                            gap: '0.35rem',
                             whiteSpace: 'nowrap',
                             boxShadow: '0 2px 8px rgba(255, 82, 82, 0.25)',
                             border: 'none',
                             cursor: 'pointer',
-                            transition: 'all 0.2s ease'
+                            transition: 'all 0.2s ease',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                           title="Read full interview dialogue transcript"
                         >
-                          <BookOpen size={14} />
-                          <span>View Transcript ({wordCount}w)</span>
+                          <BookOpen size={14} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Transcript ({wordCount}w)</span>
                         </button>
                       )}
 
@@ -836,24 +850,25 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         }}
                         style={{
                           height: '38px',
-                          fontSize: '0.82rem',
+                          fontSize: '0.8rem',
                           fontWeight: '700',
                           borderRadius: '10px',
-                          padding: '0 0.85rem',
+                          padding: '0 0.75rem',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '0.35rem',
+                          gap: '0.25rem',
                           color: 'var(--skarion-navy)',
                           borderColor: isCurrentSelected ? 'var(--skarion-navy)' : 'var(--border-color)',
                           whiteSpace: 'nowrap',
-                          flex: hasTranscript ? 'initial' : '1',
+                          flexShrink: 0,
+                          flex: hasTranscript ? '0 0 auto' : '1',
                           cursor: 'pointer'
                         }}
                         title={`Select ${mock.studentName} and view audit history`}
                       >
                         <span>Details</span>
-                        <ChevronRight size={14} />
+                        <ChevronRight size={14} style={{ flexShrink: 0 }} />
                       </button>
                     </div>
 
