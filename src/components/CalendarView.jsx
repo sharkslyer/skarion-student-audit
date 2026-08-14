@@ -218,6 +218,19 @@ export default function CalendarView({ students, onSelectStudent }) {
           const isToday = new Date().toDateString() === new Date(year, month, dayNum).toDateString();
           const isHovered = hoveredDayNum === dayNum;
 
+          // Unified list of all audits, custom notes, mocks, and milestones for this date
+          const allDayItems = [
+            ...dayCustomNotes.map(cn => ({ type: 'customNote', data: cn, id: cn.id })),
+            ...mocksOnDay.map(m => ({ type: 'mock', data: m, id: m.id })),
+            ...notesOnDay.map(n => ({ type: 'auditNote', data: n, id: n.id })),
+            ...joiningStudents.map(s => ({ type: 'joining', data: s, id: s.id }))
+          ];
+
+          // Threshold for adding "See all" tab
+          const MAX_VISIBLE_CHIPS = 3;
+          const visibleItems = allDayItems.slice(0, MAX_VISIBLE_CHIPS);
+          const remainingCount = allDayItems.length - MAX_VISIBLE_CHIPS;
+
           return (
             <div
               key={dayNum}
@@ -225,7 +238,7 @@ export default function CalendarView({ students, onSelectStudent }) {
               onMouseLeave={() => setHoveredDayNum(null)}
               onClick={() => setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay })}
               style={{
-                minHeight: '115px',
+                minHeight: '125px',
                 background: isToday ? 'rgba(255, 82, 82, 0.08)' : 'var(--bg-surface)',
                 border: isToday ? '2px solid var(--skarion-orange)' : isHovered ? '1.5px solid var(--skarion-navy)' : '1px solid var(--border-color)',
                 borderRadius: '12px',
@@ -242,162 +255,206 @@ export default function CalendarView({ students, onSelectStudent }) {
               }}
               title="Click to add note or view all details"
             >
-              {/* Day Number and in-date Action Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', gap: '2px', minWidth: 0 }}>
-                <span style={{ 
-                  fontWeight: '800', 
-                  fontSize: '0.92rem',
-                  color: isToday ? 'var(--skarion-orange)' : 'var(--skarion-navy)',
-                  flexShrink: 0
-                }}>
-                  {dayNum}
-                </span>
+              <div>
+                {/* Day Number and in-date Action Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', gap: '2px', minWidth: 0 }}>
+                  <span style={{ 
+                    fontWeight: '800', 
+                    fontSize: '0.92rem',
+                    color: isToday ? 'var(--skarion-orange)' : 'var(--skarion-navy)',
+                    flexShrink: 0
+                  }}>
+                    {dayNum}
+                  </span>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-                  {hasEvents && (
-                    <span style={{ fontSize: '0.68rem', background: 'var(--skarion-orange)', color: 'white', padding: '1px 5px', borderRadius: '99px', fontWeight: '800' }}>
-                      {totalEvents}
-                    </span>
-                  )}
-                  
-                  {/* + Note Button appearing directly inside the date card */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay });
-                    }}
-                    style={{
-                      background: 'var(--skarion-navy)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '5px',
-                      fontSize: '0.65rem',
-                      fontWeight: '800',
-                      padding: '1px 5px',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '2px',
-                      opacity: isHovered ? 1 : 0.65,
-                      transition: 'all 0.15s ease',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                      whiteSpace: 'nowrap'
-                    }}
-                    title="Add note for this date"
-                  >
-                    <Plus size={10} /> Note
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+                    {hasEvents && (
+                      <span style={{ fontSize: '0.68rem', background: 'var(--skarion-orange)', color: 'white', padding: '1px 5px', borderRadius: '99px', fontWeight: '800' }}>
+                        {totalEvents}
+                      </span>
+                    )}
+                    
+                    {/* + Note Button appearing directly inside the date card */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay });
+                      }}
+                      style={{
+                        background: 'var(--skarion-navy)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '5px',
+                        fontSize: '0.65rem',
+                        fontWeight: '800',
+                        padding: '1px 5px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        opacity: isHovered ? 1 : 0.65,
+                        transition: 'all 0.15s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        whiteSpace: 'nowrap'
+                      }}
+                      title="Add note for this date"
+                    >
+                      <Plus size={10} /> Note
+                    </button>
+                  </div>
+                </div>
+
+                {/* Day Event Chips rendered inside the date tile */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', overflow: 'hidden', minWidth: 0, width: '100%' }}>
+                  {visibleItems.map(item => {
+                    if (item.type === 'customNote') {
+                      const cn = item.data;
+                      const tagStyle = TAG_STYLES[cn.tag] || TAG_STYLES.General;
+                      return (
+                        <div 
+                          key={cn.id} 
+                          style={{ 
+                            fontSize: '0.67rem', 
+                            background: tagStyle.bg, 
+                            color: tagStyle.color, 
+                            border: `1px solid ${tagStyle.border}`, 
+                            padding: '2px 4px', 
+                            borderRadius: '4px', 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            fontWeight: '800',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '2px',
+                            minWidth: 0,
+                            maxWidth: '100%'
+                          }}
+                          title={`[${cn.author} • ${cn.tag}]: ${cn.content}`}
+                        >
+                          <span style={{ flexShrink: 0 }}>📝</span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{cn.content}</span>
+                        </div>
+                      );
+                    }
+
+                    if (item.type === 'mock') {
+                      const m = item.data;
+                      return (
+                        <div 
+                          key={m.id} 
+                          style={{ 
+                            fontSize: '0.67rem', 
+                            background: 'rgba(124, 58, 237, 0.12)', 
+                            color: '#7c3aed', 
+                            border: '1px solid rgba(124, 58, 237, 0.3)', 
+                            padding: '2px 4px', 
+                            borderRadius: '4px', 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            fontWeight: '700',
+                            minWidth: 0,
+                            maxWidth: '100%'
+                          }}
+                          title={`Mock Interview: ${m.studentName} (${m.score}/10) by ${m.evaluator}`}
+                        >
+                          🎙️ {m.studentName} ({m.score}/10)
+                        </div>
+                      );
+                    }
+
+                    if (item.type === 'auditNote') {
+                      const n = item.data;
+                      const evalCfg = EVALUATOR_CONFIG[n.author] || EVALUATOR_CONFIG.Mayukh;
+                      return (
+                        <div 
+                          key={n.id} 
+                          style={{ 
+                            fontSize: '0.67rem', 
+                            background: evalCfg.bg, 
+                            color: evalCfg.text, 
+                            border: `1px solid ${evalCfg.border}`, 
+                            padding: '2px 4px', 
+                            borderRadius: '4px', 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            fontWeight: '700',
+                            minWidth: 0,
+                            maxWidth: '100%'
+                          }}
+                          title={`Audit Note: ${n.studentName} (${n.category || 'Audit'}): ${n.content} by ${n.author}`}
+                        >
+                          📌 {n.studentName}
+                        </div>
+                      );
+                    }
+
+                    if (item.type === 'joining') {
+                      const s = item.data;
+                      return (
+                        <div 
+                          key={s.id} 
+                          style={{ 
+                            fontSize: '0.67rem', 
+                            background: 'rgba(5, 150, 105, 0.12)', 
+                            color: '#059669', 
+                            border: '1px solid rgba(5, 150, 105, 0.3)', 
+                            padding: '2px 4px', 
+                            borderRadius: '4px', 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            fontWeight: '700',
+                            minWidth: 0,
+                            maxWidth: '100%'
+                          }}
+                          title={`${s.name} Joined`}
+                        >
+                          🚀 {s.name} Joined
+                        </div>
+                      );
+                    }
+
+                    return null;
+                  })}
                 </div>
               </div>
 
-              {/* Day Event Chips rendered inside the date tile */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', overflow: 'hidden', minWidth: 0, width: '100%' }}>
-                {/* Custom Notes Chips */}
-                {dayCustomNotes.map(cn => {
-                  const tagStyle = TAG_STYLES[cn.tag] || TAG_STYLES.General;
-                  return (
-                    <div 
-                      key={cn.id} 
-                      style={{ 
-                        fontSize: '0.67rem', 
-                        background: tagStyle.bg, 
-                        color: tagStyle.color, 
-                        border: `1px solid ${tagStyle.border}`, 
-                        padding: '2px 4px', 
-                        borderRadius: '4px', 
-                        whiteSpace: 'nowrap', 
-                        overflow: 'hidden', 
-                        textOverflow: 'ellipsis', 
-                        fontWeight: '800',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '2px',
-                        minWidth: 0,
-                        maxWidth: '100%'
-                      }}
-                      title={`[${cn.author} • ${cn.tag}]: ${cn.content}`}
-                    >
-                      <span style={{ flexShrink: 0 }}>📝</span>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{cn.content}</span>
-                    </div>
-                  );
-                })}
-
-                {/* Mock Interviews Chips */}
-                {mocksOnDay.map(m => (
-                  <div 
-                    key={m.id} 
-                    style={{ 
-                      fontSize: '0.67rem', 
-                      background: 'rgba(124, 58, 237, 0.12)', 
-                      color: '#7c3aed', 
-                      border: '1px solid rgba(124, 58, 237, 0.3)', 
-                      padding: '2px 4px', 
-                      borderRadius: '4px', 
-                      whiteSpace: 'nowrap', 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis', 
-                      fontWeight: '700',
-                      minWidth: 0,
-                      maxWidth: '100%'
-                    }}
-                    title={`Mock Interview: ${m.studentName} (${m.score}/10) by ${m.evaluator}`}
-                  >
-                    🎙️ {m.studentName} ({m.score}/10)
-                  </div>
-                ))}
-
-                {/* Joining Candidates Chips */}
-                {joiningStudents.map(s => (
-                  <div 
-                    key={s.id} 
-                    style={{ 
-                      fontSize: '0.67rem', 
-                      background: 'rgba(5, 150, 105, 0.12)', 
-                      color: '#059669', 
-                      border: '1px solid rgba(5, 150, 105, 0.3)', 
-                      padding: '2px 4px', 
-                      borderRadius: '4px', 
-                      whiteSpace: 'nowrap', 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis', 
-                      fontWeight: '700',
-                      minWidth: 0,
-                      maxWidth: '100%'
-                    }}
-                    title={`${s.name} Joined`}
-                  >
-                    🚀 {s.name} Joined
-                  </div>
-                ))}
-
-                {/* Audit Sticky Notes Chips */}
-                {notesOnDay.slice(0, 2).map(n => {
-                  const evalCfg = EVALUATOR_CONFIG[n.author] || EVALUATOR_CONFIG.Mayukh;
-                  return (
-                    <div 
-                      key={n.id} 
-                      style={{ 
-                        fontSize: '0.67rem', 
-                        background: evalCfg.bg, 
-                        color: evalCfg.text, 
-                        border: `1px solid ${evalCfg.border}`, 
-                        padding: '2px 4px', 
-                        borderRadius: '4px', 
-                        whiteSpace: 'nowrap', 
-                        overflow: 'hidden', 
-                        textOverflow: 'ellipsis', 
-                        fontWeight: '700',
-                        minWidth: 0,
-                        maxWidth: '100%'
-                      }}
-                      title={`Audit Note: ${n.studentName} by ${n.author}`}
-                    >
-                      📌 {n.studentName}
-                    </div>
-                  );
-                })}
-              </div>
+              {/* "See all N audits →" Tab at Bottom of Day Card */}
+              {remainingCount > 0 && (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay });
+                  }}
+                  style={{
+                    marginTop: '4px',
+                    background: 'rgba(19, 34, 71, 0.08)',
+                    color: 'var(--skarion-navy)',
+                    border: '1px dashed var(--border-color)',
+                    borderRadius: '5px',
+                    fontSize: '0.66rem',
+                    fontWeight: '800',
+                    padding: '2px 4px',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '3px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title={`View all ${allDayItems.length} audits and events for ${formattedDate}`}
+                >
+                  <span>See all {allDayItems.length} audits →</span>
+                </div>
+              )}
             </div>
           );
         })}
