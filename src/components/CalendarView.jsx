@@ -274,33 +274,33 @@ export default function CalendarView({ students, onSelectStudent }) {
                       </span>
                     )}
                     
-                    {/* + Note Button appearing directly inside the date card */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay });
-                      }}
-                      style={{
-                        background: 'var(--skarion-navy)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '5px',
-                        fontSize: '0.65rem',
-                        fontWeight: '800',
-                        padding: '1px 5px',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '2px',
-                        opacity: isHovered ? 1 : 0.65,
-                        transition: 'all 0.15s ease',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        whiteSpace: 'nowrap'
-                      }}
-                      title="Add note for this date"
-                    >
-                      <Plus size={10} /> Note
-                    </button>
+                    {/* + Note Button appearing directly inside the date card ONLY when hovering */}
+                    {isHovered && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay });
+                        }}
+                        style={{
+                          background: 'var(--skarion-navy)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '5px',
+                          fontSize: '0.65rem',
+                          fontWeight: '800',
+                          padding: '1px 5px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                          whiteSpace: 'nowrap'
+                        }}
+                        title="Add note for this date"
+                      >
+                        <Plus size={10} /> Note
+                      </button>
+                    )}
                   </div>
                 </div>
 
