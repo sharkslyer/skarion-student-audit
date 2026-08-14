@@ -681,13 +681,13 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   >
                     <div>
                       {/* Top Header: Candidate Name, Avatar & Score */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', minHeight: '38px', gap: '0.5rem' }}>
                         <div 
                           onClick={() => {
                             setSelectedStudentId(mock.studentId);
                             document.getElementById('candidate-mock-history')?.scrollIntoView({ behavior: 'smooth' });
                           }}
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', minWidth: 0, flex: 1 }}
                           title={`Select ${mock.studentName} and view audit history`}
                         >
                           <div style={{
@@ -705,14 +705,25 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           }}>
                             {initials}
                           </div>
-                          <div>
-                            <div style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--skarion-navy)', lineHeight: '1.2', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                              <span>{mock.studentName}</span>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ 
+                              fontSize: '0.92rem', 
+                              fontWeight: '800', 
+                              color: 'var(--skarion-navy)', 
+                              lineHeight: '1.25', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '0.35rem',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{mock.studentName}</span>
                               {isCurrentSelected && (
-                                <span style={{ fontSize: '0.64rem', background: 'var(--skarion-navy)', color: '#ffffff', padding: '1px 5px', borderRadius: '4px' }}>Active</span>
+                                <span style={{ fontSize: '0.64rem', background: 'var(--skarion-navy)', color: '#ffffff', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>Active</span>
                               )}
                             </div>
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {mock.studentTargetRole || mock.category}
                             </span>
                           </div>
@@ -720,14 +731,15 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
                         {/* Rating Score Badge */}
                         <span style={{
-                          background: getScoreColor(mock.score) + '20',
+                          background: getScoreColor(mock.score) + '15',
                           color: scoreColor,
-                          fontWeight: '900',
-                          fontSize: '0.88rem',
+                          fontWeight: '800',
+                          fontSize: '0.86rem',
                           padding: '0.2rem 0.55rem',
                           borderRadius: '8px',
-                          border: `1px solid ${scoreColor}40`,
-                          whiteSpace: 'nowrap'
+                          border: `1px solid ${scoreColor}30`,
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0
                         }}>
                           {mock.score} / 10
                         </span>
@@ -756,49 +768,62 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         </span>
                       </div>
 
-                      {/* Feedback Excerpt */}
-                      <p style={{
-                        fontSize: '0.84rem',
-                        color: 'var(--text-main)',
-                        fontStyle: 'italic',
-                        marginBottom: '0.65rem',
-                        lineHeight: '1.4',
+                      {/* Feedback Excerpt - Fixed height with inner clamp to prevent text clipping */}
+                      <div style={{
                         background: 'var(--bg-surface-subtle)',
-                        padding: '0.55rem 0.75rem',
-                        borderRadius: '8px',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '10px',
+                        marginBottom: '0.75rem',
+                        minHeight: '52px',
+                        display: 'flex',
+                        alignItems: 'center'
                       }}>
-                        "{mock.feedback}"
-                      </p>
+                        <p style={{
+                          fontSize: '0.82rem',
+                          color: 'var(--text-main)',
+                          fontStyle: 'italic',
+                          lineHeight: '1.45',
+                          margin: 0,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          "{mock.feedback}"
+                        </p>
+                      </div>
                     </div>
 
                     {/* Action Bar */}
-                    <div style={{ display: 'flex', gap: '0.45rem', paddingTop: '0.55rem', borderTop: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)', alignItems: 'center' }}>
                       {hasTranscript && (
                         <button
                           className="btn-primary"
                           onClick={() => openTranscriptModal(mock, false, mock.studentData)}
                           style={{
                             flex: '1',
-                            minWidth: '130px',
                             background: 'var(--skarion-orange)',
                             color: '#ffffff',
-                            height: '34px',
-                            fontSize: '0.78rem',
-                            fontWeight: '800',
-                            borderRadius: '8px',
-                            padding: '0 0.65rem',
+                            height: '38px',
+                            fontSize: '0.82rem',
+                            fontWeight: '700',
+                            borderRadius: '10px',
+                            padding: '0 0.75rem',
                             display: 'inline-flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '0.35rem'
+                            gap: '0.4rem',
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 8px rgba(255, 82, 82, 0.25)',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
                           }}
                           title="Read full interview dialogue transcript"
                         >
-                          <BookOpen size={13} /> View Transcript ({wordCount}w)
+                          <BookOpen size={14} />
+                          <span>View Transcript ({wordCount}w)</span>
                         </button>
                       )}
 
@@ -810,23 +835,25 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           if (showToast) showToast(`Loaded performance history for ${mock.studentName}`);
                         }}
                         style={{
-                          flex: hasTranscript ? 'initial' : '1',
-                          height: '34px',
-                          fontSize: '0.78rem',
-                          fontWeight: '800',
-                          borderRadius: '8px',
-                          padding: '0 0.75rem',
+                          height: '38px',
+                          fontSize: '0.82rem',
+                          fontWeight: '700',
+                          borderRadius: '10px',
+                          padding: '0 0.85rem',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '0.3rem',
+                          gap: '0.35rem',
                           color: 'var(--skarion-navy)',
-                          borderColor: isCurrentSelected ? 'var(--skarion-navy)' : 'var(--border-color)'
+                          borderColor: isCurrentSelected ? 'var(--skarion-navy)' : 'var(--border-color)',
+                          whiteSpace: 'nowrap',
+                          flex: hasTranscript ? 'initial' : '1',
+                          cursor: 'pointer'
                         }}
                         title={`Select ${mock.studentName} and view audit history`}
                       >
                         <span>Details</span>
-                        <ChevronRight size={13} />
+                        <ChevronRight size={14} />
                       </button>
                     </div>
 
