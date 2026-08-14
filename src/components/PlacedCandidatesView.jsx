@@ -101,12 +101,17 @@ export default function PlacedCandidatesView({ students, onSelectStudent, onOpen
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
                     fontWeight: '900',
                     fontSize: '1.25rem',
-                    boxShadow: '0 4px 10px rgba(124, 58, 237, 0.3)'
+                    lineHeight: '1',
+                    boxShadow: '0 4px 10px rgba(124, 58, 237, 0.3)',
+                    flexShrink: 0
                   }}>
-                    {student.name.charAt(0)}
+                    <span style={{ display: 'block', textAlign: 'center', margin: 'auto' }}>
+                      {student.name.charAt(0)}
+                    </span>
                   </div>
                   <div>
                     <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)' }}>{student.name}</h3>

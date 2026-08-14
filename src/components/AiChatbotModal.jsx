@@ -463,15 +463,19 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
-            justify: 'space-between'
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            position: 'relative',
+            width: '100%',
+            boxSizing: 'border-box'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
               <CuteMascotAvatar size={38} />
-              <div>
-                <h3 style={{ margin: 0, fontSize: '0.96rem', fontWeight: '900', color: '#ffffff' }}>
+              <div style={{ minWidth: 0 }}>
+                <h3 style={{ margin: 0, fontSize: '0.94rem', fontWeight: '900', color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   Skarion AI Assistant (◕‿◕✿)
                 </h3>
-                <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: '600' }}>
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: '600', display: 'block' }}>
                   Active Roster Intelligence
                 </span>
               </div>
@@ -487,14 +491,16 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
                 height: '32px',
                 borderRadius: '50%',
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                justify: 'center',
+                justifyContent: 'center',
                 padding: 0,
-                flexShrink: 0
+                flexShrink: 0,
+                marginLeft: 'auto'
               }}
+              title="Close AI Assistant"
             >
-              <X size={18} color="#ffffff" style={{ display: 'block', margin: 'auto' }} />
+              <X size={18} color="#ffffff" style={{ display: 'block' }} />
             </button>
           </div>
 
@@ -584,10 +590,13 @@ export default function AiChatbotModal({ students, onSelectStudent }) {
                     background: 'var(--skarion-orange)',
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'center',
-                    flexShrink: 0
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 6px rgba(255, 82, 82, 0.35)',
+                    padding: 0,
+                    margin: 0
                   }}>
-                    <User size={18} color="#ffffff" />
+                    <User size={16} color="#ffffff" style={{ display: 'block', margin: 'auto' }} />
                   </div>
                 )}
 
