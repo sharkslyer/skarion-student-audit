@@ -1335,8 +1335,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       Improvement: {session.improvement}
                     </div>
                   )}
-
-                  {/* Prominent Mock Transcript Storage & 1-Click Reader Button */}
+                                  {/* Prominent Mock Transcript Storage & 1-Click Reader Button */}
                   <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
                     {hasTranscript ? (
                       <button 
@@ -1346,21 +1345,24 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           width: '100%', 
                           background: 'var(--skarion-orange)', 
                           color: '#ffffff',
-                          display: 'flex',
+                          display: 'inline-flex',
                           alignItems: 'center',
-                          justify: 'center',
-                          gap: '0.55rem',
-                          height: '42px',
-                          borderRadius: '12px',
-                          fontSize: '0.88rem',
-                          fontWeight: '800',
+                          justifyContent: 'center',
+                          gap: '0.45rem',
+                          height: '38px',
+                          borderRadius: '10px',
+                          fontSize: '0.84rem',
+                          fontWeight: '700',
+                          fontFamily: 'inherit',
+                          letterSpacing: '-0.01em',
                           border: 'none',
-                          boxShadow: '0 4px 14px rgba(255, 82, 82, 0.3)',
+                          boxShadow: '0 2px 8px rgba(255, 82, 82, 0.25)',
                           cursor: 'pointer',
+                          whiteSpace: 'nowrap',
                           transition: 'all 0.2s ease'
                         }}
                       >
-                        <BookOpen size={16} color="#ffffff" />
+                        <BookOpen size={15} color="#ffffff" style={{ flexShrink: 0 }} />
                         <span>View Full Transcript ({wordCount} words)</span>
                       </button>
                     ) : (
@@ -1369,17 +1371,25 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         onClick={() => openTranscriptModal(session, true)}
                         style={{ 
                           width: '100%', 
-                          display: 'flex',
+                          display: 'inline-flex',
                           alignItems: 'center',
-                          justify: 'center',
+                          justifyContent: 'center',
                           gap: '0.45rem',
-                          height: '36px',
-                          fontSize: '0.8rem',
+                          height: '38px',
+                          borderRadius: '10px',
+                          fontSize: '0.82rem',
+                          fontWeight: '700',
+                          fontFamily: 'inherit',
+                          letterSpacing: '-0.01em',
                           border: '1px dashed #7c3aed',
-                          color: '#7c3aed'
+                          color: '#7c3aed',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
                         }}
                       >
-                        <Plus size={15} /> Add / Paste Mock Transcript
+                        <Plus size={15} style={{ flexShrink: 0 }} />
+                        <span>Add / Paste Mock Transcript</span>
                       </button>
                     )}
                   </div>
