@@ -9,6 +9,7 @@ import StickyNotesBoard from './components/StickyNotesBoard';
 import CalendarView from './components/CalendarView';
 import PlacedCandidatesView from './components/PlacedCandidatesView';
 import MockInterviewView from './components/MockInterviewView';
+import AnalyticsView from './components/AnalyticsView';
 import StudentFormModal from './components/StudentFormModal';
 import StudentDetailModal from './components/StudentDetailModal';
 import AiChatbotModal from './components/AiChatbotModal';
@@ -355,6 +356,13 @@ export default function App() {
             students={safeStudentsList}
             onSelectStudent={(student) => setSelectedDetailStudent(student)}
             onOpenAddModal={() => { setEditingStudent(null); setIsAddEditModalOpen(true); }}
+          />
+        )}
+
+        {activeView === 'analytics' && (
+          <AnalyticsView 
+            students={safeStudentsList}
+            onSelectStudent={(student) => setSelectedDetailStudent(student)}
           />
         )}
       </div>

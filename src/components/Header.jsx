@@ -14,7 +14,8 @@ import {
   Check,
   Moon,
   Sun,
-  Mic
+  Mic,
+  BarChart2
 } from 'lucide-react';
 import { generateShareableUrl } from '../utils/cloudSync';
 
@@ -176,6 +177,13 @@ export default function Header({
             style={{ background: activeView === 'placed' ? '#7c3aed' : 'transparent', color: activeView === 'placed' ? '#ffffff' : 'inherit' }}
           >
             <GraduationCap size={15} /> Placed
+          </button>
+          <button 
+            className={`tab-pill ${activeView === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveView('analytics')}
+            style={{ background: activeView === 'analytics' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'transparent', color: activeView === 'analytics' ? '#ffffff' : 'inherit' }}
+          >
+            <BarChart2 size={15} /> Visual Stats
           </button>
         </div>
 
