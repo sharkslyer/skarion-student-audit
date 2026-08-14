@@ -326,6 +326,7 @@ export default function App() {
               students={safeStudentsList}
               selectedRatingFilter={selectedRatingFilter}
               setSelectedRatingFilter={setSelectedRatingFilter}
+              onSelectStudent={(student) => setSelectedDetailStudent(student)}
             />
 
             {/* Roster Candidate Data Table */}

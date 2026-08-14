@@ -1,7 +1,8 @@
 import React from 'react';
-import { Users, UserCheck, Award, AlertTriangle, AlertCircle, ThumbsUp, Mic, GraduationCap } from 'lucide-react';
+import { Users, UserCheck, Award, AlertTriangle, AlertCircle, ThumbsUp, GraduationCap, Clock, Calendar, ChevronRight, User } from 'lucide-react';
+import { RATING_CONFIG } from '../data/initialData';
 
-export default function MetricsOverview({ students, selectedRatingFilter, setSelectedRatingFilter }) {
+export default function MetricsOverview({ students, selectedRatingFilter, setSelectedRatingFilter, onSelectStudent }) {
   const total = students.length;
   const placed = students.filter(s => s.rating === 'placed').length;
   const activeCandidates = students.filter(s => s.rating !== 'placed').length;
@@ -11,15 +12,31 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
   const bad = students.filter(s => s.rating === 'bad').length;
   const avgProgress = total > 0 ? Math.round(students.reduce((acc, s) => acc + (s.progress || 0), 0) / total) : 0;
 
+  // Compute oldest candidate ever joined in the Active roster (excluding Placed alumni)
+  const activeStudents = students.filter(s => s.rating !== 'placed');
+  const oldestActiveStudent = [...activeStudents].sort((a, b) => {
+    const timeA = new Date(a.joiningDate || '9999-12-31').getTime();
+    const timeB = new Date(b.joiningDate || '9999-12-31').getTime();
+    return timeA - timeB;
+  })[0] || null;
+
+  const calculateDaysEnrolled = (dateStr) => {
+    if (!dateStr) return 0;
+    const diff = Math.max(0, new Date().getTime() - new Date(dateStr).getTime());
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const daysEnrolled = oldestActiveStudent ? calculateDaysEnrolled(oldestActiveStudent.joiningDate) : 0;
+
   return (
     <div style={{ 
       display: 'grid', 
-      gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', 
+      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
       gap: '1.25rem', 
       marginBottom: '1.5rem' 
     }}>
       
-      {/* Group 1: Candidate Enrolment & Active Roster KPI */}
+      {/* Card 1: Candidate Enrolment & Active Roster KPI */}
       <div className="card-panel" style={{ padding: '1.15rem 1.35rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--skarion-navy)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -81,7 +98,7 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
         </div>
       </div>
 
-      {/* Group 2: Rating Health Breakdown */}
+      {/* Card 2: Rating Health Breakdown */}
       <div className="card-panel" style={{ padding: '1.15rem 1.35rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--skarion-navy)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -155,6 +172,80 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
             <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--rating-bad-color)' }}>At Risk</span>
           </div>
         </div>
+      </div>
+
+      {/* Card 3: Longest Tenured in Active Roster (Oldest Candidate Joined) */}
+      <div 
+        className="card-panel" 
+        onClick={() => oldestActiveStudent && onSelectStudent && onSelectStudent(oldestActiveStudent)}
+        style={{ 
+          padding: '1.15rem 1.35rem', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'space-between',
+          cursor: oldestActiveStudent ? 'pointer' : 'default',
+          borderLeft: '5px solid var(--skarion-orange)',
+          background: 'linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-subtle) 100%)',
+          transition: 'all 0.2s ease'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--skarion-navy)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Clock size={14} color="var(--skarion-orange)" /> Longest Tenured (Active Roster)
+          </span>
+          <span style={{ fontSize: '0.74rem', color: 'var(--skarion-orange)', fontWeight: '800' }}>
+            {daysEnrolled} Days in Training
+          </span>
+        </div>
+
+        {oldestActiveStudent ? (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, var(--skarion-navy) 0%, #0284c7 100%)',
+                  color: '#ffffff',
+                  fontWeight: '900',
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {oldestActiveStudent.name.charAt(0)}
+                </div>
+                <div>
+                  <div style={{ fontSize: '1.05rem', fontWeight: '900', color: 'var(--skarion-navy)', lineHeight: '1.1' }}>
+                    {oldestActiveStudent.name}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                    Joined {oldestActiveStudent.joiningDate} • {oldestActiveStudent.domain || oldestActiveStudent.targetRole || 'Software Engineering'}
+                  </span>
+                </div>
+              </div>
+
+              <span className={`status-badge badge-${oldestActiveStudent.rating}`} style={{ fontSize: '0.72rem', padding: '3px 8px' }}>
+                {RATING_CONFIG[oldestActiveStudent.rating]?.label}
+              </span>
+            </div>
+
+            <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                Progress: <strong style={{ color: 'var(--skarion-orange)' }}>{oldestActiveStudent.progress || 0}%</strong>
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                View Audit Trail <ChevronRight size={13} />
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            No active candidates currently enrolled.
+          </div>
+        )}
       </div>
 
     </div>
