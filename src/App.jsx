@@ -373,6 +373,7 @@ export default function App() {
         onClose={() => setIsAddEditModalOpen(false)}
         onSaveStudent={handleSaveStudent}
         initialData={editingStudent}
+        students={safeStudentsList}
       />
 
       {/* Student Detail Drawer Modal */}

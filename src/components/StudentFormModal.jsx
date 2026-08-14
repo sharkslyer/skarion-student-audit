@@ -4,10 +4,11 @@ import { getTodayLocalDate } from '../utils/dateUtils';
 import { X, UserPlus, Save } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initialData = null }) {
+export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initialData = null, students = [] }) {
   const isEdit = Boolean(initialData);
 
   const [name, setName] = useState(initialData?.name || '');
+  const [domain, setDomain] = useState(initialData?.domain || initialData?.targetRole || '');
   const [joiningDate, setJoiningDate] = useState(initialData?.joiningDate || getTodayLocalDate());
   const [progress, setProgress] = useState(initialData?.progress || 0);
   const [mockInterviews, setMockInterviews] = useState(initialData?.mockInterviews || 0);
@@ -15,6 +16,15 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
   const [placementCompany, setPlacementCompany] = useState(initialData?.placementCompany || '');
   const [placementRole, setPlacementRole] = useState(initialData?.placementRole || '');
   const [initialComment, setInitialComment] = useState('');
+
+  // Extract all existing unique domains from all students in database
+  const existingDomains = Array.from(
+    new Set(
+      (students || [])
+        .map(s => s?.domain || s?.targetRole)
+        .filter(d => Boolean(d && typeof d === 'string' && d.trim()))
+    )
+  );
 
   if (!isOpen) return null;
 
@@ -25,6 +35,8 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
     const studentObj = {
       id: initialData?.id || `skr-${Date.now()}`,
       name: name.trim(),
+      domain: domain.trim() || 'Software Engineering',
+      targetRole: domain.trim() || 'Software Engineering',
       joiningDate,
       progress: Number(progress),
       mockInterviews: Number(mockInterviews),
@@ -118,6 +130,53 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
                 onChange={(e) => setMockInterviews(e.target.value)} 
                 className="input-control" 
               />
+            </div>
+
+            {/* Tech Domain & Career Track Assignment */}
+            <div style={{ gridColumn: '1 / -1', background: 'var(--bg-surface-subtle)', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  🎯 Candidate Tech Domain / Career Track
+                </label>
+                {existingDomains.length > 0 && (
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    {existingDomains.length} unique domains recorded
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Freeform Text Input for Domain */}
+                <input 
+                  type="text" 
+                  value={domain} 
+                  onChange={(e) => setDomain(e.target.value)} 
+                  placeholder="Type domain (e.g. OSP Design Engineer, Full-Stack, Backend Go)..." 
+                  className="input-control" 
+                  style={{ flex: 1, minWidth: '220px', fontSize: '0.86rem', fontWeight: '600' }}
+                />
+
+                {/* Quick-Select / Merge Dropdown from already existing database domains */}
+                {existingDomains.length > 0 && (
+                  <select 
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) setDomain(e.target.value);
+                    }} 
+                    className="input-control" 
+                    style={{ maxWidth: '240px', fontSize: '0.82rem', fontWeight: '700', color: 'var(--skarion-navy)', background: 'var(--bg-surface)' }}
+                    title="Select an already recorded domain to merge"
+                  >
+                    <option value="">-- Quick Assign Existing --</option>
+                    {existingDomains.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.35rem 0 0 0' }}>
+                Type a custom domain name or pick from existing recorded domains to merge candidates into identical tracks.
+              </p>
             </div>
 
             {/* Course Progress Slider */}

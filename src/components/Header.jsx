@@ -183,7 +183,7 @@ export default function Header({
             onClick={() => setActiveView('analytics')}
             style={{ background: activeView === 'analytics' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'transparent', color: activeView === 'analytics' ? '#ffffff' : 'inherit' }}
           >
-            <BarChart2 size={15} /> Visual Stats
+            <BarChart2 size={15} /> Stats
           </button>
         </div>
 
