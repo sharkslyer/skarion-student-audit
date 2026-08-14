@@ -14,11 +14,25 @@ import StudentFormModal from './components/StudentFormModal';
 import StudentDetailModal from './components/StudentDetailModal';
 import AiChatbotModal from './components/AiChatbotModal';
 
-// Defensive sanitizer to ensure no corrupted candidate object can ever crash the React render
+// Defensive sanitizer to ensure mock interviews and candidate records are 100% synchronized across all views
 function sanitizeStudents(data) {
   if (!Array.isArray(data) || data.length === 0) return INITIAL_STUDENTS;
   const valid = data.filter(s => s && typeof s === 'object' && s.name && typeof s.name === 'string');
-  return valid.length > 0 ? valid : INITIAL_STUDENTS;
+  const source = valid.length > 0 ? valid : INITIAL_STUDENTS;
+
+  return source.map(student => {
+    const mockSessions = Array.isArray(student.mockSessions) ? student.mockSessions : [];
+    // Strict single source of truth for mock interviews count
+    const effectiveMocks = mockSessions.length > 0 ? mockSessions.length : (Number(student.mockInterviews) || 0);
+
+    return {
+      ...student,
+      mockSessions,
+      mockInterviews: effectiveMocks,
+      domain: student.domain || student.targetRole || 'Software Engineering',
+      targetRole: student.targetRole || student.domain || 'Software Engineering'
+    };
+  });
 }
 
 export default function App() {

@@ -46,8 +46,31 @@ export default function StudentTable({
 
   const handleMockChange = (e, student, delta) => {
     e.stopPropagation();
-    const newCount = Math.max(0, (student.mockInterviews || 0) + delta);
-    onUpdateStudent({ ...student, mockInterviews: newCount });
+    const currentSessions = Array.isArray(student.mockSessions) ? [...student.mockSessions] : [];
+    const currentCount = currentSessions.length > 0 ? currentSessions.length : (Number(student.mockInterviews) || 0);
+    const newCount = Math.max(0, currentCount + delta);
+    
+    let updatedSessions = [...currentSessions];
+    if (delta < 0 && updatedSessions.length > 0) {
+      updatedSessions.pop();
+    } else if (delta > 0 && updatedSessions.length < newCount) {
+      updatedSessions.push({
+        id: `mock-${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        score: 8.0,
+        evaluator: 'Mayukh',
+        category: 'Technological',
+        feedback: 'Evaluation round logged from candidate roster.',
+        strengths: 'Solid technical foundation',
+        improvement: 'Continue practice'
+      });
+    }
+
+    onUpdateStudent({ 
+      ...student, 
+      mockInterviews: newCount,
+      mockSessions: updatedSessions
+    });
   };
 
   const handleRatingChange = (e, student, newRating) => {

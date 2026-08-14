@@ -10,7 +10,10 @@ export default function MetricsOverview({ students, selectedRatingFilter, setSel
   const needsAttention = students.filter(s => s.rating === 'needs_attention').length;
   const bad = students.filter(s => s.rating === 'bad').length;
 
-  const totalMocks = students.reduce((acc, s) => acc + (s.mockInterviews || 0), 0);
+  const totalMocks = students.reduce((acc, s) => {
+    const sessionCount = Array.isArray(s.mockSessions) ? s.mockSessions.length : 0;
+    return acc + (sessionCount > 0 ? sessionCount : (Number(s.mockInterviews) || 0));
+  }, 0);
   const avgProgress = total > 0 ? Math.round(students.reduce((acc, s) => acc + (s.progress || 0), 0) / total) : 0;
 
   return (
