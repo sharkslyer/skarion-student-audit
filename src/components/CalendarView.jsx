@@ -184,27 +184,29 @@ export default function CalendarView({ students, onSelectStudent }) {
       </div>
 
       {/* Weekday Headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px', textAlign: 'center' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '8px', marginBottom: '8px', textAlign: 'center', width: '100%' }}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-          <div key={d} style={{ background: 'var(--skarion-navy)', color: '#ffffff', fontSize: '0.76rem', fontWeight: '800', padding: '0.55rem', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div key={d} style={{ background: 'var(--skarion-navy)', color: '#ffffff', fontSize: '0.76rem', fontWeight: '800', padding: '0.55rem 0.2rem', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {d}
           </div>
         ))}
       </div>
 
       {/* Days Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '8px', width: '100%' }}>
         {dayGrid.map((dayNum, idx) => {
           if (!dayNum) {
             return (
               <div 
                 key={`empty-${idx}`} 
                 style={{ 
-                  minHeight: '120px', 
+                  minHeight: '115px', 
                   background: 'var(--bg-surface-subtle)', 
                   borderRadius: '12px', 
                   border: '1px solid var(--border-color)',
-                  opacity: 0.4
+                  opacity: 0.4,
+                  minWidth: 0,
+                  overflow: 'hidden'
                 }} 
               />
             );
@@ -223,34 +225,37 @@ export default function CalendarView({ students, onSelectStudent }) {
               onMouseLeave={() => setHoveredDayNum(null)}
               onClick={() => setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay })}
               style={{
-                minHeight: '120px',
+                minHeight: '115px',
                 background: isToday ? 'rgba(255, 82, 82, 0.08)' : 'var(--bg-surface)',
                 border: isToday ? '2px solid var(--skarion-orange)' : isHovered ? '1.5px solid var(--skarion-navy)' : '1px solid var(--border-color)',
                 borderRadius: '12px',
-                padding: '0.65rem',
+                padding: '0.6rem 0.55rem',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 boxShadow: isHovered ? 'var(--shadow-md)' : hasEvents ? 'var(--shadow-sm)' : 'none',
-                position: 'relative'
+                minWidth: 0,
+                overflow: 'hidden',
+                boxSizing: 'border-box'
               }}
               title="Click to add note or view all details"
             >
               {/* Day Number and in-date Action Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', gap: '2px', minWidth: 0 }}>
                 <span style={{ 
                   fontWeight: '800', 
                   fontSize: '0.92rem',
-                  color: isToday ? 'var(--skarion-orange)' : 'var(--skarion-navy)'
+                  color: isToday ? 'var(--skarion-orange)' : 'var(--skarion-navy)',
+                  flexShrink: 0
                 }}>
                   {dayNum}
                 </span>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
                   {hasEvents && (
-                    <span style={{ fontSize: '0.68rem', background: 'var(--skarion-orange)', color: 'white', padding: '1px 6px', borderRadius: '99px', fontWeight: '800' }}>
+                    <span style={{ fontSize: '0.68rem', background: 'var(--skarion-orange)', color: 'white', padding: '1px 5px', borderRadius: '99px', fontWeight: '800' }}>
                       {totalEvents}
                     </span>
                   )}
@@ -265,27 +270,28 @@ export default function CalendarView({ students, onSelectStudent }) {
                       background: 'var(--skarion-navy)',
                       color: '#ffffff',
                       border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.66rem',
+                      borderRadius: '5px',
+                      fontSize: '0.65rem',
                       fontWeight: '800',
-                      padding: '2px 6px',
+                      padding: '1px 5px',
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '2px',
                       opacity: isHovered ? 1 : 0.65,
                       transition: 'all 0.15s ease',
-                      boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      whiteSpace: 'nowrap'
                     }}
                     title="Add note for this date"
                   >
-                    <Plus size={11} /> Note
+                    <Plus size={10} /> Note
                   </button>
                 </div>
               </div>
 
               {/* Day Event Chips rendered inside the date tile */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', overflow: 'hidden', minWidth: 0, width: '100%' }}>
                 {/* Custom Notes Chips */}
                 {dayCustomNotes.map(cn => {
                   const tagStyle = TAG_STYLES[cn.tag] || TAG_STYLES.General;
@@ -293,24 +299,26 @@ export default function CalendarView({ students, onSelectStudent }) {
                     <div 
                       key={cn.id} 
                       style={{ 
-                        fontSize: '0.68rem', 
+                        fontSize: '0.67rem', 
                         background: tagStyle.bg, 
                         color: tagStyle.color, 
                         border: `1px solid ${tagStyle.border}`, 
-                        padding: '2px 5px', 
-                        borderRadius: '5px', 
+                        padding: '2px 4px', 
+                        borderRadius: '4px', 
                         whiteSpace: 'nowrap', 
                         overflow: 'hidden', 
                         textOverflow: 'ellipsis', 
                         fontWeight: '800',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '3px'
+                        gap: '2px',
+                        minWidth: 0,
+                        maxWidth: '100%'
                       }}
                       title={`[${cn.author} • ${cn.tag}]: ${cn.content}`}
                     >
-                      <span>📝</span>
-                      <span>{cn.content}</span>
+                      <span style={{ flexShrink: 0 }}>📝</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{cn.content}</span>
                     </div>
                   );
                 })}
@@ -319,7 +327,20 @@ export default function CalendarView({ students, onSelectStudent }) {
                 {mocksOnDay.map(m => (
                   <div 
                     key={m.id} 
-                    style={{ fontSize: '0.68rem', background: 'rgba(124, 58, 237, 0.12)', color: '#7c3aed', border: '1px solid rgba(124, 58, 237, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}
+                    style={{ 
+                      fontSize: '0.67rem', 
+                      background: 'rgba(124, 58, 237, 0.12)', 
+                      color: '#7c3aed', 
+                      border: '1px solid rgba(124, 58, 237, 0.3)', 
+                      padding: '2px 4px', 
+                      borderRadius: '4px', 
+                      whiteSpace: 'nowrap', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      fontWeight: '700',
+                      minWidth: 0,
+                      maxWidth: '100%'
+                    }}
                     title={`Mock Interview: ${m.studentName} (${m.score}/10) by ${m.evaluator}`}
                   >
                     🎙️ {m.studentName} ({m.score}/10)
@@ -330,7 +351,20 @@ export default function CalendarView({ students, onSelectStudent }) {
                 {joiningStudents.map(s => (
                   <div 
                     key={s.id} 
-                    style={{ fontSize: '0.68rem', background: 'rgba(5, 150, 105, 0.12)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}
+                    style={{ 
+                      fontSize: '0.67rem', 
+                      background: 'rgba(5, 150, 105, 0.12)', 
+                      color: '#059669', 
+                      border: '1px solid rgba(5, 150, 105, 0.3)', 
+                      padding: '2px 4px', 
+                      borderRadius: '4px', 
+                      whiteSpace: 'nowrap', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      fontWeight: '700',
+                      minWidth: 0,
+                      maxWidth: '100%'
+                    }}
                     title={`${s.name} Joined`}
                   >
                     🚀 {s.name} Joined
@@ -343,7 +377,20 @@ export default function CalendarView({ students, onSelectStudent }) {
                   return (
                     <div 
                       key={n.id} 
-                      style={{ fontSize: '0.68rem', background: evalCfg.bg, color: evalCfg.text, border: `1px solid ${evalCfg.border}`, padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}
+                      style={{ 
+                        fontSize: '0.67rem', 
+                        background: evalCfg.bg, 
+                        color: evalCfg.text, 
+                        border: `1px solid ${evalCfg.border}`, 
+                        padding: '2px 4px', 
+                        borderRadius: '4px', 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis', 
+                        fontWeight: '700',
+                        minWidth: 0,
+                        maxWidth: '100%'
+                      }}
                       title={`Audit Note: ${n.studentName} by ${n.author}`}
                     >
                       📌 {n.studentName}
