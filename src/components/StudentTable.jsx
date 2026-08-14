@@ -7,6 +7,7 @@ import {
   Minus, 
   Trash2, 
   Eye, 
+  Edit,
   MessageSquarePlus, 
   ArrowUpDown
 } from 'lucide-react';
@@ -17,7 +18,8 @@ export default function StudentTable({
   onUpdateStudent, 
   onDeleteStudent, 
   onSelectStudent, 
-  onAddNoteForStudent 
+  onAddNoteForStudent,
+  onEditStudent
 }) {
   const [sortField, setSortField] = useState('joiningDate');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -234,6 +236,14 @@ export default function StudentTable({
                           style={{ color: 'var(--skarion-orange)' }}
                         >
                           <MessageSquarePlus size={15} />
+                        </button>
+                        <button 
+                          className="btn-icon" 
+                          title="Edit Candidate Record"
+                          onClick={() => onEditStudent && onEditStudent(student)}
+                          style={{ color: '#0284c7' }}
+                        >
+                          <Edit size={15} />
                         </button>
                         <button 
                           className="btn-icon" 

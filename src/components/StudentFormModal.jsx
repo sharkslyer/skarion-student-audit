@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
 import { X, UserPlus, Save } from 'lucide-react';
@@ -17,6 +17,34 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
   const [placementRole, setPlacementRole] = useState(initialData?.placementRole || '');
   const [initialComment, setInitialComment] = useState('');
 
+  // Synchronize state whenever modal is opened or candidate initialData changes
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setName(initialData.name || '');
+        setDomain(initialData.domain || initialData.targetRole || 'Software Engineering');
+        setJoiningDate(initialData.joiningDate || getTodayLocalDate());
+        setProgress(initialData.progress !== undefined ? initialData.progress : 0);
+        setMockInterviews(initialData.mockInterviews !== undefined ? initialData.mockInterviews : 0);
+        setRating(initialData.rating || 'good');
+        setPlacementCompany(initialData.placementCompany || '');
+        setPlacementRole(initialData.placementRole || '');
+        setInitialComment('');
+      } else {
+        // Reset to clean default form when creating a new candidate
+        setName('');
+        setDomain('Software Engineering');
+        setJoiningDate(getTodayLocalDate());
+        setProgress(0);
+        setMockInterviews(0);
+        setRating('good');
+        setPlacementCompany('');
+        setPlacementRole('');
+        setInitialComment('');
+      }
+    }
+  }, [initialData, isOpen]);
+
   // Extract all existing unique domains from all students in database
   const existingDomains = Array.from(
     new Set(
@@ -33,6 +61,7 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
     if (!name.trim()) return;
 
     const studentObj = {
+      ...initialData,
       id: initialData?.id || `skr-${Date.now()}`,
       name: name.trim(),
       domain: domain.trim() || 'Software Engineering',
@@ -44,7 +73,8 @@ export default function StudentFormModal({ isOpen, onClose, onSaveStudent, initi
       placementCompany: rating === 'placed' ? placementCompany.trim() : '',
       placementRole: rating === 'placed' ? placementRole.trim() : '',
       placementDate: rating === 'placed' ? (initialData?.placementDate || getTodayLocalDate()) : '',
-      stickyNotes: initialData?.stickyNotes || []
+      stickyNotes: initialData?.stickyNotes ? [...initialData.stickyNotes] : [],
+      mockSessions: initialData?.mockSessions ? [...initialData.mockSessions] : []
     };
 
     if (initialComment.trim()) {

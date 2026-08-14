@@ -321,6 +321,10 @@ export default function App() {
               onDeleteStudent={handleDeleteStudent}
               onSelectStudent={(student) => setSelectedDetailStudent(student)}
               onAddNoteForStudent={(student) => setSelectedDetailStudent(student)}
+              onEditStudent={(student) => {
+                setEditingStudent(student);
+                setIsAddEditModalOpen(true);
+              }}
             />
           </>
         )}
