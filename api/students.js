@@ -1,5 +1,5 @@
 // Vercel Serverless Function connected directly to NeonDB PostgreSQL Database
-// Handles real-time CRUD operations, mock interview journey sessions, and pin status updates
+// Handles real-time CRUD operations, domain/career tracks, mock interviews, and placement readiness
 
 import pg from 'pg';
 const { Pool } = pg;
@@ -10,6 +10,54 @@ const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false }
 });
+
+// Ensure database schema and any newly added columns exist on NeonDB PostgreSQL
+let schemaInitialized = false;
+async function ensureSchema(client) {
+  if (schemaInitialized) return;
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS students (
+        id VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        domain VARCHAR(255) DEFAULT 'Software Engineering',
+        target_role VARCHAR(255) DEFAULT 'Software Engineering',
+        joining_date VARCHAR(64),
+        progress INTEGER DEFAULT 0,
+        mock_interviews INTEGER DEFAULT 0,
+        rating VARCHAR(64) DEFAULT 'good',
+        placement_company VARCHAR(255) DEFAULT '',
+        placement_role VARCHAR(255) DEFAULT '',
+        placement_date VARCHAR(64) DEFAULT '',
+        placement_readiness INTEGER DEFAULT NULL,
+        mock_sessions_json TEXT DEFAULT '[]',
+        extra_data_json TEXT DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS sticky_notes (
+        id VARCHAR(255) PRIMARY KEY,
+        student_id VARCHAR(255) REFERENCES students(id) ON DELETE CASCADE,
+        date VARCHAR(64),
+        content TEXT NOT NULL,
+        category VARCHAR(128) DEFAULT 'General',
+        author VARCHAR(128) DEFAULT 'Mayukh',
+        accent VARCHAR(64) DEFAULT 'navy',
+        pinned BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Auto-migrate columns if table already existed
+      ALTER TABLE students ADD COLUMN IF NOT EXISTS domain VARCHAR(255) DEFAULT 'Software Engineering';
+      ALTER TABLE students ADD COLUMN IF NOT EXISTS target_role VARCHAR(255) DEFAULT 'Software Engineering';
+      ALTER TABLE students ADD COLUMN IF NOT EXISTS placement_readiness INTEGER DEFAULT NULL;
+      ALTER TABLE students ADD COLUMN IF NOT EXISTS extra_data_json TEXT DEFAULT '{}';
+    `);
+    schemaInitialized = true;
+  } catch (err) {
+    console.error('Schema initialization notice:', err);
+  }
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -28,7 +76,10 @@ export default async function handler(req, res) {
   const client = await pool.connect();
 
   try {
-    // POST / PUT: Sync candidate roster and mock interview sessions (with deletion & multi-pin support)
+    // Ensure all tables and columns exist
+    await ensureSchema(client);
+
+    // POST / PUT: Sync candidate roster, career tracks, and mock interview sessions
     if (req.method === 'POST' || req.method === 'PUT') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const studentsList = Array.isArray(body) ? body : (body?.students || []);
@@ -44,17 +95,24 @@ export default async function handler(req, res) {
           await client.query(`DELETE FROM students WHERE id NOT IN (${placeholders});`, activeIds);
         }
 
-        // 2. Upsert active candidates
+        // 2. Upsert active candidates with full career track & readiness persistence
         for (const student of studentsList) {
           if (!student || !student.id || !student.name) continue;
 
           const mockSessionsJson = JSON.stringify(student.mockSessions || []);
+          const domain = student.domain || student.targetRole || 'Software Engineering';
+          const readiness = student.placementReadiness !== undefined ? Number(student.placementReadiness) : null;
 
           await client.query(`
-            INSERT INTO students (id, name, joining_date, progress, mock_interviews, rating, placement_company, placement_role, placement_date, mock_sessions_json)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            INSERT INTO students (
+              id, name, domain, target_role, joining_date, progress, mock_interviews, rating, 
+              placement_company, placement_role, placement_date, placement_readiness, mock_sessions_json
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             ON CONFLICT (id) DO UPDATE SET
               name = EXCLUDED.name,
+              domain = EXCLUDED.domain,
+              target_role = EXCLUDED.target_role,
               joining_date = EXCLUDED.joining_date,
               progress = EXCLUDED.progress,
               mock_interviews = EXCLUDED.mock_interviews,
@@ -62,10 +120,13 @@ export default async function handler(req, res) {
               placement_company = EXCLUDED.placement_company,
               placement_role = EXCLUDED.placement_role,
               placement_date = EXCLUDED.placement_date,
+              placement_readiness = EXCLUDED.placement_readiness,
               mock_sessions_json = EXCLUDED.mock_sessions_json;
           `, [
             student.id,
             student.name,
+            domain,
+            domain,
             student.joiningDate || new Date().toISOString().split('T')[0],
             student.progress || 0,
             student.mockInterviews || (student.mockSessions || []).length,
@@ -73,6 +134,7 @@ export default async function handler(req, res) {
             student.placementCompany || '',
             student.placementRole || '',
             student.placementDate || '',
+            readiness,
             mockSessionsJson
           ]);
 
@@ -110,20 +172,19 @@ export default async function handler(req, res) {
             }
           }
         }
-      } else {
-        await client.query('DELETE FROM sticky_notes;');
-        await client.query('DELETE FROM students;');
       }
 
       await client.query('COMMIT');
-      return res.status(200).json({ success: true, count: studentsList.length, students: studentsList });
+      return res.status(200).json({ success: true, count: studentsList.length });
     }
 
-    // GET: Query all students and their sticky notes from NeonDB
+    // GET: Query all students, career tracks, and sticky notes from NeonDB
     const studentsRes = await client.query(`
       SELECT 
         id, 
         name, 
+        domain,
+        target_role as "targetRole",
         joining_date as "joiningDate", 
         progress, 
         mock_interviews as "mockInterviews", 
@@ -131,6 +192,7 @@ export default async function handler(req, res) {
         placement_company as "placementCompany", 
         placement_role as "placementRole", 
         placement_date as "placementDate",
+        placement_readiness as "placementReadiness",
         mock_sessions_json as "mockSessionsJson"
       FROM students 
       ORDER BY created_at DESC;
@@ -172,8 +234,13 @@ export default async function handler(req, res) {
         }
       }
 
+      const domain = student.domain || student.targetRole || 'Software Engineering';
+
       return {
         ...student,
+        domain,
+        targetRole: domain,
+        placementReadiness: student.placementReadiness !== null && student.placementReadiness !== undefined ? Number(student.placementReadiness) : undefined,
         mockSessions,
         stickyNotes: notes
       };
