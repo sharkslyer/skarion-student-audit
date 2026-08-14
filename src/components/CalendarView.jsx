@@ -200,7 +200,7 @@ export default function CalendarView({ students, onSelectStudent }) {
               <div 
                 key={`empty-${idx}`} 
                 style={{ 
-                  minHeight: '115px', 
+                  minHeight: '120px', 
                   background: 'var(--bg-surface-subtle)', 
                   borderRadius: '12px', 
                   border: '1px solid var(--border-color)',
@@ -216,11 +216,6 @@ export default function CalendarView({ students, onSelectStudent }) {
           const isToday = new Date().toDateString() === new Date(year, month, dayNum).toDateString();
           const isHovered = hoveredDayNum === dayNum;
 
-          // Column & row position to position hover tooltip cleanly
-          const colIndex = idx % 7;
-          const rowIndex = Math.floor(idx / 7);
-          const showTooltipAbove = rowIndex >= 3;
-
           return (
             <div
               key={dayNum}
@@ -228,9 +223,9 @@ export default function CalendarView({ students, onSelectStudent }) {
               onMouseLeave={() => setHoveredDayNum(null)}
               onClick={() => setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay })}
               style={{
-                minHeight: '115px',
+                minHeight: '120px',
                 background: isToday ? 'rgba(255, 82, 82, 0.08)' : 'var(--bg-surface)',
-                border: isToday ? '2px solid var(--skarion-orange)' : '1px solid var(--border-color)',
+                border: isToday ? '2px solid var(--skarion-orange)' : isHovered ? '1.5px solid var(--skarion-navy)' : '1px solid var(--border-color)',
                 borderRadius: '12px',
                 padding: '0.65rem',
                 cursor: 'pointer',
@@ -238,15 +233,13 @@ export default function CalendarView({ students, onSelectStudent }) {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                boxShadow: isHovered ? '0 6px 20px rgba(19, 34, 71, 0.15)' : hasEvents ? 'var(--shadow-sm)' : 'none',
-                transform: isHovered ? 'translateY(-2px)' : 'none',
-                position: 'relative',
-                zIndex: isHovered ? 40 : 1
+                boxShadow: isHovered ? 'var(--shadow-md)' : hasEvents ? 'var(--shadow-sm)' : 'none',
+                position: 'relative'
               }}
               title="Click to add note or view all details"
             >
-              {/* Day Number and Badges */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {/* Day Number and in-date Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
                 <span style={{ 
                   fontWeight: '800', 
                   fontSize: '0.92rem',
@@ -261,16 +254,38 @@ export default function CalendarView({ students, onSelectStudent }) {
                       {totalEvents}
                     </span>
                   )}
-                  {isHovered && (
-                    <span style={{ fontSize: '0.66rem', background: 'var(--skarion-navy)', color: '#ffffff', padding: '1px 5px', borderRadius: '4px', fontWeight: '800' }}>
-                      + Note
-                    </span>
-                  )}
+                  
+                  {/* + Note Button appearing directly inside the date card */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedDayNotes({ dayNum, formattedDate, dayCustomNotes, joiningStudents, notesOnDay, mocksOnDay });
+                    }}
+                    style={{
+                      background: 'var(--skarion-navy)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '0.66rem',
+                      fontWeight: '800',
+                      padding: '2px 6px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                      opacity: isHovered ? 1 : 0.65,
+                      transition: 'all 0.15s ease',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                    }}
+                    title="Add note for this date"
+                  >
+                    <Plus size={11} /> Note
+                  </button>
                 </div>
               </div>
 
-              {/* Day Event Chips */}
-              <div style={{ marginTop: '0.35rem', display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'hidden' }}>
+              {/* Day Event Chips rendered inside the date tile */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'hidden' }}>
                 {/* Custom Notes Chips */}
                 {dayCustomNotes.map(cn => {
                   const tagStyle = TAG_STYLES[cn.tag] || TAG_STYLES.General;
@@ -292,6 +307,7 @@ export default function CalendarView({ students, onSelectStudent }) {
                         alignItems: 'center',
                         gap: '3px'
                       }}
+                      title={`[${cn.author} • ${cn.tag}]: ${cn.content}`}
                     >
                       <span>📝</span>
                       <span>{cn.content}</span>
@@ -301,14 +317,22 @@ export default function CalendarView({ students, onSelectStudent }) {
 
                 {/* Mock Interviews Chips */}
                 {mocksOnDay.map(m => (
-                  <div key={m.id} style={{ fontSize: '0.68rem', background: 'rgba(124, 58, 237, 0.12)', color: '#7c3aed', border: '1px solid rgba(124, 58, 237, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
+                  <div 
+                    key={m.id} 
+                    style={{ fontSize: '0.68rem', background: 'rgba(124, 58, 237, 0.12)', color: '#7c3aed', border: '1px solid rgba(124, 58, 237, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}
+                    title={`Mock Interview: ${m.studentName} (${m.score}/10) by ${m.evaluator}`}
+                  >
                     🎙️ {m.studentName} ({m.score}/10)
                   </div>
                 ))}
 
                 {/* Joining Candidates Chips */}
                 {joiningStudents.map(s => (
-                  <div key={s.id} style={{ fontSize: '0.68rem', background: 'rgba(5, 150, 105, 0.12)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
+                  <div 
+                    key={s.id} 
+                    style={{ fontSize: '0.68rem', background: 'rgba(5, 150, 105, 0.12)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.3)', padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}
+                    title={`${s.name} Joined`}
+                  >
                     🚀 {s.name} Joined
                   </div>
                 ))}
@@ -317,110 +341,16 @@ export default function CalendarView({ students, onSelectStudent }) {
                 {notesOnDay.slice(0, 2).map(n => {
                   const evalCfg = EVALUATOR_CONFIG[n.author] || EVALUATOR_CONFIG.Mayukh;
                   return (
-                    <div key={n.id} style={{ fontSize: '0.68rem', background: evalCfg.bg, color: evalCfg.text, border: `1px solid ${evalCfg.border}`, padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}>
+                    <div 
+                      key={n.id} 
+                      style={{ fontSize: '0.68rem', background: evalCfg.bg, color: evalCfg.text, border: `1px solid ${evalCfg.border}`, padding: '2px 5px', borderRadius: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '700' }}
+                      title={`Audit Note: ${n.studentName} by ${n.author}`}
+                    >
                       📌 {n.studentName}
                     </div>
                   );
                 })}
               </div>
-
-              {/* Interactive Hover Popover Tooltip */}
-              {isHovered && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    bottom: showTooltipAbove ? 'calc(100% + 8px)' : 'auto',
-                    top: showTooltipAbove ? 'auto' : 'calc(100% + 8px)',
-                    left: colIndex >= 4 ? 'auto' : '0',
-                    right: colIndex >= 4 ? '0' : 'auto',
-                    minWidth: '270px',
-                    maxWidth: '320px',
-                    background: 'linear-gradient(135deg, #132247 0%, #1e293b 100%)',
-                    color: '#ffffff',
-                    padding: '0.9rem 1.1rem',
-                    borderRadius: '14px',
-                    boxShadow: '0 16px 36px rgba(0, 0, 0, 0.35)',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    zIndex: 999,
-                    pointerEvents: 'none'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: '0.45rem' }}>
-                    <span style={{ fontSize: '0.86rem', fontWeight: '900', color: '#ffffff' }}>
-                      📅 {monthNames[month]} {dayNum}, {year}
-                    </span>
-                    <span style={{ fontSize: '0.7rem', fontWeight: '800', background: 'var(--skarion-orange)', color: '#ffffff', padding: '1px 6px', borderRadius: '8px' }}>
-                      {totalEvents} {totalEvents === 1 ? 'Item' : 'Items'}
-                    </span>
-                  </div>
-
-                  {/* Custom Notes Section in Hover */}
-                  {dayCustomNotes.length > 0 && (
-                    <div style={{ marginBottom: '0.45rem' }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#38bdf8', textTransform: 'uppercase', marginBottom: '3px' }}>
-                        Custom Notes ({dayCustomNotes.length})
-                      </div>
-                      {dayCustomNotes.map(cn => (
-                        <div key={cn.id} style={{ fontSize: '0.76rem', color: '#f1f5f9', background: 'rgba(255,255,255,0.08)', padding: '3px 6px', borderRadius: '6px', marginBottom: '3px' }}>
-                          <span style={{ fontWeight: '800', color: '#38bdf8' }}>[{cn.author} • {cn.tag}]:</span> {cn.content}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Mock Interviews Section in Hover */}
-                  {mocksOnDay.length > 0 && (
-                    <div style={{ marginBottom: '0.45rem' }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#a78bfa', textTransform: 'uppercase', marginBottom: '3px' }}>
-                        Mock Interviews ({mocksOnDay.length})
-                      </div>
-                      {mocksOnDay.map(m => (
-                        <div key={m.id} style={{ fontSize: '0.76rem', color: '#f1f5f9', background: 'rgba(167, 139, 250, 0.15)', padding: '3px 6px', borderRadius: '6px', marginBottom: '3px' }}>
-                          🎙️ <span style={{ fontWeight: '800' }}>{m.studentName}</span> ({m.score}/10) • <span style={{ opacity: 0.85 }}>{m.evaluator}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Joining Candidates Section in Hover */}
-                  {joiningStudents.length > 0 && (
-                    <div style={{ marginBottom: '0.45rem' }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#34d399', textTransform: 'uppercase', marginBottom: '3px' }}>
-                        Joined Candidates ({joiningStudents.length})
-                      </div>
-                      {joiningStudents.map(s => (
-                        <div key={s.id} style={{ fontSize: '0.76rem', color: '#f1f5f9', background: 'rgba(52, 211, 153, 0.15)', padding: '3px 6px', borderRadius: '6px', marginBottom: '3px' }}>
-                          🚀 {s.name} ({RATING_CONFIG[s.rating]?.label})
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Sticky Notes Section in Hover */}
-                  {notesOnDay.length > 0 && (
-                    <div style={{ marginBottom: '0.45rem' }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#fb923c', textTransform: 'uppercase', marginBottom: '3px' }}>
-                        Mentor Notes ({notesOnDay.length})
-                      </div>
-                      {notesOnDay.slice(0, 2).map(n => (
-                        <div key={n.id} style={{ fontSize: '0.74rem', color: '#e2e8f0', background: 'rgba(255,255,255,0.06)', padding: '3px 6px', borderRadius: '6px', marginBottom: '3px' }}>
-                          📌 <span style={{ fontWeight: '800' }}>{n.studentName}:</span> "{n.content.substring(0, 45)}..."
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {!hasEvents && (
-                    <div style={{ fontSize: '0.76rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '0.4rem' }}>
-                      No items recorded for this date.
-                    </div>
-                  )}
-
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.35rem', textAlign: 'center', fontWeight: '600' }}>
-                    ✨ Click date to add custom notes or view details
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}
