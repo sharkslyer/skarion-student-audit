@@ -734,10 +734,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       {/* Top Header: Candidate Name, Avatar & Score */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', minHeight: '38px', gap: '0.5rem' }}>
                         <div 
-                          onClick={() => {
-                            setSelectedStudentId(mock.studentId);
-                            document.getElementById('candidate-mock-history')?.scrollIntoView({ behavior: 'smooth' });
-                          }}
+                          onClick={() => setSelectedStudentId(mock.studentId)}
                           style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', minWidth: 0, flex: 1 }}
                           title={`Select ${mock.studentName} and view audit history`}
                         >
@@ -925,8 +922,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         className="btn-secondary"
                         onClick={() => {
                           setSelectedStudentId(mock.studentId);
-                          document.getElementById('candidate-mock-history')?.scrollIntoView({ behavior: 'smooth' });
-                          if (showToast) showToast(`Loaded performance history for ${mock.studentName}`);
+                          if (showToast) showToast(`Selected ${mock.studentName}`);
                         }}
                         style={{
                           height: '38px',
@@ -947,7 +943,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         }}
                         title={`Select ${mock.studentName} and view audit history`}
                       >
-                        <span>Details</span>
+                        <span>Select</span>
                         <ChevronRight size={13} />
                       </button>
                     </div>
@@ -1505,22 +1501,6 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     )}
                   </div>
 
-                  {/* Embedded Executive Performance Audit Card if available */}
-                  {session.auditAnalysis && (
-                    <div style={{ marginTop: '0.85rem' }}>
-                      <ExecutiveAuditReportCard
-                        rawText={session.auditAnalysis}
-                        candidate={currentStudent}
-                        session={session}
-                        onOpenModal={() => {
-                          setActiveAuditSession(session);
-                          setActiveAuditCandidate(currentStudent);
-                        }}
-                        showToast={showToast}
-                      />
-                    </div>
-                  )}
-
                 </div>
               </div>
             );
@@ -1733,20 +1713,32 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
       {/* User-Friendly Long Screen Reader & Editor Modal Dialog */}
       {activeTranscriptSession && (
-        <div className="transcript-modal-backdrop" onClick={() => setActiveTranscriptSession(null)}>
+        <div 
+          className="modal-backdrop" 
+          onClick={() => setActiveTranscriptSession(null)} 
+          style={{ 
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(8, 12, 20, 0.75)',
+            backdropFilter: 'blur(6px)',
+            padding: '1.5rem'
+          }}
+        >
           <div 
             className="modal-content" 
             onClick={(e) => e.stopPropagation()} 
             style={{ 
-              maxWidth: '900px', 
-              width: '95%',
-              height: '88vh', 
+              maxWidth: '850px', 
+              width: '100%',
+              maxHeight: '90vh', 
               display: 'flex', 
               flexDirection: 'column', 
-              padding: '1.5rem',
-              borderRadius: '20px',
-              border: '2px solid #7c3aed',
-              boxShadow: '0 20px 50px rgba(124, 58, 237, 0.25)'
+              padding: '1.75rem',
+              borderRadius: '16px'
             }}
           >
             

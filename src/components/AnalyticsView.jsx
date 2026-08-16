@@ -1255,97 +1255,69 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
                 const activeDisplaySession = auditSessions[safeSessionIndex] || currentStudent.mockSessions?.[0] || null;
 
                 return (
-                  <div>
-                    {hasAuditReport ? (
+                  <div className="card-panel" style={{ padding: '1.5rem 1.75rem', marginTop: '1.5rem', background: 'var(--bg-surface)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                       <div>
-                        {/* Multiple Sessions Selector Tabs if candidate has more than 1 audit report */}
-                        {auditSessions.length > 1 && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                              Audit Reports:
-                            </span>
-                            {auditSessions.map((sess, sIdx) => (
-                              <button
-                                key={sess.id || sIdx}
-                                type="button"
-                                onClick={() => setSelectedAuditSessionIndex(sIdx)}
-                                style={{
-                                  background: safeSessionIndex === sIdx ? 'var(--skarion-navy)' : 'var(--bg-surface)',
-                                  color: safeSessionIndex === sIdx ? '#ffffff' : 'var(--text-main)',
-                                  border: '1px solid var(--border-color)',
-                                  padding: '4px 12px',
-                                  borderRadius: '10px',
-                                  fontSize: '0.8rem',
-                                  fontWeight: '800',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                #{sIdx + 1} {sess.category || 'Mock'} ({sess.date}) - {sess.score}/10
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        <ExecutiveAuditReportCard
-                          rawText={activeDisplaySession.auditAnalysis}
-                          candidate={currentStudent}
-                          session={activeDisplaySession}
-                          onOpenModal={() => {
-                            setActiveAuditSession(activeDisplaySession);
-                            setActiveAuditCandidate(currentStudent);
-                          }}
-                          showToast={showToast}
-                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
+                          <span style={{ 
+                            background: 'linear-gradient(135deg, var(--skarion-orange) 0%, #e04343 100%)',
+                            color: '#ffffff',
+                            fontSize: '0.72rem',
+                            fontWeight: '900',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            letterSpacing: '0.03em'
+                          }}>
+                            EXECUTIVE AUDIT
+                          </span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: 0 }}>
+                            Candidate Performance Metrics & Evaluation Breakdown
+                          </h3>
+                        </div>
+                        <span style={{ fontSize: '0.86rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                          {hasAuditReport 
+                            ? `Comprehensive multi-dimensional evaluation filed for ${currentStudent.name} (${auditSessions.length} Report${auditSessions.length !== 1 ? 's' : ''})`
+                            : `No multi-dimensional audit report filed yet for ${currentStudent.name}. Paste verbatim analysis to parse automatically.`}
+                        </span>
                       </div>
-                    ) : (
-                      /* Empty State: Prompt to paste or add performance analysis */
-                      <div className="card-panel" style={{ padding: '1.75rem 2rem', marginTop: '1.5rem', background: 'var(--bg-surface)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.3rem' }}>
-                              <span style={{ 
-                                background: 'linear-gradient(135deg, var(--skarion-orange) 0%, #e04343 100%)',
-                                color: '#ffffff',
-                                fontSize: '0.72rem',
-                                fontWeight: '900',
-                                padding: '3px 8px',
-                                borderRadius: '6px',
-                                letterSpacing: '0.03em'
-                              }}>
-                                EXECUTIVE AUDIT
-                              </span>
-                              <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: 0 }}>
-                                Candidate Performance Metrics & Evaluation Breakdown
-                              </h3>
-                            </div>
-                            <span style={{ fontSize: '0.86rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                              No multi-dimensional audit report filed yet for {currentStudent.name}. Paste verbatim analysis to parse automatically.
-                            </span>
-                          </div>
 
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {hasAuditReport && (
                           <button
                             type="button"
                             className="btn-primary"
                             onClick={() => {
-                              const targetSess = currentStudent.mockSessions?.[0] || {
-                                id: `mock-${Date.now()}`,
-                                date: '2026-08-16',
-                                score: 7.0,
-                                evaluator: 'Mayukh',
-                                category: 'Technical',
-                                feedback: 'Interview evaluation performance',
-                                auditAnalysis: ''
-                              };
-                              setActiveAuditSession(targetSess);
+                              setActiveAuditSession(activeDisplaySession);
                               setActiveAuditCandidate(currentStudent);
                             }}
-                            style={{ height: '40px', padding: '0 1.25rem', fontSize: '0.84rem' }}
+                            style={{ height: '40px', padding: '0 1.25rem', fontSize: '0.84rem', fontWeight: '800' }}
                           >
-                            <Edit3 size={15} /> + Add / Paste Performance Audit
+                            <BarChart2 size={16} /> View Performance Analysis
                           </button>
-                        </div>
+                        )}
+
+                        <button
+                          type="button"
+                          className={hasAuditReport ? "btn-secondary" : "btn-primary"}
+                          onClick={() => {
+                            const targetSess = activeDisplaySession || {
+                              id: `mock-${Date.now()}`,
+                              date: '2026-08-16',
+                              score: 7.0,
+                              evaluator: 'Mayukh',
+                              category: 'Technical',
+                              feedback: 'Interview evaluation performance',
+                              auditAnalysis: ''
+                            };
+                            setActiveAuditSession(targetSess);
+                            setActiveAuditCandidate(currentStudent);
+                          }}
+                          style={{ height: '40px', padding: '0 1.25rem', fontSize: '0.84rem' }}
+                        >
+                          <Edit3 size={15} /> {hasAuditReport ? 'Edit / Calibrate' : '+ Add / Paste Performance Audit'}
+                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })()}
