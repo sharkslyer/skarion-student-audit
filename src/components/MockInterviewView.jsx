@@ -862,27 +862,31 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           setActiveAuditCandidate(mock.studentData || currentStudent);
                         }}
                         style={{
-                          height: '38px',
+                          height: '36px',
                           fontSize: '0.78rem',
                           fontWeight: '800',
-                          borderRadius: '10px',
-                          padding: '0 0.65rem',
-                          display: 'inline-flex',
+                          borderRadius: '8px',
+                          padding: '0 0.5rem',
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          textAlign: 'center',
                           gap: '0.3rem',
                           background: mock.auditAnalysis ? 'rgba(124, 58, 237, 0.1)' : 'var(--bg-surface-subtle)',
                           color: mock.auditAnalysis ? '#7c3aed' : 'var(--text-main)',
                           borderColor: mock.auditAnalysis ? 'rgba(124, 58, 237, 0.35)' : 'var(--border-color)',
                           whiteSpace: 'nowrap',
                           flex: '1 1 auto',
-                          minWidth: '100px',
-                          cursor: 'pointer'
+                          minWidth: '95px',
+                          cursor: 'pointer',
+                          boxSizing: 'border-box'
                         }}
                         title="View or edit structured candidate performance audit analysis"
                       >
-                        <BarChart2 size={13} color={mock.auditAnalysis ? '#7c3aed' : 'var(--text-dim)'} />
-                        <span>{mock.auditAnalysis ? 'Audit Report' : '+ Analysis'}</span>
+                        <BarChart2 size={13} color={mock.auditAnalysis ? '#7c3aed' : 'var(--text-dim)'} style={{ flexShrink: 0 }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                          {mock.auditAnalysis ? 'Audit Report' : '+ Analysis'}
+                        </span>
                       </button>
 
                       {hasTranscript && (
@@ -894,27 +898,30 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                             minWidth: 0,
                             background: 'var(--skarion-orange)',
                             color: '#ffffff',
-                            height: '38px',
-                            fontSize: '0.8rem',
+                            height: '36px',
+                            fontSize: '0.78rem',
                             fontWeight: '700',
-                            borderRadius: '10px',
-                            padding: '0 0.65rem',
-                            display: 'inline-flex',
+                            borderRadius: '8px',
+                            padding: '0 0.5rem',
+                            display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '0.35rem',
+                            textAlign: 'center',
+                            gap: '0.3rem',
                             whiteSpace: 'nowrap',
                             boxShadow: '0 2px 8px rgba(255, 82, 82, 0.25)',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis'
+                            boxSizing: 'border-box'
                           }}
                           title="Read full interview dialogue transcript"
                         >
-                          <BookOpen size={14} style={{ flexShrink: 0 }} />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Transcript ({wordCount}w)</span>
+                          <BookOpen size={13} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                            Transcript ({wordCount}w)
+                          </span>
                         </button>
                       )}
 
@@ -1413,7 +1420,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   )}
 
                   {/* Prominent Mock Transcript & Performance Audit Buttons */}
-                  <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                     {/* Executive Audit Analysis Button */}
                     <button
                       type="button"
@@ -1422,81 +1429,104 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         setActiveAuditCandidate(currentStudent);
                       }}
                       style={{
-                        height: '38px',
-                        borderRadius: '10px',
-                        fontSize: '0.82rem',
+                        height: '36px',
+                        width: '100%',
+                        borderRadius: '8px',
+                        fontSize: '0.78rem',
                         fontWeight: '800',
                         fontFamily: 'inherit',
-                        display: 'inline-flex',
+                        display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '0.4rem',
+                        textAlign: 'center',
+                        gap: '0.35rem',
+                        padding: '0 0.5rem',
                         background: session.auditAnalysis ? 'linear-gradient(135deg, #132247 0%, #1e293b 100%)' : 'var(--bg-surface-subtle)',
                         color: session.auditAnalysis ? '#38bdf8' : '#7c3aed',
                         border: session.auditAnalysis ? '1px solid rgba(56, 189, 248, 0.4)' : '1px dashed #7c3aed',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        boxSizing: 'border-box',
                         boxShadow: session.auditAnalysis ? '0 2px 8px rgba(19, 34, 71, 0.25)' : 'none',
                         transition: 'all 0.2s ease'
                       }}
                       title="View or edit multi-dimensional performance audit report"
                     >
-                      <BarChart2 size={15} color={session.auditAnalysis ? '#38bdf8' : '#7c3aed'} />
-                      <span>{session.auditAnalysis ? 'Performance Audit' : '+ Add Audit'}</span>
+                      <BarChart2 size={14} color={session.auditAnalysis ? '#38bdf8' : '#7c3aed'} style={{ flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                        {session.auditAnalysis ? 'Audit Report' : '+ Add Audit'}
+                      </span>
                     </button>
 
                     {/* Transcript Button */}
                     {hasTranscript ? (
                       <button 
+                        type="button"
                         className="btn-primary"
                         onClick={() => openTranscriptModal(session, false)}
                         style={{ 
-                          background: 'var(--skarion-orange)', 
-                          color: '#ffffff',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.45rem',
-                          height: '38px',
-                          borderRadius: '10px',
-                          fontSize: '0.82rem',
+                          height: '36px',
+                          width: '100%',
+                          borderRadius: '8px',
+                          fontSize: '0.78rem',
                           fontWeight: '700',
                           fontFamily: 'inherit',
-                          letterSpacing: '-0.01em',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          gap: '0.35rem',
+                          padding: '0 0.5rem',
+                          background: 'var(--skarion-orange)', 
+                          color: '#ffffff',
                           border: 'none',
                           boxShadow: '0 2px 8px rgba(255, 82, 82, 0.25)',
                           cursor: 'pointer',
                           whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          boxSizing: 'border-box',
                           transition: 'all 0.2s ease'
                         }}
+                        title="Read interview dialogue transcript"
                       >
-                        <BookOpen size={15} color="#ffffff" style={{ flexShrink: 0 }} />
-                        <span>Transcript ({wordCount}w)</span>
+                        <BookOpen size={14} color="#ffffff" style={{ flexShrink: 0 }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                          Transcript ({wordCount}w)
+                        </span>
                       </button>
                     ) : (
                       <button 
+                        type="button"
                         className="btn-secondary"
                         onClick={() => openTranscriptModal(session, true)}
                         style={{ 
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.45rem',
-                          height: '38px',
-                          borderRadius: '10px',
-                          fontSize: '0.82rem',
+                          height: '36px',
+                          width: '100%',
+                          borderRadius: '8px',
+                          fontSize: '0.78rem',
                           fontWeight: '700',
                           fontFamily: 'inherit',
-                          letterSpacing: '-0.01em',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          gap: '0.35rem',
+                          padding: '0 0.5rem',
                           border: '1px dashed #7c3aed',
                           color: '#7c3aed',
                           whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          boxSizing: 'border-box',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease'
                         }}
+                        title="Add transcript for this session"
                       >
-                        <Plus size={15} style={{ flexShrink: 0 }} />
-                        <span>+ Transcript</span>
+                        <Plus size={14} style={{ flexShrink: 0 }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                          + Transcript
+                        </span>
                       </button>
                     )}
                   </div>
