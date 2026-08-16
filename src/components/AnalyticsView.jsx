@@ -28,6 +28,9 @@ import {
   Sliders
 } from 'lucide-react';
 import { RATING_CONFIG, EVALUATORS, EVALUATOR_CONFIG } from '../data/initialData';
+import ExecutiveAuditReportModal from './ExecutiveAuditReportModal';
+import ExecutiveAuditReportCard from './ExecutiveAuditReportCard';
+import { parseAuditAnalysis } from '../utils/auditAnalysisParser';
 
 // Interactive SVG Donut / Pie Chart Component
 function SvgDonutChart({ data, size = 260, strokeWidth = 36, centerTitle = "Total", centerSubtitle = "" }) {
@@ -163,10 +166,36 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
   const [hoveredBarIndex, setHoveredBarIndex] = useState(null);
   const [showRubrics, setShowRubrics] = useState(false);
 
+  // Executive Audit Analysis Modal State
+  const [activeAuditSession, setActiveAuditSession] = useState(null);
+  const [activeAuditCandidate, setActiveAuditCandidate] = useState(null);
+  const [selectedAuditSessionIndex, setSelectedAuditSessionIndex] = useState(0);
+
   // Selected candidate object
   const currentStudent = useMemo(() => {
     return students.find(s => s.id === selectedStudentId) || students[0] || null;
   }, [students, selectedStudentId]);
+
+  // Handle saving audit analysis text
+  const handleSaveAuditAnalysis = (sessionId, newAnalysisText) => {
+    const candidateToUpdate = activeAuditCandidate || currentStudent;
+    if (!candidateToUpdate || !onSaveStudent) return;
+
+    const existingSessions = candidateToUpdate.mockSessions || [];
+    const updatedSessions = existingSessions.map(s => 
+      s.id === sessionId ? { ...s, auditAnalysis: newAnalysisText } : s
+    );
+
+    const updatedStudent = {
+      ...candidateToUpdate,
+      mockSessions: updatedSessions
+    };
+
+    onSaveStudent(updatedStudent);
+    if (activeAuditSession && activeAuditSession.id === sessionId) {
+      setActiveAuditSession({ ...activeAuditSession, auditAnalysis: newAnalysisText });
+    }
+  };
 
   // Aggregate Batch Level Stats
   const batchStats = useMemo(() => {
@@ -1200,6 +1229,111 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
 
               </div>
 
+              {/* ========================================================================= */}
+              {/* EXECUTIVE CANDIDATE PERFORMANCE METRICS & AUDIT BREAKDOWN */}
+              {/* ========================================================================= */}
+              {(() => {
+                const auditSessions = (currentStudent.mockSessions || []).filter(s => s.auditAnalysis && s.auditAnalysis.trim().length > 0);
+                const hasAuditReport = auditSessions.length > 0;
+                const safeSessionIndex = selectedAuditSessionIndex < auditSessions.length ? selectedAuditSessionIndex : 0;
+                const activeDisplaySession = auditSessions[safeSessionIndex] || currentStudent.mockSessions?.[0] || null;
+
+                return (
+                  <div>
+                    {hasAuditReport ? (
+                      <div>
+                        {/* Multiple Sessions Selector Tabs if candidate has more than 1 audit report */}
+                        {auditSessions.length > 1 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                              Audit Reports:
+                            </span>
+                            {auditSessions.map((sess, sIdx) => (
+                              <button
+                                key={sess.id || sIdx}
+                                type="button"
+                                onClick={() => setSelectedAuditSessionIndex(sIdx)}
+                                style={{
+                                  background: safeSessionIndex === sIdx ? 'var(--skarion-navy)' : 'var(--bg-surface)',
+                                  color: safeSessionIndex === sIdx ? '#ffffff' : 'var(--text-main)',
+                                  border: '1px solid var(--border-color)',
+                                  padding: '4px 12px',
+                                  borderRadius: '10px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: '800',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                #{sIdx + 1} {sess.category || 'Mock'} ({sess.date}) - {sess.score}/10
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        <ExecutiveAuditReportCard
+                          rawText={activeDisplaySession.auditAnalysis}
+                          candidate={currentStudent}
+                          session={activeDisplaySession}
+                          onOpenModal={() => {
+                            setActiveAuditSession(activeDisplaySession);
+                            setActiveAuditCandidate(currentStudent);
+                          }}
+                          showToast={showToast}
+                        />
+                      </div>
+                    ) : (
+                      /* Empty State: Prompt to paste or add performance analysis */
+                      <div className="card-panel" style={{ padding: '1.75rem 2rem', marginTop: '1.5rem', background: 'var(--bg-surface)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.3rem' }}>
+                              <span style={{ 
+                                background: 'linear-gradient(135deg, var(--skarion-orange) 0%, #e04343 100%)',
+                                color: '#ffffff',
+                                fontSize: '0.72rem',
+                                fontWeight: '900',
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                letterSpacing: '0.03em'
+                              }}>
+                                EXECUTIVE AUDIT
+                              </span>
+                              <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--skarion-navy)', margin: 0 }}>
+                                Candidate Performance Metrics & Evaluation Breakdown
+                              </h3>
+                            </div>
+                            <span style={{ fontSize: '0.86rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                              No multi-dimensional audit report filed yet for {currentStudent.name}. Paste verbatim analysis to parse automatically.
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={() => {
+                              const targetSess = currentStudent.mockSessions?.[0] || {
+                                id: `mock-${Date.now()}`,
+                                date: '2026-08-16',
+                                score: 7.0,
+                                evaluator: 'Mayukh',
+                                category: 'Technical',
+                                feedback: 'Interview evaluation performance',
+                                auditAnalysis: ''
+                              };
+                              setActiveAuditSession(targetSess);
+                              setActiveAuditCandidate(currentStudent);
+                            }}
+                            style={{ height: '40px', padding: '0 1.25rem', fontSize: '0.84rem' }}
+                          >
+                            <Edit3 size={15} /> + Add / Paste Performance Audit
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Score Progression History */}
               <div className="card-panel" style={{ padding: '2rem' }}>
                 <div style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
@@ -1410,6 +1544,21 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
           </div>
 
         </div>
+      )}
+
+      {/* Executive Performance Audit & Deep Analysis Modal */}
+      {activeAuditSession && (
+        <ExecutiveAuditReportModal
+          isOpen={Boolean(activeAuditSession)}
+          onClose={() => {
+            setActiveAuditSession(null);
+            setActiveAuditCandidate(null);
+          }}
+          session={activeAuditSession}
+          candidate={activeAuditCandidate || currentStudent}
+          onSaveAnalysis={handleSaveAuditAnalysis}
+          showToast={showToast}
+        />
       )}
 
     </div>

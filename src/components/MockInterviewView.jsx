@@ -32,11 +32,14 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Filter
+  Filter,
+  BarChart2
 } from 'lucide-react';
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
 import { parseAndOrganizeTranscript } from '../utils/transcriptParser';
+import ExecutiveAuditReportModal from './ExecutiveAuditReportModal';
+import ExecutiveAuditReportCard from './ExecutiveAuditReportCard';
 
 export default function MockInterviewView({ students, onSaveStudent, onSelectStudent, showToast }) {
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
@@ -49,6 +52,10 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [recentMocksSearch, setRecentMocksSearch] = useState('');
   const [isRecentMocksExpanded, setIsRecentMocksExpanded] = useState(false);
   const [activeTranscriptStudent, setActiveTranscriptStudent] = useState(null);
+
+  // Executive Audit Analysis Modal State
+  const [activeAuditSession, setActiveAuditSession] = useState(null);
+  const [activeAuditCandidate, setActiveAuditCandidate] = useState(null);
 
   // Transcript Reader / Editor Modal State
   const [activeTranscriptSession, setActiveTranscriptSession] = useState(null);
@@ -68,6 +75,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [mockStrengths, setMockStrengths] = useState('');
   const [mockImprovement, setMockImprovement] = useState('');
   const [mockTranscript, setMockTranscript] = useState('');
+  const [mockAuditAnalysis, setMockAuditAnalysis] = useState('');
 
   // Filter candidates matching search query
   const searchableCandidates = students.filter(s => 
@@ -148,7 +156,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       feedback: mockFeedback.trim(),
       strengths: mockStrengths.trim(),
       improvement: mockImprovement.trim(),
-      transcript: cleanedTranscript
+      transcript: cleanedTranscript,
+      auditAnalysis: mockAuditAnalysis.trim()
     };
 
     const existingSessions = studentToUpdate.mockSessions || [];
@@ -181,7 +190,29 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     setMockStrengths('');
     setMockImprovement('');
     setMockTranscript('');
+    setMockAuditAnalysis('');
     setIsLogModalOpen(false);
+  };
+
+  // Handle saving updated audit analysis text
+  const handleSaveAuditAnalysis = (sessionId, newAnalysisText) => {
+    const candidateToUpdate = activeAuditCandidate || currentStudent;
+    if (!candidateToUpdate) return;
+
+    const existingSessions = candidateToUpdate.mockSessions || [];
+    const updatedSessions = existingSessions.map(s => 
+      s.id === sessionId ? { ...s, auditAnalysis: newAnalysisText } : s
+    );
+
+    const updatedStudent = {
+      ...candidateToUpdate,
+      mockSessions: updatedSessions
+    };
+
+    onSaveStudent(updatedStudent);
+    if (activeAuditSession && activeAuditSession.id === sessionId) {
+      setActiveAuditSession({ ...activeAuditSession, auditAnalysis: newAnalysisText });
+    }
   };
 
   // Handle deleting a mock session record
@@ -806,8 +837,40 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       borderTop: '1px solid var(--border-color)', 
                       alignItems: 'center',
                       width: '100%',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      flexWrap: 'wrap'
                     }}>
+                      {/* Executive Audit Report Button */}
+                      <button
+                        className="btn-secondary"
+                        onClick={() => {
+                          setActiveAuditSession(mock);
+                          setActiveAuditCandidate(mock.studentData || currentStudent);
+                        }}
+                        style={{
+                          height: '38px',
+                          fontSize: '0.78rem',
+                          fontWeight: '800',
+                          borderRadius: '10px',
+                          padding: '0 0.65rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.3rem',
+                          background: mock.auditAnalysis ? 'rgba(124, 58, 237, 0.1)' : 'var(--bg-surface-subtle)',
+                          color: mock.auditAnalysis ? '#7c3aed' : 'var(--text-main)',
+                          borderColor: mock.auditAnalysis ? 'rgba(124, 58, 237, 0.35)' : 'var(--border-color)',
+                          whiteSpace: 'nowrap',
+                          flex: '1 1 auto',
+                          minWidth: '100px',
+                          cursor: 'pointer'
+                        }}
+                        title="View or edit structured candidate performance audit analysis"
+                      >
+                        <BarChart2 size={13} color={mock.auditAnalysis ? '#7c3aed' : 'var(--text-dim)'} />
+                        <span>{mock.auditAnalysis ? 'Audit Report' : '+ Analysis'}</span>
+                      </button>
+
                       {hasTranscript && (
                         <button
                           className="btn-primary"
@@ -862,13 +925,13 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           borderColor: isCurrentSelected ? 'var(--skarion-navy)' : 'var(--border-color)',
                           whiteSpace: 'nowrap',
                           flexShrink: 0,
-                          flex: hasTranscript ? '0 0 auto' : '1',
+                          flex: '0 0 auto',
                           cursor: 'pointer'
                         }}
                         title={`Select ${mock.studentName} and view audit history`}
                       >
                         <span>Details</span>
-                        <ChevronRight size={14} style={{ flexShrink: 0 }} />
+                        <ChevronRight size={13} />
                       </button>
                     </div>
 
@@ -1335,14 +1398,46 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       Improvement: {session.improvement}
                     </div>
                   )}
-                                  {/* Prominent Mock Transcript Storage & 1-Click Reader Button */}
-                  <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
+
+                  {/* Prominent Mock Transcript & Performance Audit Buttons */}
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                    {/* Executive Audit Analysis Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveAuditSession(session);
+                        setActiveAuditCandidate(currentStudent);
+                      }}
+                      style={{
+                        height: '38px',
+                        borderRadius: '10px',
+                        fontSize: '0.82rem',
+                        fontWeight: '800',
+                        fontFamily: 'inherit',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem',
+                        background: session.auditAnalysis ? 'linear-gradient(135deg, #132247 0%, #1e293b 100%)' : 'var(--bg-surface-subtle)',
+                        color: session.auditAnalysis ? '#38bdf8' : '#7c3aed',
+                        border: session.auditAnalysis ? '1px solid rgba(56, 189, 248, 0.4)' : '1px dashed #7c3aed',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        boxShadow: session.auditAnalysis ? '0 2px 8px rgba(19, 34, 71, 0.25)' : 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                      title="View or edit multi-dimensional performance audit report"
+                    >
+                      <BarChart2 size={15} color={session.auditAnalysis ? '#38bdf8' : '#7c3aed'} />
+                      <span>{session.auditAnalysis ? 'Performance Audit' : '+ Add Audit'}</span>
+                    </button>
+
+                    {/* Transcript Button */}
                     {hasTranscript ? (
                       <button 
                         className="btn-primary"
                         onClick={() => openTranscriptModal(session, false)}
                         style={{ 
-                          width: '100%', 
                           background: 'var(--skarion-orange)', 
                           color: '#ffffff',
                           display: 'inline-flex',
@@ -1351,7 +1446,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           gap: '0.45rem',
                           height: '38px',
                           borderRadius: '10px',
-                          fontSize: '0.84rem',
+                          fontSize: '0.82rem',
                           fontWeight: '700',
                           fontFamily: 'inherit',
                           letterSpacing: '-0.01em',
@@ -1363,14 +1458,13 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         }}
                       >
                         <BookOpen size={15} color="#ffffff" style={{ flexShrink: 0 }} />
-                        <span>View Full Transcript ({wordCount} words)</span>
+                        <span>Transcript ({wordCount}w)</span>
                       </button>
                     ) : (
                       <button 
                         className="btn-secondary"
                         onClick={() => openTranscriptModal(session, true)}
                         style={{ 
-                          width: '100%', 
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1389,10 +1483,26 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         }}
                       >
                         <Plus size={15} style={{ flexShrink: 0 }} />
-                        <span>Add / Paste Mock Transcript</span>
+                        <span>+ Transcript</span>
                       </button>
                     )}
                   </div>
+
+                  {/* Embedded Executive Performance Audit Card if available */}
+                  {session.auditAnalysis && (
+                    <div style={{ marginTop: '0.85rem' }}>
+                      <ExecutiveAuditReportCard
+                        rawText={session.auditAnalysis}
+                        candidate={currentStudent}
+                        session={session}
+                        onOpenModal={() => {
+                          setActiveAuditSession(session);
+                          setActiveAuditCandidate(currentStudent);
+                        }}
+                        showToast={showToast}
+                      />
+                    </div>
+                  )}
 
                 </div>
               </div>
@@ -1404,7 +1514,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       {/* Log New Mock Interview Modal */}
       {isLogModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsLogModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', padding: '1.75rem' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1474,7 +1584,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     value={mockCategory} 
                     onChange={(e) => setMockCategory(e.target.value)} 
                     className="input-control" 
-                    style={{ fontSize: '0.86rem' }}
+                    style={{ fontSize: '0.86rem' }} 
                   >
                     {MOCK_ROUND_TYPES.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -1514,7 +1624,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
               {/* Detailed Feedback */}
               <div style={{ marginBottom: '0.85rem' }}>
                 <label style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
-                  Detailed Performance Observation & Feedback *
+                  Detailed Performance Observation & Summary Feedback *
                 </label>
                 <textarea 
                   value={mockFeedback} 
@@ -1556,6 +1666,24 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                 </div>
               </div>
 
+              {/* Candidate Performance Metrics & Audit Report Box */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: '800', color: 'var(--skarion-orange)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <BarChart2 size={15} /> Candidate Performance Metrics & Audit Breakdown (Optional)
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Auto-parsed into Visual Metrics & Action Matrix</span>
+                </label>
+                <textarea 
+                  value={mockAuditAnalysis} 
+                  onChange={(e) => setMockAuditAnalysis(e.target.value)} 
+                  rows={6} 
+                  className="input-control" 
+                  placeholder="Paste evaluation breakdown text here (PERFORMANCE METRICS, STRENGTHS, CRITICAL WEAKNESSES with Quotes/Corrections, ACTION ITEMS)..." 
+                  style={{ fontSize: '0.84rem', fontFamily: 'monospace', lineHeight: '1.5' }} 
+                />
+              </div>
+
               {/* Optional Large Text Box for Copy-Pasting Full Transcript */}
               <div style={{ marginBottom: '1.25rem' }}>
                 <label style={{ fontSize: '0.76rem', fontWeight: '800', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
@@ -1566,7 +1694,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                 <textarea 
                   value={mockTranscript} 
                   onChange={(e) => setMockTranscript(e.target.value)} 
-                  rows={5} 
+                  rows={4} 
                   className="input-control" 
                   placeholder="Paste verbatim dialogue from Teams, Zoom, Google Meet or raw text here. It will be automatically formatted!" 
                   style={{ fontSize: '0.84rem', fontFamily: 'inherit', lineHeight: '1.5' }} 
@@ -1887,6 +2015,21 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
           </div>
         </div>
+      )}
+
+      {/* Executive Performance Audit & Deep Analysis Modal */}
+      {activeAuditSession && (
+        <ExecutiveAuditReportModal
+          isOpen={Boolean(activeAuditSession)}
+          onClose={() => {
+            setActiveAuditSession(null);
+            setActiveAuditCandidate(null);
+          }}
+          session={activeAuditSession}
+          candidate={activeAuditCandidate || currentStudent}
+          onSaveAnalysis={handleSaveAuditAnalysis}
+          showToast={showToast}
+        />
       )}
 
     </div>

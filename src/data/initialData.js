@@ -405,25 +405,67 @@ export const INITIAL_STUDENTS = [
   },
   {
     id: 'skr-206',
-    name: 'Tahsin Mahi',
+    name: 'Tahsin (Hassan Mustafa Mahi)',
+    domain: 'Solar PV Design Engineer',
+    targetRole: 'Solar PV Design Engineer',
     joiningDate: '2026-07-05',
-    progress: 22,
+    progress: 45,
     mockInterviews: 1,
     rating: 'needs_attention',
     placementCompany: '',
     placementRole: '',
     placementDate: '',
     mockSessions: [
-      { id: 'mock-206-1', date: '2026-07-18', score: 5.5, evaluator: 'Ferdous', category: 'Technological', feedback: 'Needs assistance with project completion and array manipulation.', strengths: 'Loops & basics', improvement: 'Project submission' }
+      { 
+        id: 'mock-206-1', 
+        date: '2026-08-15', 
+        score: 5.5, 
+        evaluator: 'Mayukh', 
+        category: 'Technological', 
+        feedback: 'High fluency and confidence, but critical engineering misconceptions require direct intervention on PV module temperature coefficients and Performance Ratio (PR).', 
+        strengths: 'Multi-Software Toolchain, Practical Project Volume, Material Estimation Accuracy, Delivery & Professional Poise', 
+        improvement: 'Module I-V Physics, PVsyst Loss Tree Metrics, Drawing Package QA Checklist',
+        auditAnalysis: `CANDIDATE PERFORMANCE METRICS & FEEDBACK
+
+Candidate: Tahsin (Hassan Mustafa Mahi)
+Target Role: Solar PV Design Engineer
+Overall Assessment: 5.5 / 10 (High fluency and confidence, but critical engineering misconceptions require direct intervention)
+
+PERFORMANCE METRICS:
+* Communication & Delivery: 9 / 10 (Articulate, steady pacing, zero hesitation, highly professional tone)
+* Technical & Domain Knowledge: 3 / 10 (Demonstrated fundamental physics error on temperature coefficients and misdefined PR)
+* Tools & Practical Workflow: 8 / 10 (Demonstrated practical familiarity with AutoCAD, PVsyst, Helioscope, and HOMER)
+* Problem-Solving & Methodology: 7 / 10 (Clear logic on replacing rules-of-thumb with manual calculations to cut BOQ variance)
+* Standards & Quality Processes: 4 / 10 (Named NEC/IEEE standards, but confused design package QA with site inspection)
+
+STRENGTHS:
+* Multi-Software Toolchain: Actively designs using AutoCAD (SLDs, cable layouts), PVsyst/Helioscope (energy modeling), and HOMER (microgrid estimation).
+* Practical Project Volume: Handled over 50 projects covering residential, 1–2 MW commercial, and utility-scale systems with high first-approval rates.
+* Material Estimation Accuracy: Articulated how manual cable/panel takeoffs reduced material estimation errors by 15–20% compared to loose rules of thumb.
+* Delivery & Professional Poise: Communicated with consistent clarity, strong executive presence, and zero speech hesitation.
+
+CRITICAL WEAKNESSES:
+* Temperature Coefficient Reversal (Fatal Physics Error): Claimed voltage increases with rising temperature (Quote: "when the temperature increases, the voltage increases... power output increases in the summer"). Correction: PV modules have a negative temperature coefficient; cold temperatures spike Voc to annual maximums (risking inverter overvoltage), while high temperatures drop operating Vmp.
+* Performance Ratio (PR) Metric Confusion: Defined PR as a confidence probability or generation guarantee (Quote: "percentage like how much power it can attain, like the probability... we kept PR at 95% where we are 95% sure"). Correction: PR is the ratio of actual yield to theoretical reference yield (PR = Yf / Yr), measuring net plant efficiency after system losses.
+* Drawing Package QA/QC Scope Error: When asked how to review a drawing package before issuance, listed physical field commissioning tasks (Quote: "ground pit is dug properly, surge arresters are placed properly, smart manager is placed in an open position"). Correction: Drawing QA/QC is a desk review verifying SLD-to-layout consistency, NEC conductor derating, voltage drop calculations (<2%), and AHJ setback compliance.
+* Vague Conductor Sizing Criteria: Described cable routing paths but missed exact electrical sizing formulas (Quote: "for each cable, I have to maintain... if the cable sizing is according to the current rating"). Correction: Must cite continuous current multipliers (125% x 125% = 156% of Isc per NEC 690.8), ambient temperature correction, and conduit fill derating.
+* Weak Career Transition Narrative: Justified switching from Computer Engineering to Solar purely as desk convenience (Quote: "I sit at a desk, I work on my computer... describe myself as... a nerd"). Correction: Must connect Computer Engineering to computational modeling, simulation algorithms (PVsyst/HOMER), and automated PV system design.
+
+ACTION ITEMS FOR MENTOR:
+* Retrain on Module I-V Physics: Practice calculating maximum string Voc under lowest record site temperatures to prevent inverter DC overvoltage.
+* Drill PVsyst Loss Tree Metrics: Enforce the standard mathematical definition of Performance Ratio (PR) to clearly separate it from P50/P90 exceedance probabilities.
+* Provide a Drawing Package QA Checklist: Train on desk-review items (SLD vs. layout cross-check, voltage drop schedules, conductor ampacity deratings, equipment cut-sheets).
+* Restructure Transition Narrative: Rehearse a 60-second pitch framing the Computer Engineering background around simulation modeling, SCADA data, and automated design.`
+      }
     ],
     stickyNotes: [
       {
         id: 'note-206-1',
-        date: '2026-07-21',
-        content: 'Progress halted after reaching projects.',
-        category: 'Course Progression',
+        date: '2026-08-15',
+        content: 'Solar PV Design Engineer mock completed. Scored 5.5/10. High confidence but critical physics misconceptions flagged for mentor retraining.',
+        category: 'Mock Feedback',
         author: 'Mayukh',
-        accent: 'amber',
+        accent: 'orange',
         pinned: true
       }
     ]
