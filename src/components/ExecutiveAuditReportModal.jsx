@@ -15,7 +15,8 @@ import {
   Calendar,
   User,
   Plus,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { parseAuditAnalysis, serializeAuditAnalysis } from '../utils/auditAnalysisParser';
 
@@ -38,6 +39,7 @@ export default function ExecutiveAuditReportModal({
   if (!isOpen || !session) return null;
 
   const [isEditingRaw, setIsEditingRaw] = useState(false);
+  const [isCustomizingScores, setIsCustomizingScores] = useState(false);
   const [rawText, setRawText] = useState(session.auditAnalysis || '');
   const [isCopied, setIsCopied] = useState(false);
 
@@ -125,6 +127,7 @@ export default function ExecutiveAuditReportModal({
     }
 
     setIsEditingRaw(false);
+    setIsCustomizingScores(false);
     onClose();
   };
 
@@ -146,7 +149,7 @@ export default function ExecutiveAuditReportModal({
         className="modal-content" 
         onClick={(e) => e.stopPropagation()} 
         style={{ 
-          maxWidth: '840px', 
+          maxWidth: '860px', 
           maxHeight: '90vh', 
           overflowY: 'auto', 
           padding: '1.75rem',
@@ -295,144 +298,235 @@ export default function ExecutiveAuditReportModal({
           </div>
         ) : (
           /* ========================================================================= */
-          /* VIEW 2: CLEAN STRUCTURED REPORT & SCORE CONTROLS */
+          /* VIEW 2: CLEAN STRUCTURED REPORT & ACCORDION SCORE CONTROLS */
           /* ========================================================================= */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
-            {/* Top Score & Summary Banner */}
+            {/* Top Score & Full Executive Summary Banner */}
             <div style={{ 
               background: 'var(--bg-surface-subtle)', 
               border: '1px solid var(--border-color)', 
               borderRadius: '14px', 
-              padding: '1.15rem 1.35rem',
+              padding: '1.25rem 1.4rem',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center',
+              alignItems: 'stretch',
               flexWrap: 'wrap',
-              gap: '1rem'
+              gap: '1.25rem'
             }}>
-              <div style={{ flex: 1, minWidth: '260px' }}>
-                <label style={{ fontSize: '0.74rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2rem' }}>
+              {/* Full Executive Assessment Summary Box */}
+              <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column' }}>
+                <label style={{ fontSize: '0.74rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '0.35rem', letterSpacing: '0.03em' }}>
                   EXECUTIVE ASSESSMENT SUMMARY
                 </label>
-                <input
-                  type="text"
-                  value={overallSummary}
-                  onChange={(e) => setOverallSummary(e.target.value)}
-                  placeholder="Record summary observation feedback..."
-                  className="input-control"
-                  style={{ fontSize: '0.86rem', fontWeight: '500' }}
-                />
+                {isCustomizingScores ? (
+                  <textarea
+                    value={overallSummary}
+                    onChange={(e) => setOverallSummary(e.target.value)}
+                    placeholder="Record executive assessment summary feedback..."
+                    rows={3}
+                    className="input-control"
+                    style={{ fontSize: '0.88rem', fontWeight: '500', lineHeight: '1.5', flex: 1, resize: 'vertical' }}
+                  />
+                ) : (
+                  <div style={{ 
+                    background: 'var(--bg-surface)', 
+                    padding: '0.85rem 1.15rem', 
+                    borderRadius: '10px', 
+                    border: '1px solid var(--border-color)',
+                    fontSize: '0.88rem',
+                    color: 'var(--text-main)',
+                    lineHeight: '1.55',
+                    fontWeight: '500',
+                    flex: 1,
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    {overallSummary || session?.feedback || 'No executive summary provided.'}
+                  </div>
+                )}
               </div>
 
-              {/* Overall Score Adjuster */}
+              {/* Overall Rating Score Display + Optional Calibration Toggle */}
               <div style={{ 
                 background: 'var(--bg-surface)', 
                 border: '2px solid var(--border-color)', 
-                borderRadius: '12px', 
-                padding: '0.65rem 1.15rem',
+                borderRadius: '14px', 
+                padding: '0.85rem 1.4rem',
                 textAlign: 'center',
-                minWidth: '150px'
+                minWidth: '160px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'var(--shadow-sm)'
               }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   OVERALL RATING
                 </span>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', margin: '0.2rem 0' }}>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    step="0.5"
-                    value={overallScore}
-                    onChange={(e) => setOverallScore(parseFloat(e.target.value) || 0)}
-                    className="input-control"
-                    style={{ 
-                      width: '64px', 
-                      height: '36px', 
-                      fontSize: '1.25rem', 
-                      fontWeight: '900', 
-                      textAlign: 'center', 
-                      color: scoreNum >= 8 ? '#059669' : scoreNum >= 6 ? '#0284c7' : '#dc2626',
-                      padding: '2px'
-                    }}
-                  />
-                  <span style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-muted)' }}>/ 10</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  step="0.5"
-                  value={overallScore}
-                  onChange={(e) => setOverallScore(parseFloat(e.target.value))}
-                  style={{ width: '100%', cursor: 'pointer', accentColor: scoreNum >= 8 ? '#059669' : scoreNum >= 6 ? '#0284c7' : '#dc2626' }}
-                />
+
+                {isCustomizingScores ? (
+                  <div style={{ margin: '0.3rem 0', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginBottom: '0.3rem' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.5"
+                        value={overallScore}
+                        onChange={(e) => setOverallScore(parseFloat(e.target.value) || 0)}
+                        className="input-control"
+                        style={{ 
+                          width: '62px', 
+                          height: '34px', 
+                          fontSize: '1.2rem', 
+                          fontWeight: '900', 
+                          textAlign: 'center', 
+                          color: scoreNum >= 8 ? '#059669' : scoreNum >= 6 ? '#0284c7' : '#dc2626',
+                          padding: '2px'
+                        }}
+                      />
+                      <span style={{ fontSize: '0.95rem', fontWeight: '900', color: 'var(--text-muted)' }}>/ 10</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="10"
+                      step="0.5"
+                      value={overallScore}
+                      onChange={(e) => setOverallScore(parseFloat(e.target.value))}
+                      style={{ width: '100%', cursor: 'pointer', accentColor: scoreNum >= 8 ? '#059669' : scoreNum >= 6 ? '#0284c7' : '#dc2626' }}
+                    />
+                  </div>
+                ) : (
+                  <div style={{ 
+                    fontSize: '1.95rem', 
+                    fontWeight: '900', 
+                    color: scoreNum >= 8 ? '#059669' : scoreNum >= 6 ? '#0284c7' : '#dc2626',
+                    lineHeight: '1.1',
+                    margin: '0.25rem 0'
+                  }}>
+                    {scoreNum.toFixed(1)} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '700' }}>/ 10</span>
+                  </div>
+                )}
+
+                {/* Score Customization Choice Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsCustomizingScores(!isCustomizingScores)}
+                  style={{
+                    background: isCustomizingScores ? 'var(--skarion-orange)' : 'var(--bg-surface-subtle)',
+                    color: isCustomizingScores ? '#ffffff' : 'var(--text-main)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '3px 9px',
+                    fontSize: '0.72rem',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginTop: '0.25rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Sliders size={11} /> {isCustomizingScores ? 'Done Editing' : 'Customize Scores'}
+                </button>
               </div>
             </div>
 
             {/* 1. Performance Metrics Breakdown */}
             <div style={{ background: 'var(--bg-surface-subtle)', padding: '1.15rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <h4 style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--skarion-navy)', margin: 0 }}>
-                  Performance Evaluation Metrics (Editable)
+                  Performance Evaluation Metrics {isCustomizingScores ? '(Manual Calibration Mode)' : '(Calculated from Analysis)'}
                 </h4>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const avg = parseFloat((metrics.reduce((acc, m) => acc + (Number(m.score) || 0), 0) / metrics.length).toFixed(1));
-                    setOverallScore(avg);
-                    if (showToast) showToast(`Set overall rating to average: ${avg}/10`);
-                  }}
-                  className="btn-secondary"
-                  style={{ height: '28px', padding: '0 0.65rem', fontSize: '0.72rem', fontWeight: '800' }}
-                >
-                  ⚡ Auto-Average Score
-                </button>
+
+                {isCustomizingScores ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const avg = parseFloat((metrics.reduce((acc, m) => acc + (Number(m.score) || 0), 0) / metrics.length).toFixed(1));
+                      setOverallScore(avg);
+                      if (showToast) showToast(`Calculated overall rating from average: ${avg}/10`);
+                    }}
+                    className="btn-secondary"
+                    style={{ height: '28px', padding: '0 0.65rem', fontSize: '0.72rem', fontWeight: '800' }}
+                  >
+                    ⚡ Auto-Average Score ({parseFloat((metrics.reduce((acc, m) => acc + (Number(m.score) || 0), 0) / metrics.length).toFixed(1))}/10)
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomizingScores(true)}
+                    className="btn-secondary"
+                    style={{ height: '28px', padding: '0 0.65rem', fontSize: '0.72rem', fontWeight: '800' }}
+                  >
+                    <Sliders size={12} /> Customize Scores
+                  </button>
+                )}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {/* Metrics Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '0.75rem' }}>
                 {metrics.map((metric, idx) => {
                   const col = getMetricColor(metric.score, metric.maxScore);
+                  const pct = Math.min(100, Math.round((metric.score / metric.maxScore) * 100));
 
                   return (
-                    <div key={idx} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.75rem 1rem' }}>
+                    <div key={idx} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.85rem 1rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                        <strong style={{ fontSize: '0.84rem', color: 'var(--skarion-navy)' }}>{metric.name}</strong>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.5"
-                            value={metric.score}
-                            onChange={(e) => {
-                              const updated = [...metrics];
-                              updated[idx].score = parseFloat(e.target.value) || 0;
-                              setMetrics(updated);
-                            }}
-                            className="input-control"
-                            style={{ width: '56px', height: '28px', fontSize: '0.84rem', fontWeight: '900', textAlign: 'center', color: col.text, padding: '2px' }}
-                          />
-                          <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)' }}>/ 10</span>
-                        </div>
+                        <strong style={{ fontSize: '0.86rem', color: 'var(--skarion-navy)' }}>{metric.name}</strong>
+                        
+                        {isCustomizingScores ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <input
+                              type="number"
+                              min="0"
+                              max="10"
+                              step="0.5"
+                              value={metric.score}
+                              onChange={(e) => {
+                                const updated = [...metrics];
+                                updated[idx].score = parseFloat(e.target.value) || 0;
+                                setMetrics(updated);
+                              }}
+                              className="input-control"
+                              style={{ width: '56px', height: '28px', fontSize: '0.84rem', fontWeight: '900', textAlign: 'center', color: col.text, padding: '2px' }}
+                            />
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)' }}>/ 10</span>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', fontWeight: '900', color: col.text, background: col.bg, padding: '2px 7px', borderRadius: '5px' }}>
+                            {metric.score} / {metric.maxScore}
+                          </span>
+                        )}
                       </div>
 
-                      <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        step="0.5"
-                        value={metric.score}
-                        onChange={(e) => {
-                          const updated = [...metrics];
-                          updated[idx].score = parseFloat(e.target.value);
-                          setMetrics(updated);
-                        }}
-                        style={{ width: '100%', cursor: 'pointer', accentColor: col.bar, marginBottom: '0.35rem' }}
-                      />
+                      {isCustomizingScores ? (
+                        <input
+                          type="range"
+                          min="0"
+                          max="10"
+                          step="0.5"
+                          value={metric.score}
+                          onChange={(e) => {
+                            const updated = [...metrics];
+                            updated[idx].score = parseFloat(e.target.value);
+                            setMetrics(updated);
+                          }}
+                          style={{ width: '100%', cursor: 'pointer', accentColor: col.bar, marginBottom: '0.4rem' }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden', marginBottom: '0.4rem' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', background: col.bar, borderRadius: '99px' }} />
+                        </div>
+                      )}
 
                       {metric.note && (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', lineHeight: '1.35' }}>
+                        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', lineHeight: '1.4' }}>
                           {metric.note}
                         </span>
                       )}
@@ -597,7 +691,7 @@ export default function ExecutiveAuditReportModal({
         {/* Footer Actions */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '1.25rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
           <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
+            Close
           </button>
           <button type="button" className="btn-primary" onClick={handleSaveAll} style={{ height: '38px', padding: '0 1.25rem' }}>
             <Save size={15} /> Save & Synchronize Scores
