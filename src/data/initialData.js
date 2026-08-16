@@ -106,6 +106,7 @@ export const EVALUATOR_CONFIG = {
 };
 
 export const CATEGORIES = [
+  'General',
   'Mock Feedback',
   'Technical',
   'Soft Skills',
@@ -115,8 +116,7 @@ export const CATEGORIES = [
   'Course Progression',
   'Behavior',
   'Background',
-  'Situation',
-  'General'
+  'Situation'
 ];
 
 export const CATEGORY_COLORS = {

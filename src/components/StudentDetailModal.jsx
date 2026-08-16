@@ -24,7 +24,7 @@ export default function StudentDetailModal({
   if (!student) return null;
 
   const [newNoteContent, setNewNoteContent] = useState('');
-  const [newNoteCategory, setNewNoteCategory] = useState('Mock Feedback');
+  const [newNoteCategory, setNewNoteCategory] = useState('General');
   const [newNoteAccent, setNewNoteAccent] = useState('navy');
   const [newNoteDate, setNewNoteDate] = useState(getTodayLocalDate());
   const [newNoteAuthor, setNewNoteAuthor] = useState(EVALUATORS[0]); // Default 'Mayukh'

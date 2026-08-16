@@ -24,7 +24,7 @@ export default function StickyNotesBoard({ students, onAddStickyNote, onDeleteSt
   const [showAddForm, setShowAddForm] = useState(false);
   const [targetStudentId, setTargetStudentId] = useState(students[0]?.id || '');
   const [noteContent, setNoteContent] = useState('');
-  const [noteCategory, setNoteCategory] = useState('Mock Feedback');
+  const [noteCategory, setNoteCategory] = useState('General');
   const [noteAccent, setNoteAccent] = useState('navy');
   const [noteDate, setNoteDate] = useState(getTodayLocalDate());
   const [noteAuthor, setNoteAuthor] = useState(EVALUATORS[0]); // Default 'Mayukh'
