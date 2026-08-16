@@ -176,15 +176,27 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
     return students.find(s => s.id === selectedStudentId) || students[0] || null;
   }, [students, selectedStudentId]);
 
-  // Handle saving audit analysis text
-  const handleSaveAuditAnalysis = (sessionId, newAnalysisText) => {
+  // Handle saving audit analysis text and synchronizing score
+  const handleSaveAuditAnalysis = (sessionId, newAnalysisText, updatedScore) => {
     const candidateToUpdate = activeAuditCandidate || currentStudent;
     if (!candidateToUpdate || !onSaveStudent) return;
 
+    const parsed = parseAuditAnalysis(newAnalysisText);
+    const finalScore = updatedScore !== undefined && updatedScore !== null && !isNaN(Number(updatedScore))
+      ? Number(updatedScore)
+      : (parsed?.overallScore !== null && parsed?.overallScore !== undefined ? Number(parsed.overallScore) : undefined);
+
     const existingSessions = candidateToUpdate.mockSessions || [];
-    const updatedSessions = existingSessions.map(s => 
-      s.id === sessionId ? { ...s, auditAnalysis: newAnalysisText } : s
-    );
+    const updatedSessions = existingSessions.map(s => {
+      if (s.id === sessionId) {
+        return {
+          ...s,
+          auditAnalysis: newAnalysisText,
+          score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : s.score
+        };
+      }
+      return s;
+    });
 
     const updatedStudent = {
       ...candidateToUpdate,
@@ -193,7 +205,11 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
 
     onSaveStudent(updatedStudent);
     if (activeAuditSession && activeAuditSession.id === sessionId) {
-      setActiveAuditSession({ ...activeAuditSession, auditAnalysis: newAnalysisText });
+      setActiveAuditSession({
+        ...activeAuditSession,
+        auditAnalysis: newAnalysisText,
+        score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : activeAuditSession.score
+      });
     }
   };
 

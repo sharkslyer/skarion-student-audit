@@ -38,6 +38,7 @@ import {
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
 import { parseAndOrganizeTranscript } from '../utils/transcriptParser';
+import { parseAuditAnalysis } from '../utils/auditAnalysisParser';
 import ExecutiveAuditReportModal from './ExecutiveAuditReportModal';
 import ExecutiveAuditReportCard from './ExecutiveAuditReportCard';
 
@@ -194,15 +195,27 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     setIsLogModalOpen(false);
   };
 
-  // Handle saving updated audit analysis text
-  const handleSaveAuditAnalysis = (sessionId, newAnalysisText) => {
+  // Handle saving updated audit analysis text and synchronizing score
+  const handleSaveAuditAnalysis = (sessionId, newAnalysisText, updatedScore) => {
     const candidateToUpdate = activeAuditCandidate || currentStudent;
     if (!candidateToUpdate) return;
 
+    const parsed = parseAuditAnalysis(newAnalysisText);
+    const finalScore = updatedScore !== undefined && updatedScore !== null && !isNaN(Number(updatedScore))
+      ? Number(updatedScore)
+      : (parsed?.overallScore !== null && parsed?.overallScore !== undefined ? Number(parsed.overallScore) : undefined);
+
     const existingSessions = candidateToUpdate.mockSessions || [];
-    const updatedSessions = existingSessions.map(s => 
-      s.id === sessionId ? { ...s, auditAnalysis: newAnalysisText } : s
-    );
+    const updatedSessions = existingSessions.map(s => {
+      if (s.id === sessionId) {
+        return {
+          ...s,
+          auditAnalysis: newAnalysisText,
+          score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : s.score
+        };
+      }
+      return s;
+    });
 
     const updatedStudent = {
       ...candidateToUpdate,
@@ -211,7 +224,11 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
     onSaveStudent(updatedStudent);
     if (activeAuditSession && activeAuditSession.id === sessionId) {
-      setActiveAuditSession({ ...activeAuditSession, auditAnalysis: newAnalysisText });
+      setActiveAuditSession({
+        ...activeAuditSession,
+        auditAnalysis: newAnalysisText,
+        score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : activeAuditSession.score
+      });
     }
   };
 

@@ -189,3 +189,64 @@ export function parseAuditAnalysis(rawText) {
 
   return result;
 }
+
+/**
+ * Serializes a parsed audit analysis object back into standard structured report text
+ */
+export function serializeAuditAnalysis(parsed) {
+  if (!parsed) return '';
+
+  let text = `CANDIDATE PERFORMANCE METRICS & FEEDBACK\n\n`;
+
+  if (parsed.candidateName) {
+    text += `Candidate: ${parsed.candidateName}\n`;
+  }
+  if (parsed.targetRole) {
+    text += `Target Role: ${parsed.targetRole}\n`;
+  }
+  if (parsed.overallScore !== null && parsed.overallScore !== undefined) {
+    const summary = parsed.overallSummary ? ` (${parsed.overallSummary})` : '';
+    text += `Overall Assessment: ${parsed.overallScore} / 10${summary}\n`;
+  }
+
+  text += `\nPERFORMANCE METRICS:\n`;
+  if (parsed.metrics && parsed.metrics.length > 0) {
+    parsed.metrics.forEach(m => {
+      const note = m.note ? ` (${m.note})` : '';
+      text += `* ${m.name}: ${m.score} / ${m.maxScore || 10}${note}\n`;
+    });
+  } else {
+    text += `* Communication & Delivery: 8 / 10 (Clear articulation and pacing)\n`;
+    text += `* Technical & Domain Knowledge: 7 / 10 (Good foundational grasp)\n`;
+    text += `* Tools & Practical Workflow: 8 / 10 (Hands-on software workflow)\n`;
+    text += `* Problem-Solving & Methodology: 7 / 10 (Structured problem decomposition)\n`;
+    text += `* Standards & Quality Processes: 7 / 10 (Adheres to core guidelines)\n`;
+  }
+
+  if (parsed.strengths && parsed.strengths.length > 0) {
+    text += `\nSTRENGTHS:\n`;
+    parsed.strengths.forEach(s => {
+      text += `* ${s.title}: ${s.description}\n`;
+    });
+  }
+
+  if (parsed.weaknesses && parsed.weaknesses.length > 0) {
+    text += `\nCRITICAL WEAKNESSES:\n`;
+    parsed.weaknesses.forEach(w => {
+      let line = `* ${w.title}: ${w.mistake || ''}`;
+      if (w.quote) line += ` (Quote: "${w.quote}")`;
+      if (w.correction) line += ` Correction: ${w.correction}`;
+      text += `${line.trim()}\n`;
+    });
+  }
+
+  if (parsed.actionItems && parsed.actionItems.length > 0) {
+    text += `\nACTION ITEMS FOR MENTOR:\n`;
+    parsed.actionItems.forEach(a => {
+      text += `* ${a.title}: ${a.action}\n`;
+    });
+  }
+
+  return text.trim();
+}
+

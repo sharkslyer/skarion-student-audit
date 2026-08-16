@@ -78,7 +78,7 @@ export default function ExecutiveAuditReportCard({
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={handleCopy}
@@ -95,7 +95,7 @@ export default function ExecutiveAuditReportCard({
               type="button"
               onClick={onOpenModal}
               className="btn-primary"
-              style={{ height: '36px', padding: '0 1rem', fontSize: '0.82rem' }}
+              style={{ height: '36px', padding: '0 1rem', fontSize: '0.82rem', fontWeight: '800' }}
             >
               <Edit3 size={14} /> Full View / Edit
             </button>
