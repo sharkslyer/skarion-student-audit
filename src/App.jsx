@@ -332,6 +332,8 @@ export default function App() {
             {/* Roster Candidate Data Table */}
             <StudentTable 
               students={filteredStudents}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
               onUpdateStudent={handleUpdateStudent}
               onDeleteStudent={handleDeleteStudent}
               onSelectStudent={(student) => setSelectedDetailStudent(student)}

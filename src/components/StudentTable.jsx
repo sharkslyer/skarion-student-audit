@@ -9,12 +9,16 @@ import {
   Eye, 
   Edit,
   MessageSquarePlus, 
-  ArrowUpDown
+  ArrowUpDown,
+  Search,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function StudentTable({ 
   students, 
+  searchQuery,
+  setSearchQuery,
   onUpdateStudent, 
   onDeleteStudent, 
   onSelectStudent, 
@@ -85,16 +89,44 @@ export default function StudentTable({
 
   return (
     <div className="card-panel" style={{ overflow: 'hidden' }}>
-      <div style={{ padding: '1.15rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-surface-subtle)' }}>
-        <div>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--skarion-navy)' }}>Candidate Audit Roster</h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+      <div style={{ padding: '1.15rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-surface-subtle)', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ flex: '1', minWidth: '260px' }}>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--skarion-navy)', margin: 0 }}>Candidate Audit Roster</h2>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
             Input-friendly dashboard to update mock interviews, course completion %, and evaluation marks.
           </p>
         </div>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', background: 'var(--bg-surface)', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-          {sortedStudents.length} candidates enrolled
-        </span>
+
+        {/* Search Candidate Bar & Total Count */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+          {setSearchQuery && (
+            <div style={{ position: 'relative', width: '280px' }}>
+              <Search size={16} color="var(--text-dim)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input 
+                type="text" 
+                placeholder="Search candidate or notes..."
+                value={searchQuery || ''}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-control"
+                style={{ paddingLeft: '2.3rem', paddingRight: searchQuery ? '2.3rem' : '0.85rem', height: '38px', fontSize: '0.86rem', width: '100%', background: 'var(--bg-surface)' }}
+              />
+              {searchQuery && (
+                <button 
+                  type="button" 
+                  onClick={() => setSearchQuery('')}
+                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '2px' }}
+                  title="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          )}
+
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '700', background: 'var(--bg-surface)', padding: '0.42rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', whiteSpace: 'nowrap' }}>
+            {sortedStudents.length} {sortedStudents.length === 1 ? 'candidate' : 'candidates'} enrolled
+          </span>
+        </div>
       </div>
 
       <div style={{ overflowX: 'auto' }}>

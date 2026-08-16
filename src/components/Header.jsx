@@ -131,19 +131,6 @@ export default function Header({
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div style={{ flex: '1', maxWidth: '240px', position: 'relative' }}>
-          <Search size={16} color="var(--text-dim)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
-          <input 
-            type="text" 
-            placeholder="Search candidate..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="input-control"
-            style={{ paddingLeft: '2.4rem', height: '42px', fontSize: '0.86rem' }}
-          />
-        </div>
-
         {/* View Switcher Tabs */}
         <div style={{ display: 'flex', background: 'var(--bg-surface-subtle)', padding: '4px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
           <button 
