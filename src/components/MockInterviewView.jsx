@@ -33,7 +33,8 @@ import {
   ChevronDown,
   ChevronUp,
   Filter,
-  BarChart2
+  BarChart2,
+  Paperclip
 } from 'lucide-react';
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
@@ -1570,7 +1571,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                     className="input-control" 
                     style={{ fontSize: '0.86rem', fontWeight: '700' }}
                   >
-                    {students.map(s => (
+                    {(students || []).filter(s => s && s.id && s.name).map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
