@@ -75,9 +75,38 @@ export default function App() {
         const cloudResult = await fetchFromCloudDb();
         if (cloudResult && Array.isArray(cloudResult.students) && cloudResult.students.length > 0) {
           const sanitized = sanitizeStudents(cloudResult.students);
-          const currentStr = JSON.stringify(students);
-          const cloudStr = JSON.stringify(sanitized);
-          if (currentStr !== cloudStr) {
+          
+          // Ultra-fast lightweight equality check without freezing the UI with large JSON stringifications
+          let isDifferent = students.length !== sanitized.length;
+          if (!isDifferent) {
+            for (let i = 0; i < students.length; i++) {
+              const a = students[i];
+              const b = sanitized[i];
+              if (!a || !b || a.id !== b.id || a.name !== b.name || a.rating !== b.rating || a.progress !== b.progress) {
+                isDifferent = true;
+                break;
+              }
+              if ((a.mockSessions?.length || 0) !== (b.mockSessions?.length || 0) || (a.stickyNotes?.length || 0) !== (b.stickyNotes?.length || 0)) {
+                isDifferent = true;
+                break;
+              }
+              const aMocks = a.mockSessions || [];
+              const bMocks = b.mockSessions || [];
+              for (let j = 0; j < aMocks.length; j++) {
+                if (aMocks[j]?.id !== bMocks[j]?.id || aMocks[j]?.score !== bMocks[j]?.score || aMocks[j]?.auditAnalysis !== bMocks[j]?.auditAnalysis || aMocks[j]?.transcript !== bMocks[j]?.transcript) {
+                  isDifferent = true;
+                  break;
+                }
+                if (aMocks[j]?.pdfAttachment?.name !== bMocks[j]?.pdfAttachment?.name || aMocks[j]?.pdfAttachment?.size !== bMocks[j]?.pdfAttachment?.size) {
+                  isDifferent = true;
+                  break;
+                }
+              }
+              if (isDifferent) break;
+            }
+          }
+
+          if (isDifferent) {
             setStudents(sanitized);
             saveLocally(sanitized);
             setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));

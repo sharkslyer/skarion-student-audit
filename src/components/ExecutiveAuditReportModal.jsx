@@ -24,6 +24,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { parseAuditAnalysis, serializeAuditAnalysis } from '../utils/auditAnalysisParser';
+import { createFastBlobUrl, savePdfToIndexedDb } from '../utils/pdfStorage';
 
 const DEFAULT_METRIC_NAMES = [
   'Communication & Delivery',
@@ -59,6 +60,23 @@ export default function ExecutiveAuditReportModal({
   // PDF Attachment State
   const [pdfAttachment, setPdfAttachment] = useState(session.pdfAttachment || session.auditPdf || null);
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+
+  // Fast memoized blob URL for instant smooth preview
+  useEffect(() => {
+    let url = null;
+    if (pdfAttachment?.dataUrl && isPdfPreviewOpen) {
+      url = createFastBlobUrl(pdfAttachment.dataUrl);
+      setPdfBlobUrl(url);
+    } else {
+      setPdfBlobUrl(null);
+    }
+    return () => {
+      if (url && typeof url === 'string' && url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [pdfAttachment?.dataUrl, isPdfPreviewOpen]);
 
   // Parse structured data from rawText or session
   const parsed = parseAuditAnalysis(rawText || session.auditAnalysis || session.feedback || '');
@@ -169,6 +187,9 @@ export default function ExecutiveAuditReportModal({
     }
 
     if (onSaveAnalysis) {
+      if (pdfAttachment && session?.id) {
+        savePdfToIndexedDb(session.id, pdfAttachment);
+      }
       onSaveAnalysis(session.id, textToSave, Number(overallScore), pdfAttachment);
       if (showToast) showToast(`Saved performance audit & PDF attachment!`);
     }
@@ -558,7 +579,7 @@ export default function ExecutiveAuditReportModal({
                       </button>
 
                       <a
-                        href={pdfAttachment.dataUrl}
+                        href={pdfBlobUrl || pdfAttachment.dataUrl}
                         download={pdfAttachment.name || 'Audit_Evaluation.pdf'}
                         className="btn-secondary"
                         style={{ height: '32px', padding: '0 0.75rem', fontSize: '0.76rem', fontWeight: '700', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -600,7 +621,7 @@ export default function ExecutiveAuditReportModal({
                           Interactive Document Viewer
                         </span>
                         <a
-                          href={pdfAttachment.dataUrl}
+                          href={pdfBlobUrl || pdfAttachment.dataUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--skarion-orange)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
@@ -609,8 +630,9 @@ export default function ExecutiveAuditReportModal({
                         </a>
                       </div>
                       <iframe
-                        src={pdfAttachment.dataUrl}
+                        src={pdfBlobUrl || pdfAttachment.dataUrl}
                         title="PDF Attachment Preview"
+                        loading="lazy"
                         style={{
                           width: '100%',
                           height: '480px',

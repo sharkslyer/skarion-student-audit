@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Mic, 
   TrendingUp, 
@@ -102,39 +102,45 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const isDeclining = Number(scoreDiff) < 0;
 
   // Extract and sort all recent mock sessions across the entire candidate database
-  const allRecentMocks = students.flatMap(student => 
-    (student.mockSessions || []).map(session => ({
-      ...session,
-      studentId: student.id,
-      studentName: student.name,
-      studentRating: student.rating,
-      studentTargetRole: student.targetRole || student.domain || '',
-      studentData: student
-    }))
-  ).sort((a, b) => {
-    const dateA = new Date(a.date).getTime() || 0;
-    const dateB = new Date(b.date).getTime() || 0;
-    if (dateB !== dateA) return dateB - dateA;
-    return String(b.id).localeCompare(String(a.id));
-  });
+  const allRecentMocks = useMemo(() => {
+    return (students || []).flatMap(student => 
+      (student?.mockSessions || []).map(session => ({
+        ...session,
+        studentId: student?.id,
+        studentName: student?.name,
+        studentRating: student?.rating,
+        studentTargetRole: student?.targetRole || student?.domain || '',
+        studentData: student
+      }))
+    ).sort((a, b) => {
+      const dateA = new Date(a.date).getTime() || 0;
+      const dateB = new Date(b.date).getTime() || 0;
+      if (dateB !== dateA) return dateB - dateA;
+      return String(b.id).localeCompare(String(a.id));
+    });
+  }, [students]);
 
-  const evaluatorsWithMocks = Array.from(new Set(allRecentMocks.map(m => m.evaluator).filter(Boolean)));
+  const evaluatorsWithMocks = useMemo(() => {
+    return Array.from(new Set(allRecentMocks.map(m => m.evaluator).filter(Boolean)));
+  }, [allRecentMocks]);
 
-  const filteredRecentMocks = allRecentMocks.filter(mock => {
-    if (recentEvaluatorFilter !== 'all' && mock.evaluator !== recentEvaluatorFilter) {
-      return false;
-    }
-    if (recentMocksSearch.trim()) {
-      const q = recentMocksSearch.trim().toLowerCase();
-      const matchName = mock.studentName?.toLowerCase().includes(q);
-      const matchCategory = mock.category?.toLowerCase().includes(q);
-      const matchFeedback = mock.feedback?.toLowerCase().includes(q);
-      const matchEvaluator = mock.evaluator?.toLowerCase().includes(q);
-      const matchStrengths = mock.strengths?.toLowerCase().includes(q);
-      if (!matchName && !matchCategory && !matchFeedback && !matchEvaluator && !matchStrengths) return false;
-    }
-    return true;
-  });
+  const filteredRecentMocks = useMemo(() => {
+    return allRecentMocks.filter(mock => {
+      if (recentEvaluatorFilter !== 'all' && mock.evaluator !== recentEvaluatorFilter) {
+        return false;
+      }
+      if (recentMocksSearch.trim()) {
+        const q = recentMocksSearch.trim().toLowerCase();
+        const matchName = mock.studentName?.toLowerCase().includes(q);
+        const matchCategory = mock.category?.toLowerCase().includes(q);
+        const matchFeedback = mock.feedback?.toLowerCase().includes(q);
+        const matchEvaluator = mock.evaluator?.toLowerCase().includes(q);
+        const matchStrengths = mock.strengths?.toLowerCase().includes(q);
+        if (!matchName && !matchCategory && !matchFeedback && !matchEvaluator && !matchStrengths) return false;
+      }
+      return true;
+    });
+  }, [allRecentMocks, recentEvaluatorFilter, recentMocksSearch]);
 
   const displayedRecentMocks = isRecentMocksExpanded ? filteredRecentMocks : filteredRecentMocks.slice(0, 4);
 
@@ -514,15 +520,21 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     return '#dc2626'; // Red
   };
 
-  const parsedDialogueParagraphs = parseAndOrganizeTranscript(transcriptTextBuffer).split('\n\n');
-  const availableSpeakers = Array.from(new Set(
-    parsedDialogueParagraphs
-      .map(p => {
-        const match = p.match(/^([^:\[\n]+)/);
-        return match ? match[1].trim() : null;
-      })
-      .filter(Boolean)
-  ));
+  const parsedDialogueParagraphs = useMemo(() => {
+    if (!transcriptTextBuffer) return [];
+    return parseAndOrganizeTranscript(transcriptTextBuffer).split('\n\n');
+  }, [transcriptTextBuffer]);
+
+  const availableSpeakers = useMemo(() => {
+    return Array.from(new Set(
+      parsedDialogueParagraphs
+        .map(p => {
+          const match = p.match(/^([^:[\n]+)/);
+          return match ? match[1].trim() : null;
+        })
+        .filter(Boolean)
+    ));
+  }, [parsedDialogueParagraphs]);
 
   return (
     <div className="card-panel" style={{ padding: '1.75rem' }}>
