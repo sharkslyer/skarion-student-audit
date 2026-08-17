@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   Sparkles, 
@@ -16,7 +16,12 @@ import {
   User,
   Plus,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Paperclip,
+  UploadCloud,
+  Download,
+  Eye,
+  ExternalLink
 } from 'lucide-react';
 import { parseAuditAnalysis, serializeAuditAnalysis } from '../utils/auditAnalysisParser';
 
@@ -28,6 +33,13 @@ const DEFAULT_METRIC_NAMES = [
   'Standards & Quality Processes'
 ];
 
+function formatFileSize(bytes) {
+  if (!bytes || isNaN(bytes)) return '0 KB';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 export default function ExecutiveAuditReportModal({
   isOpen,
   onClose,
@@ -38,10 +50,15 @@ export default function ExecutiveAuditReportModal({
 }) {
   if (!isOpen || !session) return null;
 
+  const fileInputRef = useRef(null);
   const [isEditingRaw, setIsEditingRaw] = useState(false);
   const [isCustomizingScores, setIsCustomizingScores] = useState(false);
   const [rawText, setRawText] = useState(session.auditAnalysis || '');
   const [isCopied, setIsCopied] = useState(false);
+
+  // PDF Attachment State
+  const [pdfAttachment, setPdfAttachment] = useState(session.pdfAttachment || session.auditPdf || null);
+  const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
 
   // Parse structured data from rawText or session
   const parsed = parseAuditAnalysis(rawText || session.auditAnalysis || session.feedback || '');
@@ -76,6 +93,9 @@ export default function ExecutiveAuditReportModal({
   useEffect(() => {
     const currentParsed = parseAuditAnalysis(session.auditAnalysis || session.feedback || '');
     setRawText(session.auditAnalysis || '');
+    setPdfAttachment(session.pdfAttachment || session.auditPdf || null);
+    setIsPdfPreviewOpen(false);
+
     const sc = currentParsed?.overallScore !== null && currentParsed?.overallScore !== undefined 
       ? currentParsed.overallScore 
       : Number(session.score || 7.0);
@@ -99,7 +119,34 @@ export default function ExecutiveAuditReportModal({
     setTimeout(() => setIsCopied(false), 2500);
   };
 
-  // Save all changes and sync score throughout website
+  // Handle PDF file upload
+  const handleFileUpload = (file) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      if (showToast) showToast('Please select a valid PDF file (.pdf)');
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      if (showToast) showToast('File too large. Maximum PDF size is 15MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const newAttachment = {
+        name: file.name,
+        size: file.size,
+        type: file.type || 'application/pdf',
+        dataUrl: e.target.result,
+        uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      };
+      setPdfAttachment(newAttachment);
+      if (showToast) showToast(`Attached PDF: "${file.name}"!`);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Save all changes and sync score and PDF attachment throughout website
   const handleSaveAll = () => {
     let textToSave = rawText;
 
@@ -122,8 +169,8 @@ export default function ExecutiveAuditReportModal({
     }
 
     if (onSaveAnalysis) {
-      onSaveAnalysis(session.id, textToSave, Number(overallScore));
-      if (showToast) showToast(`Saved performance audit (Overall Score: ${overallScore}/10)!`);
+      onSaveAnalysis(session.id, textToSave, Number(overallScore), pdfAttachment);
+      if (showToast) showToast(`Saved performance audit & PDF attachment!`);
     }
 
     setIsEditingRaw(false);
@@ -157,7 +204,7 @@ export default function ExecutiveAuditReportModal({
         }}
       >
         
-        {/* Header - Matches StudentDetailModal exactly */}
+        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{
@@ -191,6 +238,22 @@ export default function ExecutiveAuditReportModal({
                 }}>
                   🎯 {targetRole}
                 </span>
+                {pdfAttachment && (
+                  <span style={{ 
+                    fontSize: '0.74rem', 
+                    fontWeight: '800', 
+                    color: '#dc2626', 
+                    background: '#fef2f2', 
+                    padding: '2px 8px', 
+                    borderRadius: '6px',
+                    border: '1px solid #fecaca',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px'
+                  }}>
+                    <Paperclip size={11} /> PDF Attached
+                  </span>
+                )}
               </div>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <Calendar size={13} color="var(--text-dim)" /> Evaluated by {session.evaluator} on {session.date}
@@ -437,7 +500,174 @@ export default function ExecutiveAuditReportModal({
               </div>
             </div>
 
-            {/* 1. Performance Metrics Breakdown */}
+            {/* 1. PDF Evaluation Document Attachment Section */}
+            <div style={{ background: 'var(--bg-surface-subtle)', padding: '1.15rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Paperclip size={16} color="var(--skarion-orange)" />
+                  <h4 style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--skarion-navy)', margin: 0 }}>
+                    Official PDF Evaluation Attachment
+                  </h4>
+                </div>
+
+                {pdfAttachment && (
+                  <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#059669', background: 'rgba(5, 150, 105, 0.12)', padding: '2px 8px', borderRadius: '6px' }}>
+                    ✓ Document Stored & Linked
+                  </span>
+                )}
+              </div>
+
+              {pdfAttachment ? (
+                <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
+                      <div style={{
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '10px',
+                        background: 'rgba(220, 38, 38, 0.1)',
+                        color: '#dc2626',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: '900',
+                        fontSize: '0.85rem',
+                        flexShrink: 0
+                      }}>
+                        PDF
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <strong style={{ fontSize: '0.86rem', color: 'var(--skarion-navy)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {pdfAttachment.name}
+                        </strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {formatFileSize(pdfAttachment.size)} • Uploaded {pdfAttachment.uploadedAt || 'recently'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => setIsPdfPreviewOpen(!isPdfPreviewOpen)}
+                        style={{ height: '32px', padding: '0 0.75rem', fontSize: '0.76rem', fontWeight: '700' }}
+                      >
+                        <Eye size={13} /> {isPdfPreviewOpen ? 'Hide Preview' : 'Preview PDF'}
+                      </button>
+
+                      <a
+                        href={pdfAttachment.dataUrl}
+                        download={pdfAttachment.name || 'Audit_Evaluation.pdf'}
+                        className="btn-secondary"
+                        style={{ height: '32px', padding: '0 0.75rem', fontSize: '0.76rem', fontWeight: '700', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Download size={13} /> Download
+                      </a>
+
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ height: '32px', padding: '0 0.65rem', fontSize: '0.76rem' }}
+                        title="Replace with another PDF"
+                      >
+                        <UploadCloud size={13} /> Replace
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={() => {
+                          setPdfAttachment(null);
+                          setIsPdfPreviewOpen(false);
+                          if (showToast) showToast('Removed PDF attachment');
+                        }}
+                        style={{ width: '32px', height: '32px', color: '#dc2626' }}
+                        title="Remove attachment"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Embedded PDF Viewer on Preview */}
+                  {isPdfPreviewOpen && (
+                    <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                          Interactive Document Viewer
+                        </span>
+                        <a
+                          href={pdfAttachment.dataUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--skarion-orange)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                        >
+                          <ExternalLink size={12} /> Open in New Tab
+                        </a>
+                      </div>
+                      <iframe
+                        src={pdfAttachment.dataUrl}
+                        title="PDF Attachment Preview"
+                        style={{
+                          width: '100%',
+                          height: '480px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          background: '#525659'
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Upload Drag & Drop Area */
+                <div
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      handleFileUpload(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: '2px dashed var(--border-color)',
+                    borderRadius: '10px',
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <UploadCloud size={28} color="var(--skarion-orange)" style={{ marginBottom: '0.35rem' }} />
+                  <strong style={{ fontSize: '0.86rem', color: 'var(--skarion-navy)', display: 'block', marginBottom: '0.15rem' }}>
+                    Click to upload or drag & drop evaluation PDF
+                  </strong>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                    Supports evaluation rubrics, problem sheets, candidate test packages, or resume PDFs (up to 15MB)
+                  </span>
+                </div>
+              )}
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileUpload(e.target.files[0]);
+                  }
+                }}
+                accept="application/pdf,.pdf"
+                style={{ display: 'none' }}
+              />
+            </div>
+
+            {/* 2. Performance Metrics Breakdown */}
             <div style={{ background: 'var(--bg-surface-subtle)', padding: '1.15rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <h4 style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--skarion-navy)', margin: 0 }}>
@@ -536,7 +766,7 @@ export default function ExecutiveAuditReportModal({
               </div>
             </div>
 
-            {/* 2. Key Strengths */}
+            {/* 3. Key Strengths */}
             {parsed?.strengths && parsed.strengths.length > 0 && (
               <div>
                 <h4 style={{ fontSize: '0.92rem', fontWeight: '800', color: '#059669', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -563,7 +793,7 @@ export default function ExecutiveAuditReportModal({
               </div>
             )}
 
-            {/* 3. Critical Weaknesses with Quotes & Corrections */}
+            {/* 4. Critical Weaknesses with Quotes & Corrections */}
             {parsed?.weaknesses && parsed.weaknesses.length > 0 && (
               <div>
                 <h4 style={{ fontSize: '0.92rem', fontWeight: '800', color: '#dc2626', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -639,7 +869,7 @@ export default function ExecutiveAuditReportModal({
               </div>
             )}
 
-            {/* 4. Action Items for Mentor */}
+            {/* 5. Action Items for Mentor */}
             {parsed?.actionItems && parsed.actionItems.length > 0 && (
               <div>
                 <h4 style={{ fontSize: '0.92rem', fontWeight: '800', color: '#7c3aed', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>

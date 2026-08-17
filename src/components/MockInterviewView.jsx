@@ -77,6 +77,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [mockImprovement, setMockImprovement] = useState('');
   const [mockTranscript, setMockTranscript] = useState('');
   const [mockAuditAnalysis, setMockAuditAnalysis] = useState('');
+  const [mockPdfAttachment, setMockPdfAttachment] = useState(null);
 
   // Filter candidates matching search query
   const searchableCandidates = students.filter(s => 
@@ -158,7 +159,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       strengths: mockStrengths.trim(),
       improvement: mockImprovement.trim(),
       transcript: cleanedTranscript,
-      auditAnalysis: mockAuditAnalysis.trim()
+      auditAnalysis: mockAuditAnalysis.trim(),
+      pdfAttachment: mockPdfAttachment
     };
 
     const existingSessions = studentToUpdate.mockSessions || [];
@@ -192,11 +194,12 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     setMockImprovement('');
     setMockTranscript('');
     setMockAuditAnalysis('');
+    setMockPdfAttachment(null);
     setIsLogModalOpen(false);
   };
 
-  // Handle saving updated audit analysis text and synchronizing score
-  const handleSaveAuditAnalysis = (sessionId, newAnalysisText, updatedScore) => {
+  // Handle saving updated audit analysis text, score, and PDF attachment
+  const handleSaveAuditAnalysis = (sessionId, newAnalysisText, updatedScore, pdfAttachment) => {
     const candidateToUpdate = activeAuditCandidate || currentStudent;
     if (!candidateToUpdate) return;
 
@@ -211,7 +214,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
         return {
           ...s,
           auditAnalysis: newAnalysisText,
-          score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : s.score
+          score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : s.score,
+          pdfAttachment: pdfAttachment !== undefined ? pdfAttachment : s.pdfAttachment
         };
       }
       return s;
@@ -227,7 +231,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
       setActiveAuditSession({
         ...activeAuditSession,
         auditAnalysis: newAnalysisText,
-        score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : activeAuditSession.score
+        score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : activeAuditSession.score,
+        pdfAttachment: pdfAttachment !== undefined ? pdfAttachment : activeAuditSession.pdfAttachment
       });
     }
   };
@@ -872,20 +877,20 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           justifyContent: 'center',
                           textAlign: 'center',
                           gap: '0.3rem',
-                          background: mock.auditAnalysis ? 'rgba(124, 58, 237, 0.1)' : 'var(--bg-surface-subtle)',
-                          color: mock.auditAnalysis ? '#7c3aed' : 'var(--text-main)',
-                          borderColor: mock.auditAnalysis ? 'rgba(124, 58, 237, 0.35)' : 'var(--border-color)',
+                          background: mock.auditAnalysis || mock.pdfAttachment ? 'rgba(124, 58, 237, 0.1)' : 'var(--bg-surface-subtle)',
+                          color: mock.auditAnalysis || mock.pdfAttachment ? '#7c3aed' : 'var(--text-main)',
+                          borderColor: mock.auditAnalysis || mock.pdfAttachment ? 'rgba(124, 58, 237, 0.35)' : 'var(--border-color)',
                           whiteSpace: 'nowrap',
                           flex: '1 1 auto',
                           minWidth: '95px',
                           cursor: 'pointer',
                           boxSizing: 'border-box'
                         }}
-                        title="View or edit structured candidate performance audit analysis"
+                        title="View or edit structured candidate performance audit analysis & attached PDF"
                       >
-                        <BarChart2 size={13} color={mock.auditAnalysis ? '#7c3aed' : 'var(--text-dim)'} style={{ flexShrink: 0 }} />
+                        <BarChart2 size={13} color={mock.auditAnalysis || mock.pdfAttachment ? '#7c3aed' : 'var(--text-dim)'} style={{ flexShrink: 0 }} />
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                          {mock.auditAnalysis ? 'Audit Report' : '+ Analysis'}
+                          {mock.pdfAttachment ? 'Audit + PDF' : mock.auditAnalysis ? 'Audit Report' : '+ Analysis'}
                         </span>
                       </button>
 
@@ -1441,21 +1446,21 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         textAlign: 'center',
                         gap: '0.35rem',
                         padding: '0 0.5rem',
-                        background: session.auditAnalysis ? 'linear-gradient(135deg, #132247 0%, #1e293b 100%)' : 'var(--bg-surface-subtle)',
-                        color: session.auditAnalysis ? '#38bdf8' : '#7c3aed',
-                        border: session.auditAnalysis ? '1px solid rgba(56, 189, 248, 0.4)' : '1px dashed #7c3aed',
+                        background: session.auditAnalysis || session.pdfAttachment ? 'linear-gradient(135deg, #132247 0%, #1e293b 100%)' : 'var(--bg-surface-subtle)',
+                        color: session.auditAnalysis || session.pdfAttachment ? '#38bdf8' : '#7c3aed',
+                        border: session.auditAnalysis || session.pdfAttachment ? '1px solid rgba(56, 189, 248, 0.4)' : '1px dashed #7c3aed',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         boxSizing: 'border-box',
-                        boxShadow: session.auditAnalysis ? '0 2px 8px rgba(19, 34, 71, 0.25)' : 'none',
+                        boxShadow: session.auditAnalysis || session.pdfAttachment ? '0 2px 8px rgba(19, 34, 71, 0.25)' : 'none',
                         transition: 'all 0.2s ease'
                       }}
-                      title="View or edit multi-dimensional performance audit report"
+                      title="View or edit performance audit report and attached evaluation PDF"
                     >
-                      <BarChart2 size={14} color={session.auditAnalysis ? '#38bdf8' : '#7c3aed'} style={{ flexShrink: 0 }} />
+                      <BarChart2 size={14} color={session.auditAnalysis || session.pdfAttachment ? '#38bdf8' : '#7c3aed'} style={{ flexShrink: 0 }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                        {session.auditAnalysis ? 'Audit Report' : '+ Add Audit'}
+                        {session.pdfAttachment ? 'Audit + PDF' : session.auditAnalysis ? 'Audit Report' : '+ Add Audit'}
                       </span>
                     </button>
 
@@ -1726,6 +1731,70 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   placeholder="Paste verbatim dialogue from Teams, Zoom, Google Meet or raw text here. It will be automatically formatted!" 
                   style={{ fontSize: '0.84rem', fontFamily: 'inherit', lineHeight: '1.5' }} 
                 />
+              </div>
+
+              {/* Optional PDF Evaluation Document Attachment */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Paperclip size={15} color="var(--skarion-orange)" /> Attach Official PDF Evaluation Sheet / Document (Optional)
+                  </span>
+                  {mockPdfAttachment && (
+                    <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: '800' }}>✓ PDF Attached</span>
+                  )}
+                </label>
+
+                {mockPdfAttachment ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                      <span style={{ background: '#fef2f2', color: '#dc2626', fontWeight: '900', fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px' }}>PDF</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--skarion-navy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {mockPdfAttachment.name}
+                      </span>
+                      <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>({(mockPdfAttachment.size / 1024).toFixed(0)} KB)</span>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => setMockPdfAttachment(null)}
+                      className="btn-icon" 
+                      style={{ width: '28px', height: '28px', color: '#dc2626' }}
+                      title="Remove PDF"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+                        if (showToast) showToast('Please select a valid PDF file (.pdf)');
+                        return;
+                      }
+                      if (file.size > 15 * 1024 * 1024) {
+                        if (showToast) showToast('File too large. Maximum PDF size is 15MB.');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = (evt) => {
+                        setMockPdfAttachment({
+                          name: file.name,
+                          size: file.size,
+                          type: file.type || 'application/pdf',
+                          dataUrl: evt.target.result,
+                          uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        });
+                        if (showToast) showToast(`Attached "${file.name}"!`);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                    className="input-control"
+                    style={{ fontSize: '0.8rem', padding: '0.45rem' }}
+                  />
+                )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem' }}>

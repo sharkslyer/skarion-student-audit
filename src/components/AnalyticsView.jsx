@@ -176,8 +176,8 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
     return students.find(s => s.id === selectedStudentId) || students[0] || null;
   }, [students, selectedStudentId]);
 
-  // Handle saving audit analysis text and synchronizing score
-  const handleSaveAuditAnalysis = (sessionId, newAnalysisText, updatedScore) => {
+  // Handle saving audit analysis text, score, and PDF attachment
+  const handleSaveAuditAnalysis = (sessionId, newAnalysisText, updatedScore, pdfAttachment) => {
     const candidateToUpdate = activeAuditCandidate || currentStudent;
     if (!candidateToUpdate || !onSaveStudent) return;
 
@@ -192,7 +192,8 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
         return {
           ...s,
           auditAnalysis: newAnalysisText,
-          score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : s.score
+          score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : s.score,
+          pdfAttachment: pdfAttachment !== undefined ? pdfAttachment : s.pdfAttachment
         };
       }
       return s;
@@ -208,7 +209,8 @@ export default function AnalyticsView({ students, onSelectStudent, onSaveStudent
       setActiveAuditSession({
         ...activeAuditSession,
         auditAnalysis: newAnalysisText,
-        score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : activeAuditSession.score
+        score: finalScore !== undefined && !isNaN(finalScore) ? finalScore : activeAuditSession.score,
+        pdfAttachment: pdfAttachment !== undefined ? pdfAttachment : activeAuditSession.pdfAttachment
       });
     }
   };
