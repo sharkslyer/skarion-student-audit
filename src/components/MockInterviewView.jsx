@@ -34,7 +34,8 @@ import {
   ChevronUp,
   Filter,
   BarChart2,
-  Paperclip
+  Paperclip,
+  Save
 } from 'lucide-react';
 import { EVALUATORS, EVALUATOR_CONFIG, MOCK_ROUND_TYPES, RATING_CONFIG } from '../data/initialData';
 import { getTodayLocalDate } from '../utils/dateUtils';
@@ -67,7 +68,9 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
   const [transcriptSpeakerFilter, setTranscriptSpeakerFilter] = useState('all'); // Speaker filter in viewer
   const [transcriptWordSearch, setTranscriptWordSearch] = useState(''); // Word search inside transcript viewer
 
-  // Form state for logging a new mock session
+  // Form state for logging / editing a mock session
+  const [editingMockSession, setEditingMockSession] = useState(null);
+  const [editingMockCandidate, setEditingMockCandidate] = useState(null);
   const [targetStudentId, setTargetStudentId] = useState(students[0]?.id || '');
   const [mockDate, setMockDate] = useState(getTodayLocalDate());
   const [mockEvaluator, setMockEvaluator] = useState(EVALUATORS[0]);
@@ -144,56 +147,125 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
   const displayedRecentMocks = isRecentMocksExpanded ? filteredRecentMocks : filteredRecentMocks.slice(0, 4);
 
-  // Handle submitting new mock interview record
+  // Open Edit Mock Modal pre-populated with all session fields
+  const handleOpenEditMock = (session, candidate) => {
+    const student = candidate || students.find(s => s.id === session.studentId) || currentStudent;
+    setEditingMockSession(session);
+    setEditingMockCandidate(student);
+    setTargetStudentId(student?.id || selectedStudentId);
+    setMockDate(session.date || getTodayLocalDate());
+    setMockEvaluator(session.evaluator || EVALUATORS[0]);
+    setMockCategory(session.category || MOCK_ROUND_TYPES[0]);
+    setMockScore(Number(session.score !== undefined && session.score !== null ? session.score : 7.5));
+    setMockFeedback(session.feedback || '');
+    setMockStrengths(session.strengths || '');
+    setMockImprovement(session.improvement || '');
+    setMockTranscript(session.transcript || '');
+    setMockAuditAnalysis(session.auditAnalysis || '');
+    setMockPdfAttachment(session.pdfAttachment || null);
+    setIsLogModalOpen(true);
+  };
+
+  // Open New Mock Modal with clean defaults
+  const handleOpenNewMock = () => {
+    setEditingMockSession(null);
+    setEditingMockCandidate(null);
+    setTargetStudentId(selectedStudentId || students[0]?.id || '');
+    setMockDate(getTodayLocalDate());
+    setMockEvaluator(EVALUATORS[0]);
+    setMockCategory(MOCK_ROUND_TYPES[0]);
+    setMockScore(7.5);
+    setMockFeedback('');
+    setMockStrengths('');
+    setMockImprovement('');
+    setMockTranscript('');
+    setMockAuditAnalysis('');
+    setMockPdfAttachment(null);
+    setIsLogModalOpen(true);
+  };
+
+  // Handle submitting new or edited mock interview record
   const handleLogMock = (e) => {
     e.preventDefault();
     if (!mockFeedback.trim()) return;
 
-    const studentToUpdate = students.find(s => s.id === targetStudentId);
+    const studentToUpdate = students.find(s => s.id === targetStudentId) || editingMockCandidate || currentStudent;
     if (!studentToUpdate) return;
 
     // Automatically parse raw transcript if pasted in form
     const studentRosterNames = (students || []).map(s => s?.name).filter(Boolean);
-    const cleanedTranscript = parseAndOrganizeTranscript(mockTranscript.trim(), studentRosterNames);
-
-    const newSession = {
-      id: `mock-${Date.now()}`,
-      date: mockDate || getTodayLocalDate(),
-      score: Number(mockScore),
-      evaluator: mockEvaluator,
-      category: mockCategory,
-      feedback: mockFeedback.trim(),
-      strengths: mockStrengths.trim(),
-      improvement: mockImprovement.trim(),
-      transcript: cleanedTranscript,
-      auditAnalysis: mockAuditAnalysis.trim(),
-      pdfAttachment: mockPdfAttachment
-    };
+    const cleanedTranscript = mockTranscript.trim() ? parseAndOrganizeTranscript(mockTranscript.trim(), studentRosterNames) : '';
 
     const existingSessions = studentToUpdate.mockSessions || [];
-    const updatedSessions = [...existingSessions, newSession];
 
-    // Automatically update student's mockInterviews count
-    const updatedStudent = {
-      ...studentToUpdate,
-      mockInterviews: updatedSessions.length,
-      mockSessions: updatedSessions
-    };
+    if (editingMockSession) {
+      // EDIT MODE: Update existing session in place
+      const updatedSessions = existingSessions.map(s => {
+        if (s.id === editingMockSession.id) {
+          return {
+            ...s,
+            date: mockDate || getTodayLocalDate(),
+            score: Number(mockScore),
+            evaluator: mockEvaluator,
+            category: mockCategory,
+            feedback: mockFeedback.trim(),
+            strengths: mockStrengths.trim(),
+            improvement: mockImprovement.trim(),
+            transcript: cleanedTranscript,
+            auditAnalysis: mockAuditAnalysis.trim(),
+            pdfAttachment: mockPdfAttachment
+          };
+        }
+        return s;
+      });
 
-    // Automatically append an audit log entry for this mock interview
-    const auditNote = {
-      id: `note-mock-${Date.now()}`,
-      date: mockDate || getTodayLocalDate(),
-      content: `Mock Interview (${mockCategory}): Scored ${mockScore}/10. ${mockFeedback.trim()}`,
-      category: 'Mock Feedback',
-      author: mockEvaluator,
-      accent: mockScore >= 8 ? 'green' : mockScore >= 5 ? 'blue' : 'amber',
-      pinned: true
-    };
-    updatedStudent.stickyNotes = [auditNote, ...(updatedStudent.stickyNotes || [])];
+      const updatedStudent = {
+        ...studentToUpdate,
+        mockSessions: updatedSessions
+      };
 
-    onSaveStudent(updatedStudent);
-    if (showToast) showToast(`Logged ${mockScore}/10 Mock Interview for ${studentToUpdate.name}`);
+      onSaveStudent(updatedStudent);
+      if (showToast) showToast(`Updated Mock Interview record for ${studentToUpdate.name}`);
+    } else {
+      // CREATE MODE: Add new session
+      const newSession = {
+        id: `mock-${Date.now()}`,
+        date: mockDate || getTodayLocalDate(),
+        score: Number(mockScore),
+        evaluator: mockEvaluator,
+        category: mockCategory,
+        feedback: mockFeedback.trim(),
+        strengths: mockStrengths.trim(),
+        improvement: mockImprovement.trim(),
+        transcript: cleanedTranscript,
+        auditAnalysis: mockAuditAnalysis.trim(),
+        pdfAttachment: mockPdfAttachment
+      };
+
+      const updatedSessions = [...existingSessions, newSession];
+
+      // Automatically update student's mockInterviews count
+      const updatedStudent = {
+        ...studentToUpdate,
+        mockInterviews: updatedSessions.length,
+        mockSessions: updatedSessions
+      };
+
+      // Automatically append an audit log entry for this mock interview
+      const auditNote = {
+        id: `note-mock-${Date.now()}`,
+        date: mockDate || getTodayLocalDate(),
+        content: `Mock Interview (${mockCategory}): Scored ${mockScore}/10. ${mockFeedback.trim()}`,
+        category: 'Mock Feedback',
+        author: mockEvaluator,
+        accent: mockScore >= 8 ? 'green' : mockScore >= 5 ? 'blue' : 'amber',
+        pinned: true
+      };
+      updatedStudent.stickyNotes = [auditNote, ...(updatedStudent.stickyNotes || [])];
+
+      onSaveStudent(updatedStudent);
+      if (showToast) showToast(`Logged ${mockScore}/10 Mock Interview for ${studentToUpdate.name}`);
+    }
 
     // Reset form & close modal
     setMockFeedback('');
@@ -202,6 +274,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
     setMockTranscript('');
     setMockAuditAnalysis('');
     setMockPdfAttachment(null);
+    setEditingMockSession(null);
+    setEditingMockCandidate(null);
     setIsLogModalOpen(false);
   };
 
@@ -568,7 +642,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
         <button 
           className="btn-primary"
-          onClick={() => { setTargetStudentId(selectedStudentId); setIsLogModalOpen(true); }}
+          onClick={handleOpenNewMock}
           style={{ height: '42px', padding: '0 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
         >
           <Plus size={18} /> Log Mock Interview
@@ -863,14 +937,14 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
 
                     {/* Action Bar */}
                     <div style={{ 
-                      display: 'flex', 
+                      display: 'grid', 
+                      gridTemplateColumns: '1fr 1fr auto auto', 
                       gap: '0.45rem', 
                       paddingTop: '0.65rem', 
                       borderTop: '1px solid var(--border-color)', 
                       alignItems: 'center',
                       width: '100%',
-                      boxSizing: 'border-box',
-                      flexWrap: 'wrap'
+                      boxSizing: 'border-box'
                     }}>
                       {/* Executive Audit Report Button */}
                       <button
@@ -894,8 +968,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           color: mock.auditAnalysis || mock.pdfAttachment ? '#7c3aed' : 'var(--text-main)',
                           borderColor: mock.auditAnalysis || mock.pdfAttachment ? 'rgba(124, 58, 237, 0.35)' : 'var(--border-color)',
                           whiteSpace: 'nowrap',
-                          flex: '1 1 auto',
-                          minWidth: '95px',
+                          width: '100%',
                           cursor: 'pointer',
                           boxSizing: 'border-box'
                         }}
@@ -907,13 +980,12 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         </span>
                       </button>
 
-                      {hasTranscript && (
+                      {/* Transcript Button (Always 50% width! Shows "+ Add Transcript" if unavailable) */}
+                      {hasTranscript ? (
                         <button
                           className="btn-primary"
                           onClick={() => openTranscriptModal(mock, false, mock.studentData)}
                           style={{
-                            flex: '1 1 auto',
-                            minWidth: 0,
                             background: 'var(--skarion-orange)',
                             color: '#ffffff',
                             height: '36px',
@@ -932,7 +1004,8 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             overflow: 'hidden',
-                            boxSizing: 'border-box'
+                            boxSizing: 'border-box',
+                            width: '100%'
                           }}
                           title="Read full interview dialogue transcript"
                         >
@@ -941,8 +1014,61 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                             Transcript ({wordCount}w)
                           </span>
                         </button>
+                      ) : (
+                        <button
+                          className="btn-secondary"
+                          onClick={() => openTranscriptModal(mock, true, mock.studentData)}
+                          style={{
+                            height: '36px',
+                            fontSize: '0.78rem',
+                            fontWeight: '700',
+                            borderRadius: '8px',
+                            padding: '0 0.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            gap: '0.3rem',
+                            border: '1px dashed #7c3aed',
+                            color: '#7c3aed',
+                            background: 'var(--bg-surface-subtle)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            boxSizing: 'border-box',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            width: '100%'
+                          }}
+                          title="Add full interview transcript"
+                        >
+                          <Plus size={13} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                            + Add Transcript
+                          </span>
+                        </button>
                       )}
 
+                      {/* Edit Mock Record Button */}
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => handleOpenEditMock(mock, mock.studentData || currentStudent)}
+                        style={{
+                          height: '36px',
+                          padding: '0 0.55rem',
+                          borderRadius: '8px',
+                          color: 'var(--text-main)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                        title="Edit full mock interview record"
+                      >
+                        <Edit3 size={13} />
+                      </button>
+
+                      {/* Select Candidate Button */}
                       <button
                         className="btn-secondary"
                         onClick={() => {
@@ -950,11 +1076,11 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           if (showToast) showToast(`Selected ${mock.studentName}`);
                         }}
                         style={{
-                          height: '38px',
-                          fontSize: '0.8rem',
+                          height: '36px',
+                          fontSize: '0.78rem',
                           fontWeight: '700',
-                          borderRadius: '10px',
-                          padding: '0 0.75rem',
+                          borderRadius: '8px',
+                          padding: '0 0.65rem',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -963,7 +1089,6 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           borderColor: isCurrentSelected ? 'var(--skarion-navy)' : 'var(--border-color)',
                           whiteSpace: 'nowrap',
                           flexShrink: 0,
-                          flex: '0 0 auto',
                           cursor: 'pointer'
                         }}
                         title={`Select ${mock.studentName} and view audit history`}
@@ -1399,14 +1524,23 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                         fontSize: '0.74rem',
                         background: evalCfg.bg, 
                         padding: '0.15rem 0.5rem', 
-                        borderRadius: '5px',
+                        borderRadius: '5px', 
                         border: `1px solid ${evalCfg.border}`
                       }}>
                         {session.evaluator}
                       </span>
                       <button 
+                        type="button"
+                        onClick={() => handleOpenEditMock(session, currentStudent)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.75, padding: '2px', display: 'flex', alignItems: 'center' }}
+                        title="Edit mock interview record"
+                      >
+                        <Edit3 size={14} color="var(--text-muted)" />
+                      </button>
+                      <button 
+                        type="button"
                         onClick={() => handleDeleteMock(session.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5 }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, padding: '2px', display: 'flex', alignItems: 'center' }}
                         title="Delete mock record"
                       >
                         <Trash2 size={14} color="var(--text-muted)" />
@@ -1477,7 +1611,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       </span>
                     </button>
 
-                    {/* Transcript Button */}
+                    {/* Transcript Button (Always 50% width! Shows "+ Add Transcript" if unavailable) */}
                     {hasTranscript ? (
                       <button 
                         type="button"
@@ -1533,6 +1667,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                           padding: '0 0.5rem',
                           border: '1px dashed #7c3aed',
                           color: '#7c3aed',
+                          background: 'var(--bg-surface-subtle)',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           boxSizing: 'border-box',
@@ -1543,7 +1678,7 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                       >
                         <Plus size={14} style={{ flexShrink: 0 }} />
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                          + Transcript
+                          + Add Transcript
                         </span>
                       </button>
                     )}
@@ -1556,15 +1691,18 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
         </div>
       )}
 
-      {/* Log New Mock Interview Modal */}
+      {/* Log / Edit Mock Interview Modal */}
       {isLogModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsLogModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Log Candidate Mock Interview Performance
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {editingMockSession ? <Edit3 size={20} color="var(--skarion-orange)" /> : <Plus size={20} color="var(--skarion-orange)" />}
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--skarion-navy)', margin: 0 }}>
+                  {editingMockSession ? 'Edit Mock Interview Record' : 'Log Candidate Mock Interview Performance'}
+                </h3>
+              </div>
               <button className="btn-icon" onClick={() => setIsLogModalOpen(false)}>
                 <X size={18} />
               </button>
@@ -1815,7 +1953,15 @@ export default function MockInterviewView({ students, onSaveStudent, onSelectStu
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" style={{ padding: '0 1.25rem' }}>
-                  <Send size={15} /> Save Mock Record
+                  {editingMockSession ? (
+                    <>
+                      <Save size={15} /> Save Changes
+                    </>
+                  ) : (
+                    <>
+                      <Send size={15} /> Save Mock Record
+                    </>
+                  )}
                 </button>
               </div>
             </form>
